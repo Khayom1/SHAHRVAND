@@ -1,38 +1,36 @@
-# SHAHRVAND 1.0 — UI/UX prototype
+# SHAHRVAND UI prototype — iteration 2
 
-## Scope
-This branch contains the first Android UI prototype and a responsive admin review mockup. It is intentionally frontend-only.
+## Test modes
+- Browser preview: web/index.html is a standalone frontend. Open it in a browser; no APK installation is required for registration, navigation, missions UI, ranking periods, profile editing, badge explanations, and local settings.
+- Android APK: native Jetpack Compose build. Install it only when checking Android-specific behaviour such as the document picker and device keyboard.
+- No backend: Supabase, authentication, remote uploads, live XP, and administrator verification remain disconnected.
 
-## Included
-- First-run profile form: first name, last name, age, optional profile photo.
-- Four citizen app sections: Home, Missions, Ranking, Profile.
-- Mission templates and a personal activity proposal form.
-- Evidence selection through Android photo/video picker.
-- Demo submission state, sample XP, sample Top 30 ranking, and sample achievements.
-- Four ranking periods: today, week, month, year.
-- Top 30 list with a pinned personal rank row.
-- Tajik, Russian, and English interface labels.
-- Responsive admin review mockup at `admin/index.html`.
+## Changes in this iteration
+- Registration places first name and surname on one row.
+- Age accepts digits only and validates a range of 7–120.
+- Android IME actions move from first name to surname to age; the final action hides the keyboard.
+- Browser registration uses Enter/Next navigation and a sticky submit area.
+- Browser state is persisted in localStorage under shahrvand.ui.v2.
+- Android profile fields, language, selected avatar URI, registration state, and submitted mission IDs are persisted with app-private SharedPreferences.
+- Ranking separates lifetime XP from period XP. Each of Today, Week, Month, and Year shows its own sample period points and sample rank; the pinned personal row uses the same selected period.
+- Profile has an accessible settings control, profile editing, language controls, local test reset, earned and locked titles/badges, and a tap-to-open explanation of each badge's earning criteria.
+- Browser demo profile supports editing and local persistence after refresh.
 
-## Explicitly not connected
-- No Supabase.
-- No API or remote database.
-- No real account creation or authentication.
-- No file upload; selecting evidence only updates the local UI state.
-- No real XP credit, ranking calculation, or administrator decision.
-- Demo state is in memory and may reset when the app process restarts.
+## Important demo-data limitations
+- Ranking names, points, and positions are sample fixtures. They are internally consistent for each selected period but are not real standings.
+- The lifetime 2,450 XP, completed mission count, and one earned starter badge are demo values.
+- Browser mission evidence is selected locally and not uploaded. The native APK uses Android's document picker and stores the selected profile photo URI in app-private preferences. Mission submissions are local demo state only.
+- The browser's optional avatar is held as a local data URL; very large images should not be used.
+- Android persistence is app-private SharedPreferences, not browser localStorage.
+- Clearing browser storage or resetting the test profile removes local demo data. Uninstalling the Android APK removes its private data.
 
-## UI acceptance checklist
-- [ ] Review registration and profile layout on a small Android screen.
-- [ ] Verify all four app tabs and mission detail navigation.
-- [ ] Verify image/video picker opens and returns a selected URI.
-- [ ] Verify the four ranking period controls and pinned personal position.
-- [ ] Verify Tajik, Russian, and English labels for all visible controls.
-- [ ] Review admin queue layout and local approve/reject interactions.
-- [ ] Run Android debug build and resolve compiler errors before calling this build test-ready.
+## How to test
+1. Open the browser preview URL published by the SHAHRVAND browser preview workflow. The first visit starts at registration.
+2. Enter first name and surname, then age 7 or above. Refresh the page: profile and language should remain.
+3. Change tabs, open a mission, select a local evidence file, and submit. Refresh: pending mission state should remain.
+4. Change all four ranking periods. Confirm period XP/rank update, while lifetime XP remains a separate figure.
+5. Open Profile → Settings, edit details, change language, and save. Tap each earned/locked badge for its criteria.
+6. Install APK only for Android-specific checks: keyboard focus, document picker, profile URI persistence, and screen layout.
 
-## Next UI iteration
-1. Review spacing, typography, colors, and Tajik ornament details on the target device.
-2. Refine mission submission states and empty/error states.
-3. Complete the admin review workflow UI.
-4. Only after UI approval, design the backend contracts and persistence layer.
+## Scope guard
+This branch is still frontend-only. Do not connect Supabase or merge into main until UI review is approved.
