@@ -143,11 +143,11 @@ private val translations = mapOf(
         "empty_history" to "Ҳоло фаъолияти тасдиқшуда нест",
         "back" to "Бозгашт",
         "choose_task" to "Вазифаро оғоз кунед",
-        "status_submitted" to "Пешниҳод фиристода шуд. Дар прототип ҳолат маҳаллӣ нигоҳ дошта мешавад.",
+        "status_submitted" to "Дар интерфейс ҳамчун пешниҳод қайд шуд. Ирсоли воқеӣ ба сервер ҳоло пайваст нест.",
         "personal_pending" to "Пешниҳоди шахсӣ — дар интизори санҷиш",
         "invalid_form" to "Ном, насаб ва синну соли дурустро ворид кунед.",
         "no_file" to "Аввал акс ё видеоро интихоб кунед.",
-        "test_disclaimer" to "Ин прототип аст: аккаунт, XP ва пешниҳодҳо ҳоло танҳо дар дохили телефон намунавӣ мебошанд."
+        "test_disclaimer" to "Ин прототип аст: аккаунт, XP ва пешниҳодҳо ба сервер фиристода намешаванд; маълумоти намоишӣ метавонад баъди бозоғозӣ аз байн равад."
     ),
     "ru" to mapOf(
         "tagline" to "Каждый шаг — это прогресс",
@@ -207,11 +207,11 @@ private val translations = mapOf(
         "empty_history" to "Пока нет подтверждённой активности",
         "back" to "Назад",
         "choose_task" to "Начать задание",
-        "status_submitted" to "Материал отправлен. В прототипе статус хранится локально.",
+        "status_submitted" to "В интерфейсе отмечено как отправленное. Реальная отправка на сервер пока не подключена.",
         "personal_pending" to "Личное предложение — ожидает проверки",
         "invalid_form" to "Введите корректные имя, фамилию и возраст.",
         "no_file" to "Сначала выберите фото или видео.",
-        "test_disclaimer" to "Это прототип: аккаунт, XP и отправки пока демонстрационные и хранятся только на устройстве."
+        "test_disclaimer" to "Это прототип: аккаунт, XP и отправки не передаются на сервер; демонстрационные данные могут исчезнуть после перезапуска."
     ),
     "en" to mapOf(
         "tagline" to "Every step is progress",
@@ -271,11 +271,11 @@ private val translations = mapOf(
         "empty_history" to "No approved activity yet",
         "back" to "Back",
         "choose_task" to "Start mission",
-        "status_submitted" to "Evidence submitted. In this prototype, status is stored locally.",
+        "status_submitted" to "Marked as submitted in the UI. Actual server upload is not connected yet.",
         "personal_pending" to "Personal proposal — pending review",
         "invalid_form" to "Enter a valid first name, last name and age.",
         "no_file" to "Choose a photo or video first.",
-        "test_disclaimer" to "This is a prototype: accounts, XP and submissions are demo-only and stored on this device."
+        "test_disclaimer" to "This is a prototype: accounts, XP and submissions are not sent to a server; demo data may disappear after restart."
     )
 )
 
