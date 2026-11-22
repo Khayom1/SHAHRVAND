@@ -1,0 +1,49 @@
+name: SHAHRVAND browser preview
+
+on:
+  push:
+    branches:
+      - "uiux/**"
+    paths:
+      - "web/**"
+      - ".github/workflows/web-preview.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Check browser JavaScript syntax
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          html = Path("web/index.html").read_text(encoding="utf-8")
+          script = html.split("<script>", 1)[1].split("</script>", 1)[0]
+          Path("/tmp/shahrvand-preview.js").write_text(script, encoding="utf-8")
+          PY
+          node --check /tmp/shahrvand-preview.js
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+      - name: Upload website
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: web
+      - name: Deploy preview
+        uses: actions/deploy-pages@v4
