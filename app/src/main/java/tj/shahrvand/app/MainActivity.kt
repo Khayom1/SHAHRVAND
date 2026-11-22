@@ -516,8 +516,14 @@ private fun HomeScreen(
         Spacer(Modifier.height(20.dp))
         Text(tr(language, "recent_activity"), fontWeight = FontWeight.Bold, fontSize = 17.sp, color = Ink)
         Spacer(Modifier.height(8.dp))
-        ActivityRow("Тести дониш", tr(language, "approved"), "+40 XP", Green)
-        ActivityRow("2 км роҳгардӣ", tr(language, "waiting"), "—", Gold)
+        val recentSubmissions = missions.filter { submittedIds.contains(it.id) }.take(3)
+        if (recentSubmissions.isEmpty()) {
+            Text(tr(language, "empty_history"), color = Muted, fontSize = 12.sp, modifier = Modifier.padding(vertical = 10.dp))
+        } else {
+            recentSubmissions.forEach { item ->
+                ActivityRow(item.title, tr(language, "waiting"), "—", Gold)
+            }
+        }
         Spacer(Modifier.height(16.dp))
     }
 }
