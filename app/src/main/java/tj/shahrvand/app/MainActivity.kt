@@ -871,7 +871,7 @@ private fun ProfileScreen(
 
 @Composable
 private fun Achievement(icon: ImageVector, title: String) {
-    Card(modifier = Modifier.widthIn(min = 88.dp).weight(1f), colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(14.dp)) {
+    Card(modifier = Modifier.width(100.dp), colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(14.dp)) {
         Column(Modifier.fillMaxWidth().padding(10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(icon, null, tint = Gold, modifier = Modifier.size(26.dp))
             Spacer(Modifier.height(6.dp))
