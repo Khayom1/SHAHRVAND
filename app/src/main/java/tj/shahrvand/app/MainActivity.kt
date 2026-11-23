@@ -54,6 +54,7 @@ import coil.compose.AsyncImage
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Locale
+import java.time.LocalDate
 
 private val Navy = Color(0xFF20384B)
 private val NavyLight = Color(0xFF355D70)
@@ -182,6 +183,13 @@ private val rankingNames = listOf(
 private fun formatDistance(m: Float): String =
     if (m >= 1000f) String.format(Locale.getDefault(), "%.2f км", m / 1000f) else m.toInt().toString() + " м"
 
+private fun missionCompletedToday(id: String, completed: Collection<String>): Boolean =
+    if (id == "walk") "walk_" + LocalDate.now().toString() in completed || "walk" in completed
+    else id in completed
+
+private fun hasWalkingBadge(completed: Collection<String>): Boolean =
+    completed.any { it == "walk" || it.startsWith("walk_") }
+
 @Composable
 private fun CulturalPatternBand() {
     Row(
@@ -269,7 +277,7 @@ private fun ShahrvandApp() {
         val ids = mutableListOf<String>()
         if (completed.isNotEmpty()) ids.add("first")
         if ("run" in completed) ids.add("runner")
-        if ("walk" in completed) ids.add("walker")
+        if (hasWalkingBadge(completed)) ids.add("walker")
         if ("clean" in completed) ids.add("helper")
         if ("tree" in completed) ids.add("nature")
         if ("read" in completed) ids.add("reader")
@@ -304,18 +312,18 @@ private fun ShahrvandApp() {
         saveProgress()
     }
 
+    fun syncStoredProgress() {
+        val stored = prefs.getStringSet("completed_v2", emptySet()) ?: emptySet()
+        val newIds = stored.filter { it !in completed }
+        if (newIds.isNotEmpty()) completed.addAll(newIds)
+        val storedXp = prefs.getInt("total_xp", xp)
+        if (storedXp != xp) xp = storedXp
+        if (newIds.isNotEmpty()) evaluateBadges()
+    }
+
     LaunchedEffect(Unit) {
         while (true) {
-            val stored = prefs.getStringSet("completed_v2", emptySet()) ?: emptySet()
-            val newlySynced = stored.filter { it !in completed }
-            if (newlySynced.isNotEmpty()) {
-                completed.addAll(newlySynced)
-                xp = prefs.getInt("total_xp", xp)
-                evaluateBadges()
-            } else {
-                val storedXp = prefs.getInt("total_xp", xp)
-                if (storedXp != xp) xp = storedXp
-            }
+            syncStoredProgress()
             delay(900)
         }
     }
@@ -337,9 +345,9 @@ private fun ShahrvandApp() {
         val mission = selectedMission!!
         if (mission.gpsMode != null) {
             GpsMissionScreen(
-                mission, lang, testMode, mission.id in completed,
+                mission, lang, testMode, missionCompletedToday(mission.id, completed),
                 onBack = { selectedMission = null },
-                onComplete = { completeMission(mission.id); selectedMission = null }
+                onComplete = { syncStoredProgress(); selectedMission = null }
             )
         } else {
             ProofMissionScreen(
@@ -711,10 +719,11 @@ private fun GpsMissionScreen(
         else error = tx(lang, "Барои трекинг иҷозати ҷойгиршавии дақиқ зарур аст.", "Нужно разрешение на точную геолокацию.", "Precise location permission is required.")
     }
 
-    LaunchedEffect(mode, completed) {
+    LaunchedEffect(mode) {
         while (true) {
             refresh()
-            if (!completed && prefs.getBoolean("tracker_goal_reached_$mode", false)) {
+            if (prefs.getBoolean("tracker_goal_reached_$mode", false)) {
+                prefs.edit().putBoolean("tracker_goal_reached_$mode", false).apply()
                 message = tx(lang, "Ҳадаф иҷро шуд! Вазифа ба таври худкор анҷом ёфт.", "Цель достигнута! Задание завершено автоматически.", "Target reached! Mission completed automatically.")
                 onComplete()
                 break
@@ -929,7 +938,7 @@ private fun RankingScreen(lang: String, first: String, last: String, totalXp: In
     val earnedIds = buildList {
         if (completedIds.isNotEmpty()) add("first")
         if ("run" in completedIds) add("runner")
-        if ("walk" in completedIds) add("walker")
+        if (hasWalkingBadge(completedIds)) add("walker")
         if ("clean" in completedIds) add("helper")
         if ("tree" in completedIds) add("nature")
         if ("read" in completedIds) add("reader")
