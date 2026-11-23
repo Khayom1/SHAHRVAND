@@ -546,7 +546,7 @@ private fun HomeScreen(
         }
         missionList.take(2).forEach { mission ->
             MissionTile(mission, lang, mission.id in listOf("run", "walk"), testMode,
-                if (mission.id == "walk") missionCompletedToday("walk", prefs.getStringSet("completed_v2", emptySet()) ?: emptySet()) else false,
+                missionCompletedToday(mission.id, prefs.getStringSet("completed_v2", emptySet()) ?: emptySet()),
                 false) { onMission(mission) }
         }
         Spacer(Modifier.height(10.dp))
