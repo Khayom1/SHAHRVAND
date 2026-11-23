@@ -35,3 +35,39 @@
 
 ## Scope guard
 This branch is still frontend-only. Do not connect Supabase or merge into main until UI review is approved.
+
+## Android GPS and achievement test iteration (1.1.0-test)
+
+### GPS missions
+- Run 2 km: GPS-only. No photo or video evidence is requested. The normal target is 2,000 m of distance classified as running.
+- Walk 5 km per day: GPS-only. The normal target is 5,000 m classified as walking. Daily distance accumulates across multiple tracking sessions and resets on the local calendar date.
+- The user explicitly starts tracking while the app is visible. A location foreground service keeps recording after the screen is locked or the app is backgrounded, and shows an ongoing notification. The user can stop and restart; daily distance remains accumulated.
+- GPS points with reported accuracy worse than 28 m, implausible jumps, and implausible speeds are filtered out.
+
+### Movement classification
+- This iteration is a transparent on-device GPS heuristic, not a trained AI model.
+- Segment speed is smoothed over the latest five GPS samples. A smoothed speed of 1.72 m/s or higher is classified as running; a lower accepted movement speed is classified as walking.
+- This estimate can misclassify slow running or very brisk walking. GPS conditions, accuracy, signal obstruction, and route geometry affect the result. A future sensor-fusion or trained classifier would need validation data before it could be described as AI.
+
+### Test mode
+- Test mode is enabled by default on a fresh install and can be disabled in Profile → Settings.
+- Test targets: 120 m of running and 200 m of accumulated walking in the day.
+- Test XP: running 3, walking 3, cleanup 2, tree planting 3, reading 1.
+- With test mode enabled, selecting a photo/video and submitting a proof mission grants test XP immediately. Evidence stays local on the device; it is not uploaded to a server.
+- Production XP values are running 40, walking 35, cleanup 80, tree planting 100, reading 30. In production mode, photo/video submissions remain pending review because no server-side administrator review is connected.
+
+### Titles and animated awards
+- First Step: first completed mission.
+- City Runner: run GPS mission complete.
+- Healthy Steps: daily walking target reached.
+- Community Helper: cleanup mission complete.
+- Nature Guardian: tree mission complete.
+- Knowledge Seeker: reading mission complete.
+- Active Citizen: two different completed missions in test mode; five in production mode.
+- Profile shows earned and locked titles. Each title opens its earning rule. New titles appear in an animated award dialog with Tajik flag colours and national crown motif.
+
+### Validation status and known limits
+- GitHub Actions Android assembleDebug completed successfully on commit 9734b205714e83518852fc6f0ea59dbda4d8ac0d.
+- APK artifact is shahrvand-ui-debug-apk (run 45142999315).
+- Automated build success does not replace real-device GPS validation. GPS classification, accuracy, background tracking continuity, battery consumption, and award animations still require physical-device testing.
+- This APK remains frontend/test-only: no Supabase, server upload, real admin approval, or real leaderboards are connected.
