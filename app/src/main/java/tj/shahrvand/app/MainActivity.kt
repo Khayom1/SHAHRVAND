@@ -36,6 +36,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.focus.FocusRequester
@@ -54,16 +55,16 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Locale
 
-private val Navy = Color(0xFF173B59)
-private val NavyLight = Color(0xFF244F70)
-private val Gold = Color(0xFFC49A52)
-private val Green = Color(0xFF287A58)
-private val FlagRed = Color(0xFFCE1126)
-private val FlagGreen = Color(0xFF006600)
-private val Page = Color(0xFFF6F3EC)
-private val Ink = Color(0xFF1D2B35)
-private val Muted = Color(0xFF74818A)
-private val BorderTone = Color(0xFFE8E3D9)
+private val Navy = Color(0xFF20384B)
+private val NavyLight = Color(0xFF355D70)
+private val Gold = Color(0xFFB98A50)
+private val Green = Color(0xFF36766D)
+private val Turquoise = Color(0xFF4C8A86)
+private val Copper = Color(0xFFAE6B53)
+private val Page = Color(0xFFF4EFE5)
+private val Ink = Color(0xFF263640)
+private val Muted = Color(0xFF777F7E)
+private val BorderTone = Color(0xFFE4D9C8)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -106,27 +107,27 @@ private val missionList = listOf(
         "2 километр давед. GPS суръати ҳаракатро таҳлил карда, қисми давиданро аз роҳгардӣ ҷудо мекунад.",
         "Пробегите 2 км. GPS анализирует скорость и отделяет бег от ходьбы.",
         "Run 2 km. GPS speed analysis separates running from walking.",
-        "🏃", 40, 3, LocationTrackingService.MODE_RUN),
+        "🏃", 40, 8, LocationTrackingService.MODE_RUN),
     Mission("walk", "5 км роҳгардӣ дар як рӯз", "Ходьба 5 км за день", "Walk 5 km in one day", "Саломатӣ", "Здоровье", "Wellness",
         "Дар давоми рӯз ҷамъан 5 км роҳ гардед. Метавонед трекингро чанд бор оғозу қатъ кунед; масофа ҷамъ мешавад.",
         "Пройдите суммарно 5 км за день. Трекинг можно запускать несколько раз — дистанция суммируется.",
         "Walk a total of 5 km during the day. Start and stop tracking multiple times; distance accumulates.",
-        "👟", 35, 3, LocationTrackingService.MODE_WALK),
+        "👟", 35, 8, LocationTrackingService.MODE_WALK),
     Mission("clean", "Тоза кардани кӯча", "Уборка улицы", "Street cleanup", "Ҷомеа", "Сообщество", "Community",
         "Қисми бехатари кӯча ё маҳалли ҷамъиятиро тоза кунед. Акс ё видео ҳамчун далел илова кунед.",
         "Уберите безопасный участок улицы или общественную территорию. Добавьте фото или видео.",
         "Clean a safe section of a street or public area. Add a photo or video as evidence.",
-        "🧹", 80, 2),
+        "🧹", 80, 6),
     Mission("tree", "Шинондани дарахт", "Посадка дерева", "Plant a tree", "Экология", "Экология", "Environment",
         "Дарахтро дар ҷойи мувофиқ ва бо иҷозати зарурӣ шинонед. Акс ё видео илова кунед.",
         "Посадите дерево в подходящем месте с разрешением. Добавьте фото или видео.",
         "Plant a tree in a suitable place with permission. Add a photo or video.",
-        "🌱", 100, 3),
+        "🌱", 100, 7),
     Mission("read", "30 дақиқа китобхонӣ", "Чтение 30 минут", "Read for 30 minutes", "Дониш", "Знания", "Learning",
         "30 дақиқа мавзӯи муфидро хонед. Акс ё видеои кӯтоҳи далелро илова кунед.",
         "Читайте полезную тему 30 минут. Добавьте фото или короткое видео.",
         "Read a useful topic for 30 minutes. Add a photo or short video.",
-        "📚", 30, 1)
+        "📚", 30, 5)
 )
 
 private data class BadgeInfo(
@@ -182,13 +183,42 @@ private fun formatDistance(m: Float): String =
     if (m >= 1000f) String.format(Locale.getDefault(), "%.2f км", m / 1000f) else m.toInt().toString() + " м"
 
 @Composable
-private fun TajikRibbon() {
-    Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(4.dp))) {
-        Box(Modifier.fillMaxWidth().height(4.dp).background(FlagRed))
-        Box(Modifier.fillMaxWidth().height(4.dp).background(Color.White))
-        Box(Modifier.fillMaxWidth().height(4.dp).background(FlagGreen))
+private fun CulturalPatternBand() {
+    Row(
+        Modifier.fillMaxWidth().height(16.dp).clip(RoundedCornerShape(5.dp))
+            .background(Color(0xFFF0E7D8)).padding(horizontal = 5.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        repeat(23) { index ->
+            Box(
+                Modifier.size(if (index % 4 == 0) 8.dp else 6.dp)
+                    .rotate(45f)
+                    .background(
+                        when (index % 3) {
+                            0 -> Turquoise.copy(alpha = .85f)
+                            1 -> Gold.copy(alpha = .85f)
+                            else -> Copper.copy(alpha = .72f)
+                        },
+                        RoundedCornerShape(1.dp)
+                    )
+            )
+        }
     }
 }
+
+private fun badgeAccent(id: String): Color = when (id) {
+    "first" -> Color(0xFFB98A50)
+    "runner" -> Color(0xFF36766D)
+    "walker" -> Color(0xFF4C8A86)
+    "helper" -> Color(0xFF54758A)
+    "nature" -> Color(0xFF65845B)
+    "reader" -> Color(0xFF81709B)
+    "citizen" -> Color(0xFFAE6B53)
+    else -> Navy
+}
+
+private fun badgeTint(id: String): Color = badgeAccent(id).copy(alpha = .11f)
 
 @Composable
 private fun BrandHeader(title: String, subtitle: String? = null) {
@@ -205,7 +235,7 @@ private fun BrandHeader(title: String, subtitle: String? = null) {
             Text("♛", color = Gold, fontSize = 27.sp)
         }
         Spacer(Modifier.height(8.dp))
-        TajikRibbon()
+        CulturalPatternBand()
     }
 }
 
@@ -257,9 +287,14 @@ private fun ShahrvandApp() {
 
     fun completeMission(id: String) {
         if (id in completed) return
-        val mission = missionList.find { it.id == id } ?: return
+        val savedBefore = prefs.getStringSet("completed_v2", emptySet()) ?: emptySet()
         completed.add(id)
-        xp += if (testMode) mission.testXp else mission.normalXp
+        if (id in savedBefore) {
+            xp = prefs.getInt("total_xp", xp)
+        } else {
+            val mission = missionList.find { it.id == id } ?: return
+            xp += if (testMode) mission.testXp else mission.normalXp
+        }
         saveProgress()
         evaluateBadges()
     }
@@ -267,6 +302,22 @@ private fun ShahrvandApp() {
     fun submitPending(id: String) {
         if (id !in pending && id !in completed) pending.add(id)
         saveProgress()
+    }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            val stored = prefs.getStringSet("completed_v2", emptySet()) ?: emptySet()
+            val newlySynced = stored.filter { it !in completed }
+            if (newlySynced.isNotEmpty()) {
+                completed.addAll(newlySynced)
+                xp = prefs.getInt("total_xp", xp)
+                evaluateBadges()
+            } else {
+                val storedXp = prefs.getInt("total_xp", xp)
+                if (storedXp != xp) xp = storedXp
+            }
+            delay(900)
+        }
     }
 
     SideEffect {
@@ -341,7 +392,7 @@ private fun ShahrvandApp() {
                             "Шахсӣ", "Личное", "Personal", desc, desc, desc, "✨", 0, 1
                         ))
                     })
-                2 -> RankingScreen(lang, firstName, lastName, xp)
+                2 -> RankingScreen(lang, firstName, lastName, xp, completed.toList())
                 else -> ProfileScreen(
                     lang, firstName, lastName, age, avatar, xp,
                     completed.toList(), pending.size, testMode,
@@ -471,7 +522,7 @@ private fun HomeScreen(
                 Text(tx(lang, "Титулҳо бо иҷрои вазифаҳо кушода мешаванд", "Титулы открываются за задания", "Titles unlock as missions are completed"),
                     color = Color(0xFFE7D4A8), fontSize = 10.sp)
                 Spacer(Modifier.height(9.dp))
-                TajikRibbon()
+                CulturalPatternBand()
             }
         }
         Spacer(Modifier.height(10.dp))
@@ -643,6 +694,7 @@ private fun GpsMissionScreen(
             return
         }
         try {
+            prefs.edit().putBoolean("tracker_goal_reached_$mode", false).apply()
             val intent = Intent(context, LocationTrackingService::class.java)
                 .setAction(LocationTrackingService.ACTION_START)
                 .putExtra(LocationTrackingService.EXTRA_MODE, mode)
@@ -659,8 +711,16 @@ private fun GpsMissionScreen(
         else error = tx(lang, "Барои трекинг иҷозати ҷойгиршавии дақиқ зарур аст.", "Нужно разрешение на точную геолокацию.", "Precise location permission is required.")
     }
 
-    LaunchedEffect(mode) {
-        while (true) { refresh(); delay(1000) }
+    LaunchedEffect(mode, completed) {
+        while (true) {
+            refresh()
+            if (!completed && prefs.getBoolean("tracker_goal_reached_$mode", false)) {
+                message = tx(lang, "Ҳадаф иҷро шуд! Вазифа ба таври худкор анҷом ёфт.", "Цель достигнута! Задание завершено автоматически.", "Target reached! Mission completed automatically.")
+                onComplete()
+                break
+            }
+            delay(700)
+        }
     }
 
     val distance = if (isRun) runToday else walkToday
@@ -746,7 +806,7 @@ private fun GpsMissionScreen(
                             "Осталось " + formatDistance(goal - current) + ". Можно продолжить позже.",
                             formatDistance(goal - current) + " remaining. Continue later.")
                     }
-                }, modifier = Modifier.fillMaxWidth().height(52.dp), colors = ButtonDefaults.buttonColors(containerColor = FlagRed), shape = RoundedCornerShape(14.dp)) {
+                }, modifier = Modifier.fillMaxWidth().height(52.dp), colors = ButtonDefaults.buttonColors(containerColor = Copper), shape = RoundedCornerShape(14.dp)) {
                     Icon(Icons.Filled.Stop, null); Spacer(Modifier.width(7.dp))
                     Text(tx(lang, "Қатъ ва санҷиш", "Стоп и проверить", "Stop and check"), fontWeight = FontWeight.Bold)
                 }
@@ -840,45 +900,180 @@ private fun ProofMissionScreen(
     }
 }
 
+private data class BoardMember(
+    val id: String,
+    val name: String,
+    val xp: Int,
+    val mainTitleId: String?,
+    val badgeIds: List<String>,
+    val isCurrentUser: Boolean = false
+)
+
 @Composable
-private fun RankingScreen(lang: String, first: String, last: String, totalXp: Int) {
-    var period by remember { mutableIntStateOf(0) }
-    val labels = listOf(tx(lang, "Имрӯз", "День", "Today"), tx(lang, "Ҳафта", "Неделя", "Week"),
-        tx(lang, "Моҳ", "Месяц", "Month"), tx(lang, "Сол", "Год", "Year"))
-    val xps = listOf(120, 980, 1640, 2450)
-    val ranks = listOf(86, 112, 147, 203)
-    val top = listOf(520, 5200, 18000, 65000)
-    val step = listOf(11, 85, 260, 900)
-    Column(Modifier.fillMaxSize().padding(horizontal = 14.dp)) {
+private fun TitlePill(title: String, accent: Color, compact: Boolean = false) {
+    Surface(color = accent.copy(alpha = .12f), shape = RoundedCornerShape(8.dp)) {
+        Row(
+            Modifier.padding(horizontal = if (compact) 6.dp else 8.dp, vertical = if (compact) 3.dp else 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(Modifier.size(if (compact) 5.dp else 6.dp).clip(CircleShape).background(accent))
+            Spacer(Modifier.width(5.dp))
+            Text(title, color = accent, fontSize = if (compact) 9.sp else 10.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+        }
+    }
+}
+
+@Composable
+private fun RankingScreen(lang: String, first: String, last: String, totalXp: Int, completedIds: List<String>) {
+    var selectedMember by remember { mutableStateOf<BoardMember?>(null) }
+    val earnedIds = buildList {
+        if (completedIds.isNotEmpty()) add("first")
+        if ("run" in completedIds) add("runner")
+        if ("walk" in completedIds) add("walker")
+        if ("clean" in completedIds) add("helper")
+        if ("tree" in completedIds) add("nature")
+        if ("read" in completedIds) add("reader")
+        if (completedIds.size >= 2) add("citizen")
+    }
+    val mainTitleId = listOf("citizen", "runner", "walker", "nature", "helper", "reader", "first")
+        .firstOrNull { it in earnedIds }
+    val ownName = (first + " " + last).trim().ifBlank { tx(lang, "Шумо", "Вы", "You") }
+    val members = listOf(
+        BoardMember("p1", "Фирдавс Саидов", 18, "runner", listOf("first", "runner")),
+        BoardMember("p2", "Меҳрона Раҳмон", 14, "nature", listOf("first", "nature", "reader")),
+        BoardMember("p3", "Сомон Каримов", 9, "helper", listOf("first", "helper")),
+        BoardMember("p4", "Мадина Юсуфӣ", 4, "reader", listOf("first", "reader")),
+        BoardMember("self", ownName, totalXp, mainTitleId, earnedIds, true)
+    ).sortedWith(compareByDescending<BoardMember> { it.xp }.thenBy { if (it.isCurrentUser) 1 else 0 })
+    val ownRank = members.indexOfFirst { it.isCurrentUser } + 1
+    val nextMember = members.getOrNull(ownRank - 2)
+    val xpToNext = if (nextMember == null) 0 else (nextMember.xp - totalXp + 1).coerceAtLeast(0)
+
+    Column(Modifier.fillMaxSize().padding(horizontal = 15.dp)) {
         Spacer(Modifier.height(15.dp))
-        BrandHeader(tx(lang, "Рейтинг", "Рейтинг", "Ranking"), "ТОП 30")
-        Row(horizontalArrangement = Arrangement.spacedBy(3.dp), modifier = Modifier.padding(vertical = 11.dp)) {
-            labels.forEachIndexed { i, label ->
-                FilterChip(selected = period == i, onClick = { period = i }, label = { Text(label, fontSize = 10.sp) },
-                    colors = FilterChipDefaults.filterChipColors(selectedContainerColor = Navy, selectedLabelColor = Color.White))
-            }
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-            PeriodStat("XP", xps[period].toString(), Modifier.weight(1f))
-            PeriodStat(tx(lang, "Мақом", "Место", "Rank"), "#" + ranks[period], Modifier.weight(1f))
-            PeriodStat(tx(lang, "Ҳамаи XP", "Всего XP", "Lifetime XP"), totalXp.toString(), Modifier.weight(1f))
-        }
-        LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(7.dp), contentPadding = PaddingValues(vertical = 9.dp)) {
-            items(rankingNames) { name ->
-                val index = rankingNames.indexOf(name)
-                LeaderRow(index + 1, name, top[period] - index * step[period])
-            }
-        }
-        Card(colors = CardDefaults.cardColors(containerColor = Navy), shape = RoundedCornerShape(15.dp)) {
-            Row(Modifier.fillMaxWidth().padding(13.dp), verticalAlignment = Alignment.CenterVertically) {
+        BrandHeader(tx(lang, "Рейтинг", "Рейтинг", "Ranking"),
+            tx(lang, "5 иштирокчӣ • режими тестӣ", "5 участников • тестовый режим", "5 participants • test leaderboard"))
+        Spacer(Modifier.height(11.dp))
+        Card(colors = CardDefaults.cardColors(containerColor = Navy), shape = RoundedCornerShape(17.dp)) {
+            Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text(tx(lang, "Ҷойи шумо", "Ваше место", "Your rank") + " • " + labels[period], color = Color(0xFFDCE6ED), fontSize = 9.sp)
-                    Text("#" + ranks[period] + " • " + first + " " + last, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    Text(tx(lang, "ҶОЙИ ШУМО", "ВАШЕ МЕСТО", "YOUR POSITION"), color = Color(0xFFDCE5E4), fontSize = 9.sp, letterSpacing = 1.sp)
+                    Text("#" + ownRank + "  •  " + ownName, color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
+                    Text(
+                        if (ownRank == 1) tx(lang, "Пешсафи рейтинг!", "Вы лидер рейтинга!", "You lead the ranking!")
+                        else tx(lang, "Барои боло рафтан: " + xpToNext + " XP", "До следующего места: " + xpToNext + " XP", xpToNext.toString() + " XP to climb one place"),
+                        color = Color(0xFFE2C99E), fontSize = 10.sp
+                    )
                 }
-                Text(xps[period].toString() + " XP", color = Color(0xFFE7D4A8), fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(totalXp.toString(), color = Color.White, fontSize = 27.sp, fontWeight = FontWeight.Black)
+                    Text("XP", color = Color(0xFFE2C99E), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                }
             }
         }
-        Spacer(Modifier.height(7.dp))
+        Spacer(Modifier.height(12.dp))
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text(tx(lang, "ИШТИРОКЧИЁН", "УЧАСТНИКИ", "PARTICIPANTS"), color = Muted, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+            Spacer(Modifier.weight(1f))
+            Text(tx(lang, "Барои дидани профил пахш кун", "Нажмите для профиля", "Tap a person to view profile"), color = Muted, fontSize = 9.sp)
+        }
+        LazyColumn(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(vertical = 9.dp)
+        ) {
+            items(members, key = { it.id }) { member ->
+                val pos = members.indexOf(member) + 1
+                LeaderProfileRow(pos, member, lang) { selectedMember = member }
+            }
+        }
+        Text(tx(lang, "Холҳо аз вазифаҳои иҷрошуда ҷамъ мешаванд. Бо ҳар вазифа мақом метавонад боло ё поён равад.",
+            "Баллы накапливаются за задания. После каждого задания место может измениться.",
+            "Points accumulate from completed missions. Your position can move after each mission."),
+            color = Muted, fontSize = 10.sp, lineHeight = 14.sp, modifier = Modifier.padding(bottom = 8.dp))
+    }
+    if (selectedMember != null) {
+        val member = selectedMember!!
+        val mainBadge = member.mainTitleId?.let { id -> badgeList.find { it.id == id } }
+        val badges = member.badgeIds.mapNotNull { id -> badgeList.find { it.id == id } }
+        AlertDialog(
+            onDismissRequest = { selectedMember = null },
+            icon = {
+                Box(Modifier.size(54.dp).clip(CircleShape).background(Color(0xFFECE5D9)), contentAlignment = Alignment.Center) {
+                    Text(member.name.take(1), color = Navy, fontSize = 24.sp, fontWeight = FontWeight.ExtraBold)
+                }
+            },
+            title = { Text(member.name, color = Navy, fontWeight = FontWeight.ExtraBold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(member.xp.toString() + " XP", color = Gold, fontWeight = FontWeight.ExtraBold, fontSize = 17.sp)
+                    Text(tx(lang, "Титули асосӣ", "Основной титул", "Main title"), color = Muted, fontSize = 10.sp)
+                    if (mainBadge != null) {
+                        TitlePill(mainBadge.title(lang), badgeAccent(mainBadge.id))
+                        Text(mainBadge.rule(lang), color = Ink, fontSize = 11.sp, lineHeight = 15.sp)
+                    } else {
+                        TitlePill(tx(lang, "Навкор", "Новичок", "Newcomer"), Turquoise)
+                    }
+                    Text(tx(lang, "Нишонҳои гирифташуда", "Полученные значки", "Earned badges"), color = Muted, fontSize = 10.sp)
+                    if (badges.isEmpty()) {
+                        Text(tx(lang, "Ҳоло нишон надорад.", "Пока нет значков.", "No badges yet."), color = Muted, fontSize = 11.sp)
+                    } else {
+                        badges.forEach { badge ->
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(badge.icon, fontSize = 20.sp)
+                                Spacer(Modifier.width(8.dp))
+                                Column {
+                                    Text(badge.title(lang), color = badgeAccent(badge.id), fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                                    Text(badge.rule(lang), color = Muted, fontSize = 9.sp, lineHeight = 12.sp)
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { selectedMember = null }) {
+                    Text(tx(lang, "Пӯшидан", "Закрыть", "Close"))
+                }
+            }
+        )
+    }
+}
+
+@Composable
+private fun LeaderProfileRow(position: Int, member: BoardMember, lang: String, onClick: () -> Unit) {
+    val title = member.mainTitleId?.let { id -> badgeList.find { it.id == id } }
+    val accent = title?.let { badgeAccent(it.id) } ?: Turquoise
+    Card(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(containerColor = if (member.isCurrentUser) Color(0xFFF0E7D8) else Color.White),
+        shape = RoundedCornerShape(15.dp),
+        border = if (member.isCurrentUser) androidx.compose.foundation.BorderStroke(1.dp, Gold.copy(alpha = .75f)) else null
+    ) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 11.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                Modifier.size(34.dp).clip(RoundedCornerShape(11.dp)).background(if (position == 1) Color(0xFFECE0C9) else Color(0xFFECEFED)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(position.toString(), color = if (position == 1) Gold else Muted, fontWeight = FontWeight.ExtraBold, fontSize = 13.sp)
+            }
+            Spacer(Modifier.width(9.dp))
+            Box(Modifier.size(37.dp).clip(CircleShape).background(accent.copy(alpha = .14f)), contentAlignment = Alignment.Center) {
+                Text(member.name.take(1), color = accent, fontWeight = FontWeight.ExtraBold, fontSize = 17.sp)
+            }
+            Spacer(Modifier.width(9.dp))
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Text(member.name, color = Ink, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                TitlePill(title?.title(lang) ?: tx(lang, "Навкор", "Новичок", "Newcomer"), accent, compact = true)
+            }
+            Column(horizontalAlignment = Alignment.End) {
+                Text(member.xp.toString() + " XP", color = Navy, fontSize = 12.sp, fontWeight = FontWeight.ExtraBold)
+                Text(if (member.isCurrentUser) tx(lang, "Шумо", "Вы", "You") else tx(lang, "Иштирокчӣ", "Участник", "Participant"),
+                    color = Muted, fontSize = 8.sp)
+            }
+            Spacer(Modifier.width(3.dp))
+            Icon(Icons.Filled.ChevronRight, null, tint = Muted, modifier = Modifier.size(17.dp))
+        }
     }
 }
 
@@ -938,7 +1133,7 @@ private fun ProfileScreen(
         Spacer(Modifier.height(11.dp))
         Card(colors = CardDefaults.cardColors(containerColor = Navy), shape = RoundedCornerShape(19.dp)) {
             Column {
-                TajikRibbon()
+                CulturalPatternBand()
                 Row(Modifier.fillMaxWidth().padding(15.dp), verticalAlignment = Alignment.CenterVertically) {
                     if (avatar == null) {
                         Box(Modifier.size(62.dp).clip(CircleShape).background(Color.White.copy(alpha = .16f)), contentAlignment = Alignment.Center) {
@@ -1037,12 +1232,17 @@ private fun BadgeGrid(items: List<BadgeInfo>, lang: String, earned: Boolean, onS
     items.chunked(3).forEach { rowItems ->
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
             rowItems.forEach { b ->
-                Card(modifier = Modifier.weight(1f).alpha(if (earned) 1f else .55f).clickable { onSelect(b) },
-                    colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(14.dp)) {
+                val accent = badgeAccent(b.id)
+                Card(
+                    modifier = Modifier.weight(1f).alpha(if (earned) 1f else .62f).clickable { onSelect(b) },
+                    colors = CardDefaults.cardColors(containerColor = badgeTint(b.id)),
+                    shape = RoundedCornerShape(14.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, accent.copy(alpha = .35f))
+                ) {
                     Column(Modifier.fillMaxWidth().padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(b.icon, fontSize = 25.sp)
-                        Text(b.title(lang), color = Ink, fontSize = 9.sp, fontWeight = FontWeight.Bold, lineHeight = 12.sp, maxLines = 2)
-                        Text(if (earned) "✓" else "🔒", fontSize = 10.sp)
+                        Text(b.title(lang), color = accent, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold, lineHeight = 12.sp, maxLines = 2)
+                        Text(if (earned) "✓" else "🔒", color = accent, fontSize = 10.sp)
                     }
                 }
             }
@@ -1060,18 +1260,18 @@ private fun AnimatedAwardDialog(badge: BadgeInfo, lang: String, onDismiss: () ->
         Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 22.dp).graphicsLayer { scaleX = scale; scaleY = scale },
             colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFCF4)), shape = RoundedCornerShape(24.dp)) {
             Column(Modifier.fillMaxWidth().padding(19.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                TajikRibbon()
+                CulturalPatternBand()
                 Spacer(Modifier.height(13.dp))
                 Text("✦  ШАҲРВАНД  ✦", color = Gold, fontSize = 11.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 2.sp)
                 Spacer(Modifier.height(12.dp))
-                Box(Modifier.size(120.dp).clip(CircleShape).background(Color(0xFFFFF0D5)).border(2.dp, Gold, CircleShape), contentAlignment = Alignment.Center) {
-                    Text(badge.icon, fontSize = 64.sp, modifier = Modifier.graphicsLayer { rotationZ = rotate })
+                Box(Modifier.size(98.dp).clip(CircleShape).background(Color(0xFFF0E7D8)).border(2.dp, Gold, CircleShape), contentAlignment = Alignment.Center) {
+                    Text(badge.icon, fontSize = 54.sp, modifier = Modifier.graphicsLayer { rotationZ = rotate })
                 }
                 Spacer(Modifier.height(16.dp))
                 Text(tx(lang, "ТАБРИК! ТУ ГИРИФТӢ", "ПОЗДРАВЛЯЕМ! ПОЛУЧЕНО", "CONGRATULATIONS! EARNED"),
                     color = Gold, fontWeight = FontWeight.Black, fontSize = 12.sp)
                 Spacer(Modifier.height(6.dp))
-                Text(badge.title(lang), color = Navy, fontWeight = FontWeight.ExtraBold, fontSize = 22.sp)
+                Text(badge.title(lang), color = badgeAccent(badge.id), fontWeight = FontWeight.ExtraBold, fontSize = 20.sp)
                 Text(badge.rule(lang), color = Muted, fontSize = 11.sp, lineHeight = 16.sp)
                 Spacer(Modifier.height(15.dp))
                 Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Navy),
