@@ -172,6 +172,48 @@ class LocationTrackingService : Service(), LocationListener {
             .apply()
 
         updateNotification(isRunning, smoothedSpeed)
+        val updatedWalk = prefs.getFloat("walk_today_m", 0f)
+        val updatedRun = prefs.getFloat("run_today_m", 0f)
+        val testMode = prefs.getBoolean("test_mode", true)
+        val target = if (testMode) {
+            if (mode == MODE_RUN) 120f else 200f
+        } else {
+            if (mode == MODE_RUN) 2000f else 5000f
+        }
+        val achieved = if (mode == MODE_RUN) updatedRun >= target else updatedWalk >= target
+        if (achieved) finishMissionAutomatically()
+    }
+
+    private fun finishMissionAutomatically() {
+        val missionId = mode
+        val completed = prefs.getStringSet("completed_v2", emptySet())?.toMutableSet() ?: mutableSetOf()
+        val alreadyCompleted = missionId in completed
+        completed.add(missionId)
+        val testMode = prefs.getBoolean("test_mode", true)
+        val reward = when (missionId) {
+            MODE_RUN -> if (testMode) 8 else 40
+            else -> if (testMode) 8 else 35
+        }
+        val editor = prefs.edit()
+            .putStringSet("completed_v2", completed)
+            .putBoolean("tracker_goal_reached_$mode", true)
+            .putBoolean("tracker_active", false)
+            .putString("tracker_last_completed", missionId)
+            .putLong("tracker_completed_at", System.currentTimeMillis())
+        if (!alreadyCompleted) {
+            editor.putInt("total_xp", prefs.getInt("total_xp", 0) + reward)
+        }
+        editor.apply()
+        try { locationManager.removeUpdates(this) } catch (_: Exception) { }
+        previous = null
+        speedWindow.clear()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+        } else {
+            @Suppress("DEPRECATION")
+            stopForeground(true)
+        }
+        stopSelf()
     }
 
     private fun stopTracking() {
