@@ -185,7 +185,7 @@ class LocationTrackingService : Service(), LocationListener {
     }
 
     private fun finishMissionAutomatically() {
-        val missionId = mode
+        val missionId = if (mode == MODE_WALK) "walk_" + LocalDate.now().toString() else mode
         val completed = prefs.getStringSet("completed_v2", emptySet())?.toMutableSet() ?: mutableSetOf()
         val alreadyCompleted = missionId in completed
         completed.add(missionId)
