@@ -209,7 +209,7 @@ class LocationTrackingService : Service(), LocationListener {
         }
     }
 
-    private fun buildNotification(text: String = "GPS фаъол • \${if (mode == MODE_RUN) "давидан" else "роҳгардӣ"}"): Notification {
+    private fun buildNotification(text: String? = null): Notification {
         val builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             Notification.Builder(this, CHANNEL_ID)
         } else {
@@ -219,7 +219,7 @@ class LocationTrackingService : Service(), LocationListener {
         return builder
             .setSmallIcon(android.R.drawable.ic_menu_mylocation)
             .setContentTitle("ШАҲРВАНД")
-            .setContentText(text)
+            .setContentText(text ?: if (mode == MODE_RUN) "GPS фаъол • давидан" else "GPS фаъол • роҳгардӣ")
             .setOngoing(true)
             .setCategory(Notification.CATEGORY_SERVICE)
             .build()
