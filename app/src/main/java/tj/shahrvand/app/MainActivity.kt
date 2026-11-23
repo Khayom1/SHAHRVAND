@@ -171,15 +171,6 @@ private val badgeList = listOf(
         "Complete 2 different missions in test mode or 5 verified missions in production mode.")
 )
 
-private val rankingNames = listOf(
-    "Фирдавс Саидов", "Меҳрона Раҳмон", "Сомон Каримов", "Далер Набиев", "Мадина Юсуфӣ",
-    "Шаҳбоз Алиев", "Фарзона Ҳасанова", "Муҳаммад Назаров", "Ситора Давлатова", "Амир Ҷӯраев",
-    "Зуҳро Саидова", "Беҳрӯз Шарифов", "Нозим Раҳимов", "Манижа Абдуллоева", "Фаридун Исмоилов",
-    "Меҳроҷ Ҳакимов", "Шабнам Қодирова", "Рустам Сафаров", "Нигина Бобоева", "Сорбон Мирзоев",
-    "Мавзуна Раҳматова", "Парвиз Саидов", "Дилноза Олимова", "Фирӯз Шарипов", "Шаҳноз Назарова",
-    "Комрон Давлатов", "Сабрина Ҳусейнова", "Абдулло Раҳимов", "Малика Нурова", "Ҷамшед Каримов"
-)
-
 private fun formatDistance(m: Float): String =
     if (m >= 1000f) String.format(Locale.getDefault(), "%.2f км", m / 1000f) else m.toInt().toString() + " м"
 
@@ -189,6 +180,12 @@ private fun missionCompletedToday(id: String, completed: Collection<String>): Bo
 
 private fun hasWalkingBadge(completed: Collection<String>): Boolean =
     completed.any { it == "walk" || it.startsWith("walk_") }
+
+private fun distinctCompletedMissionCount(completed: Collection<String>): Int {
+    val distinct = completed.filter { it in setOf("run", "clean", "tree", "read") }.toMutableSet()
+    if (hasWalkingBadge(completed)) distinct.add("walk")
+    return distinct.size
+}
 
 @Composable
 private fun CulturalPatternBand() {
@@ -281,7 +278,7 @@ private fun ShahrvandApp() {
         if ("clean" in completed) ids.add("helper")
         if ("tree" in completed) ids.add("nature")
         if ("read" in completed) ids.add("reader")
-        if (completed.size >= (if (testMode) 2 else 5)) ids.add("citizen")
+        if (distinctCompletedMissionCount(completed) >= (if (testMode) 2 else 5)) ids.add("citizen")
         val stored = prefs.getStringSet("earned_badges_v2", emptySet())?.toMutableSet() ?: mutableSetOf()
         val newIds = ids.filter { it !in stored }
         if (newIds.isNotEmpty()) {
@@ -944,7 +941,7 @@ private fun RankingScreen(lang: String, first: String, last: String, totalXp: In
         if ("clean" in completedIds) add("helper")
         if ("tree" in completedIds) add("nature")
         if ("read" in completedIds) add("reader")
-        if (completedIds.size >= 2) add("citizen")
+        if (distinctCompletedMissionCount(completedIds) >= 2) add("citizen")
     }
     val mainTitleId = listOf("citizen", "runner", "walker", "nature", "helper", "reader", "first")
         .firstOrNull { it in earnedIds }
@@ -1129,7 +1126,7 @@ private fun ProfileScreen(
             if ("clean" in completed) add("helper")
             if ("tree" in completed) add("nature")
             if ("read" in completed) add("reader")
-            if (completed.size >= (if (testMode) 2 else 5)) add("citizen")
+            if (distinctCompletedMissionCount(completed) >= (if (testMode) 2 else 5)) add("citizen")
         }
     }
     var editFirst by remember(first) { mutableStateOf(first) }
