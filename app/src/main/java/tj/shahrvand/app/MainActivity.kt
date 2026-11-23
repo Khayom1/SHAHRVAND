@@ -548,7 +548,9 @@ private fun HomeScreen(
             TextButton(onClick = onAllMissions) { Text(tx(lang, "Ҳама", "Все", "All")) }
         }
         missionList.take(2).forEach { mission ->
-            MissionTile(mission, lang, mission.id in listOf("run", "walk"), testMode, false, false) { onMission(mission) }
+            MissionTile(mission, lang, mission.id in listOf("run", "walk"), testMode,
+                if (mission.id == "walk") missionCompletedToday("walk", prefs.getStringSet("completed_v2", emptySet()) ?: emptySet()) else false,
+                false) { onMission(mission) }
         }
         Spacer(Modifier.height(10.dp))
         Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF8E8)), shape = RoundedCornerShape(16.dp)) {
@@ -1123,7 +1125,7 @@ private fun ProfileScreen(
         buildSet {
             if (completed.isNotEmpty()) add("first")
             if ("run" in completed) add("runner")
-            if ("walk" in completed) add("walker")
+            if (hasWalkingBadge(completed)) add("walker")
             if ("clean" in completed) add("helper")
             if ("tree" in completed) add("nature")
             if ("read" in completed) add("reader")
