@@ -36,12 +36,18 @@ jobs:
         run: |
           ! grep -E 'ACCESS_(FINE|COARSE)_LOCATION|CAMERA|RECORD_AUDIO|FOREGROUND_SERVICE_LOCATION' app/src/main/AndroidManifest.xml
       - name: Run unit tests and assemble APKs
-        run: gradle :app:testDebugUnitTest :app:assembleDebug :app:assembleRelease
+        run: gradle :app:testDebugUnitTest :app:assembleDebug :app:assembleRelease :app:bundleRelease
       - name: Upload debug APK
         uses: actions/upload-artifact@v7
         with:
           name: shahrvand-v1-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+      - name: Upload unsigned release AAB for Google Play
+        uses: actions/upload-artifact@v7
+        with:
+          name: shahrvand-v1-release-unsigned-aab
+          path: app/build/outputs/bundle/release/app-release.aab
           if-no-files-found: error
       - name: Upload unsigned release APK
         uses: actions/upload-artifact@v7
