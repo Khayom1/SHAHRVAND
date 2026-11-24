@@ -1,11 +1,12 @@
-name: SHAHRVAND browser preview
+name: SHAHRVAND public website
 
 on:
   push:
     branches:
-      - "uiux/**"
+      - "release/**"
+      - "main"
     paths:
-      - "web/**"
+      - "site/**"
       - ".github/workflows/web-preview.yml"
   workflow_dispatch:
 
@@ -16,31 +17,25 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-      - name: Check browser JavaScript syntax
+      - name: Validate public site files
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          html = Path("web/index.html").read_text(encoding="utf-8")
-          script = html.split("<script>", 1)[1].split("</script>", 1)[0]
-          Path("/tmp/shahrvand-preview.js").write_text(script, encoding="utf-8")
-          PY
-          node --check /tmp/shahrvand-preview.js
+          test -s site/index.html
+          test -s site/privacy/index.html
       - name: Upload website
         uses: actions/upload-pages-artifact@v3
         with:
-          path: web
-      - name: Deploy preview
+          path: site
+      - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
