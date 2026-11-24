@@ -32,7 +32,8 @@ class ProgressRulesTest {
     @Test
     fun dailyGoalProgressIsClamped() {
         assertEquals(0f, ProgressRules.dailyGoalProgress(-1), 0.0001f)
-        assertEquals(0.5f, ProgressRules.dailyGoalProgress(1), 0.0001f)
+        assertEquals(1f / 3f, ProgressRules.dailyGoalProgress(1), 0.0001f)
+        assertEquals(2f / 3f, ProgressRules.dailyGoalProgress(2), 0.0001f)
         assertEquals(1f, ProgressRules.dailyGoalProgress(5), 0.0001f)
         assertEquals(0f, ProgressRules.dailyGoalProgress(3, 0), 0.0001f)
     }
