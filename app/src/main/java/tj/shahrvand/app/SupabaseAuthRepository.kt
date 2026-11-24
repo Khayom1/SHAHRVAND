@@ -160,7 +160,11 @@ object SupabaseAuthRepository {
                     ?: "Хатои сервер: HTTP $code"
                 error(message)
             }
-            return when {\n                response.isBlank() -> JSONObject()\n                response.trimStart().startsWith("[") -> JSONObject().put("data", org.json.JSONArray(response))\n                else -> JSONObject(response)\n            }
+            return when {
+                response.isBlank() -> JSONObject()
+                response.trimStart().startsWith("[") -> JSONObject().put("data", org.json.JSONArray(response))
+                else -> JSONObject(response)
+            }
         } finally {
             connection?.disconnect()
         }
