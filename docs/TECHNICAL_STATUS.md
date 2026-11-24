@@ -56,7 +56,7 @@ The Supabase project is shared with other Khayom1 apps. SHAHRVAND touched only i
 
 `ProgressRulesTest.kt` covers level progression, current-level progress, duplicate daily completion, and daily-goal clamping.
 
-Android CI runs the manifest permission guard, `testDebugUnitTest`, `assembleDebug`, and `assembleRelease`. Artifacts are debug APK and unsigned release APK. CI success does not prove physical-device usability and does not sign the release.
+Android CI runs the manifest permission guard, `testDebugUnitTest`, `assembleDebug`, `assembleRelease`, and `bundleRelease`. Artifacts are a debug APK, unsigned release APK, and unsigned release AAB. CI success does not prove physical-device usability and does not sign the release.
 
 ## Explicit V1 exclusions
 
