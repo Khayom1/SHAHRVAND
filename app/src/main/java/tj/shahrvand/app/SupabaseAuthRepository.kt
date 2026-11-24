@@ -152,11 +152,11 @@ object SupabaseAuthRepository {
             val stream = if (code in 200..299) connection.inputStream else connection.errorStream
             val response = stream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }.orEmpty()
             if (code !in 200..299) {
-                val error = runCatching { JSONObject(response) }.getOrNull()
-                val message = error?.optString("msg")?.takeIf { it.isNotBlank() }
-                    ?: error?.optString("message")?.takeIf { it.isNotBlank() }
-                    ?: error?.optString("error_description")?.takeIf { it.isNotBlank() }
-                    ?: error?.optString("error")?.takeIf { it.isNotBlank() }
+                val errorBody = runCatching { JSONObject(response) }.getOrNull()
+                val message = errorBody?.optString("msg")?.takeIf { it.isNotBlank() }
+                    ?: errorBody?.optString("message")?.takeIf { it.isNotBlank() }
+                    ?: errorBody?.optString("error_description")?.takeIf { it.isNotBlank() }
+                    ?: errorBody?.optString("error")?.takeIf { it.isNotBlank() }
                     ?: "Хатои сервер: HTTP $code"
                 error(message)
             }
