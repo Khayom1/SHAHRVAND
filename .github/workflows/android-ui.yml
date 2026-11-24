@@ -1,15 +1,19 @@
-name: Android UI build
+name: SHAHRVAND v1 Android CI
 
 on:
   push:
     branches:
-      - "uiux/**"
+      - "release/**"
+      - "main"
   pull_request:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
-  build:
+  verify-and-build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -23,11 +27,20 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.13"
-      - name: Assemble debug APK
-        run: gradle :app:assembleDebug
+      - name: Verify child-safe manifest permissions
+        run: |
+          ! grep -E 'ACCESS_(FINE|COARSE)_LOCATION|CAMERA|RECORD_AUDIO|FOREGROUND_SERVICE_LOCATION' app/src/main/AndroidManifest.xml
+      - name: Run unit tests and assemble APKs
+        run: gradle :app:testDebugUnitTest :app:assembleDebug :app:assembleRelease
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: shahrvand-ui-debug-apk
+          name: shahrvand-v1-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+      - name: Upload unsigned release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: shahrvand-v1-release-unsigned
+          path: app/build/outputs/apk/release/app-release-unsigned.apk
           if-no-files-found: error
