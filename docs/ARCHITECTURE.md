@@ -1,114 +1,66 @@
-# SHAHRVAND — Architecture
+# SHAHRVAND — V1 Architecture
 
-**Scope:** `uiux/v1-prototype`, inspected at commit `108c0c2ea45eeb7f51dbab5b7ff44cbe5ef091f3` on 2026-11-24.
+**Branch:** `release/v1.0.0` · **Version:** 1.0.0
 
-## 1. System context
+## System boundary
 
-The repository currently contains three independent client-side surfaces. They do not share a backend or a common data store.
+V1 has one native Android client and one read-only public content endpoint for the 18+ age band.
 
 ```mermaid
 flowchart TB
-    subgraph Android["Native Android prototype"]
-        UI["MainActivity / Jetpack Compose"]
-        GPS["LocationTrackingService"]
-        PREFS[("App-private SharedPreferences")]
-        LM["Android LocationManager / GPS_PROVIDER"]
-        UI -->|"start / stop intents"| GPS
-        GPS --> LM
-        GPS -->|"distance, XP, tracker state"| PREFS
-        UI <-->|"read and write local state"| PREFS
-    end
-
-    subgraph Browser["Browser prototype"]
-        WEB["web/index.html"]
-        LS[("Browser localStorage")]
-        WEB <-->|"shahrvand.ui.v2"| LS
-    end
-
-    subgraph Admin["Admin review mock"]
-        ADMIN["admin/index.html"]
-        FIXTURES["Hard-coded JavaScript sample queue"]
-        ADMIN --> FIXTURES
-    end
-
-    Android -. "No sync or API connection" .- Browser
-    Browser -. "No review API connection" .- Admin
+  subgraph Android["Android application"]
+    Gate["Neutral age-band onboarding"]
+    UI["Jetpack Compose UI"]
+    Store[("App-private SharedPreferences")]
+    Rules["Local progress rules"]
+    Gate --> UI
+    UI <--> Store
+    UI --> Rules
+    Rules --> Store
+  end
+  subgraph Supabase["Supabase — public content only"]
+    Catalog[("public.shahrvand_missions")]
+  end
+  UI -->|"18+ only: GET mission catalogue"| Catalog
+  UI -. "7–17: no network call" .-> Store
 ```
 
-Dashed lines in this diagram indicate the absence of an integration, not an implemented network connection.
+The 18+ request reads public mission content only. There is no user authentication, profile synchronisation, user progress upload, or write path.
 
-## 2. Android application
+## Android
 
-### Entry point and UI
+Single Gradle module: `:app`.
 
-- Android application ID and Kotlin namespace: `tj.shahrvand.app`.
-- Entry activity: `MainActivity`.
-- UI toolkit: Jetpack Compose with Material 3.
-- The activity owns the main navigation and most of the state/mission logic.
-- Main sections: Home, Missions, Ranking, and Profile.
-- UI language selection is implemented in client code for Tajik, Russian, and English.
+- `MainActivity.kt`: onboarding, age gate, Home/Missions/Progress/Future screens, mission cards, XP, achievements, settings, and language selection.
+- `Mission`: shared data model for translated mission titles/descriptions and reward metadata.
+- `ProgressRules.kt`: pure level, duplicate-completion, and daily-progress functions.
+- `SupabaseMissionRepository.kt`: read-only 18+ HTTP client; no profile fields are included. Errors return null so bundled missions remain available.
+- `app/src/test/`: unit tests for local progress rules.
 
-The current implementation is intentionally compact: mission definitions, badge rules, UI state, local persistence calls, and screen composables are concentrated in `MainActivity.kt`. There is no separate domain/data layer, repository abstraction, ViewModel layer, or network client in the inspected source.
+No location service, media uploader, user repository, auth module, or user backend is present.
 
-### GPS service
+## Local persistence
 
-`LocationTrackingService` is an Android `Service` that implements `LocationListener`. The activity starts and stops it through explicit service intents.
+Preferences file: `shahrvand_v1`.
 
-Processing sequence:
+Stored keys: `language`, `age_band`, `nickname`, `total_xp`, `total_completed`, `progress_day`, and `completed_today`. The daily set is reset when the app is opened on a new local calendar date. Reset Settings clears app data.
 
-1. Check that GPS is enabled and precise-location permission is available.
-2. Start a location foreground service with an ongoing notification.
-3. Request GPS provider updates every 2.5 seconds.
-4. Reject low-quality fixes and implausible time, distance, or speed segments.
-5. Average the latest five accepted speed samples.
-6. Classify accepted distance as running or walking using the 1.72 m/s threshold.
-7. Update daily distance and current segment counters in app-private preferences.
-8. Complete the selected GPS mission once its configured distance target is reached.
+## Age-gated network logic
 
-The thresholds and limitations are recorded in [Technical status](TECHNICAL_STATUS.md#43-gps-tracking). This is not a machine-learning classifier.
+The onboarding presents 7–12, 13–17, and 18+ choices.
 
-### Android local data
+- 7–12 and 13–17 use bundled data. Supabase repository is not called.
+- 18+ may fetch active public missions. No user-specific fields or auth token are sent.
+- Failed fetch falls back to bundled content.
 
-The application uses app-private `SharedPreferences` named `shahrvand_local`. The same preference file is used by the activity and GPS service. It stores profile fields, language, test mode, XP, completed/pending mission IDs, badges, and GPS counters/status.
+## Supabase table
 
-No API, remote database, token storage, backend authentication, or cloud synchronization is implemented in this branch.
+`public.shahrvand_missions` contains curated public content only. RLS is enabled. The public Data API role has SELECT permission only and the policy returns active rows. There is no public insert/update/delete policy.
 
-## 3. Browser application
+The connected project is shared with other Khayom1 applications; SHAHRVAND uses only this prefixed table.
 
-`web/index.html` is a self-contained page with inline CSS and JavaScript. It uses DOM rendering and browser `localStorage` under `shahrvand.ui.v2`.
+## Trust model and deferred features
 
-The browser page has its own demo mission definitions, profile state, sample ranking fixtures, and badge data. It is not a web client for the Android app: it neither reads Android preferences nor communicates with the native application.
+XP is local and self-reported. It is not tamper-proof or independently verified. V1 therefore has no public leaderboard, cash reward, or official civic-impact claim.
 
-No package manager, frontend bundler, server framework, or API endpoint is defined in the inspected browser source.
-
-## 4. Admin review mock
-
-`admin/index.html` is a separate static page. Its review queue is a fixed JavaScript array containing three sample items. Approve/reject actions mutate those objects in memory and repaint the page.
-
-There is no login, session management, administrator role, audit log, persistent queue, upload endpoint, or API call. It is therefore a UI demonstration only and must not be used to approve real user submissions.
-
-The current `web-preview.yml` workflow uploads the `web/` directory only. It does not package `admin/`.
-
-## 5. Deployment boundary
-
-The repository's default branch is `main`, but the implementation described here lives on `uiux/v1-prototype`. The implementation branch contains:
-- `android-ui.yml` for debug APK builds;
-- `web-preview.yml` for a static Pages deployment from `web/`.
-
-The default branch separately contains `static.yml` and `jekyll-gh-pages.yml`, both triggered by pushes to `main`. These are separate Pages publishers. The most recently observed main-branch Jekyll run succeeded; the static publisher's most recently observed run failed at deployment. The repository therefore has more than one Pages deployment path and should be reduced to one deliberate publishing configuration before production use.
-
-## 6. Architectural gaps for a future backend
-
-The following are not present in the current source and are listed as gaps, not existing components:
-
-- user identity and authentication;
-- server-side profile and mission records;
-- proof upload and secure object storage;
-- administrator authentication and permission checks;
-- review workflow with immutable audit history;
-- server-side XP calculation and badge awarding;
-- authoritative leaderboard queries;
-- validation against GPS spoofing and duplicate submissions;
-- API contracts, database migrations, backups, and monitoring.
-
-Any future backend must become the authority for verification and rewards. Client-side XP, completion IDs, and GPS-derived distances can be modified on a user's device and cannot independently establish verified activity.
+Evidence review, admin moderation, accounts, server-side rewards, sync, and rankings require a separate backend design, authentication/authorization, audit history, abuse controls, and a privacy review before implementation.
