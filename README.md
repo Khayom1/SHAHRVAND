@@ -14,10 +14,10 @@
 Use JDK 17, Android SDK platform 36, and Gradle 8.13:
 
 ```bash
-gradle :app:testDebugUnitTest :app:assembleDebug :app:assembleRelease
+gradle :app:testDebugUnitTest :app:assembleDebug :app:assembleRelease :app:bundleRelease
 ```
 
-The CI release artifact is unsigned. A private owner-controlled release keystore is required before public distribution.
+CI produces an unsigned release APK and an unsigned Android App Bundle (AAB). Google Play new apps must use an AAB; sign it with the owner's private upload key before submission. Target SDK 36 is configured.
 
 ## Documentation
 
