@@ -4,7 +4,7 @@
 
 ## Product scope
 
-V1 is a small personal-growth game for age 7+: seven short missions in learning, kindness, nature, community, and focus. The interface is available in Tajik, Russian, and English. Onboarding asks only for an optional nickname and age band. No real name, surname, date of birth, email, phone, or password is required.
+V1 is a small personal-growth game for age 7+: seven short missions in learning, kindness, nature, community, and focus. The Android app interface is available in Tajik, Russian, and English. Android onboarding asks only for an optional nickname and age band. The website has a separate Supabase-backed citizen account requiring first name, surname, age (7+), username, and password.
 
 ## Implemented
 
@@ -48,9 +48,11 @@ The APK includes the public Supabase publishable key, not a service-role or secr
 
 Connected project: `bgfcpnlxztziigrsyuqp` (existing Khayom1 project, also used by other applications).
 
-Table: `public.shahrvand_missions`. Seven content rows are seeded. RLS is enabled. Privilege query verified: `anon` can SELECT and cannot INSERT, UPDATE, or DELETE. No SHAHRVAND user/profile/progress table exists.
+Tables: `public.shahrvand_missions` (7 public mission rows) and `public.shahrvand_profiles` (website citizen profiles). The profile table stores the Auth UUID, first name, surname, age, unique username, and creation time; it does not store passwords. RLS is enabled. Authenticated users can SELECT only their own profile; anonymous clients have no profile-table privileges. The `service_role` is used only inside the Edge Function.
 
-The Supabase project is shared with other Khayom1 apps. SHAHRVAND touched only its prefixed mission table and did not modify the existing application functions or migrations. If the Data API is disabled or the table is not exposed in project API settings, the 18+ fetch will fall back to bundled content. Verify the GET endpoint on a device before publishing.
+Edge Function: `shahrvand-auth` (active, `verify_jwt=false`). It supports username/password registration and login, creates confirmed Supabase Auth identities using an internal account identifier, returns a Supabase session, and enforces rate limits through a service-role-only RPC. A synthetic authentication identifier is not a mailbox; no real email or phone is collected, so self-service password recovery is unavailable. The website stores the session through Supabase JS.
+
+The Supabase project is shared with other Khayom1 apps. SHAHRVAND touched only its prefixed mission/profile/rate-limit objects and the `shahrvand-auth` function; existing application functions were not modified. The Android mission catalogue still uses only the public read-only endpoint in 18+ mode. Website profiles are separate from Android local progress and are not yet synchronised.
 
 ## CI and tests
 
@@ -60,7 +62,7 @@ Android CI runs the manifest permission guard, `testDebugUnitTest`, `assembleDeb
 
 ## Explicit V1 exclusions
 
-No GPS, location verification, photos/videos, uploads, chat, public ranking, admin review panel, cloud profile, cross-device sync, payment, ads, or in-app purchase. Mission completion is self-reported; local XP can be reset or modified on-device and is not independently verified.
+Android V1 has no GPS, location verification, photos/videos, uploads, chat, public ranking, admin review panel, cross-device progress sync, payment, ads, or in-app purchase. The website has private user profiles but no public member directory or real leaderboard. Mission completion is self-reported; local Android XP can be reset or modified on-device and is not independently verified.
 
 ## Remaining publication gates
 
