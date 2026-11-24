@@ -17,6 +17,7 @@ alter table public.shahrvand_profiles enable row level security;
 
 revoke all on table public.shahrvand_profiles from anon, authenticated;
 grant select on table public.shahrvand_profiles to authenticated;
+grant select, insert, update, delete on table public.shahrvand_profiles to service_role;
 
 create policy "shahrvand_profiles_read_own"
 on public.shahrvand_profiles
