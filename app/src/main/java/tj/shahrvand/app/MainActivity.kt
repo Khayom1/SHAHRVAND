@@ -27,6 +27,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.foundation.text.KeyboardOptions
+import kotlinx.coroutines.launch
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.time.LocalDate
@@ -139,6 +143,7 @@ private fun ShahrvandApp() {
 
     var language by remember { mutableStateOf(prefs.getString("language", "tg") ?: "tg") }
     var ageBand by remember { mutableStateOf(prefs.getString("age_band", null)) }
+    var isAuthenticated by remember { mutableStateOf(prefs.getBoolean("auth_signed_in", false)) }
     var nickname by remember { mutableStateOf(prefs.getString("nickname", "") ?: "") }
     var tab by remember { mutableIntStateOf(0) }
     var totalXp by remember { mutableIntStateOf(prefs.getInt("total_xp", 0)) }
@@ -207,25 +212,27 @@ private fun ShahrvandApp() {
             .apply()
     }
 
-    if (ageBand == null) {
-        WelcomeScreen(
-            language = language,
-            nickname = nickname,
-            onNickname = { nickname = it },
-            onLanguage = ::changeLanguage,
-            onContinue = { selectedBand ->
-                ageBand = selectedBand
-                val cleanName = safeNickname(nickname)
-                nickname = cleanName
-                prefs.edit()
-                    .putString("age_band", selectedBand)
-                    .putString("nickname", cleanName)
-                    .putString("language", language)
-                    .apply()
-            }
-        )
+    if (!isAuthenticated) {
+        AuthScreen(language = language, onLanguage = ::changeLanguage) { account ->
+            isAuthenticated = true
+            ageBand = account.ageBand
+            nickname = account.login
+            prefs.edit()
+                .putBoolean("auth_signed_in", true)
+                .putString("auth_access_token", account.accessToken)
+                .putString("auth_user_id", account.userId)
+                .putString("first_name", account.firstName)
+                .putString("last_name", account.lastName ?: "")
+                .putInt("account_age", account.age)
+                .putString("login", account.login)
+                .putString("age_band", account.ageBand)
+                .putString("nickname", account.login)
+                .putString("language", language)
+                .apply()
+        }
         return
     }
+    if (ageBand == null) ageBand = prefs.getString("age_band", "18_plus") ?: "18_plus"
 
     Scaffold(
         containerColor = Page,
@@ -277,6 +284,7 @@ private fun ShahrvandApp() {
             },
             onReset = {
                 prefs.edit().clear().apply()
+                isAuthenticated = false
                 language = "tg"
                 nickname = ""
                 ageBand = null
@@ -756,5 +764,83 @@ private fun SettingsDialog(
                 }
             }
         )
+    }
+}
+
+
+@Composable
+private fun AuthScreen(
+    language: String,
+    onLanguage: (String) -> Unit,
+    onAuthenticated: (ShahrvandAccount) -> Unit
+) {
+    var isRegister by remember { mutableStateOf(true) }
+    var firstName by remember { mutableStateOf("") }
+    var lastName by remember { mutableStateOf("") }
+    var ageText by remember { mutableStateOf("") }
+    var login by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var errorText by remember { mutableStateOf("") }
+    var loading by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    Column(Modifier.fillMaxSize().background(Page).verticalScroll(rememberScrollState()).padding(horizontal = 22.dp, vertical = 18.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+            listOf("tg", "ru", "en").forEach { code ->
+                FilterChip(selected = language == code, onClick = { onLanguage(code) }, label = { Text(code.uppercase()) })
+                Spacer(Modifier.width(5.dp))
+            }
+        }
+        Spacer(Modifier.height(14.dp))
+        BrandHeader(tr(language, "ҲАР ҚАДАМ — ЯК ПЕШРАФТ", "КАЖДЫЙ ШАГ — ПРОГРЕСС", "EVERY STEP IS PROGRESS"),
+            tr(language, "БОЗИИ МАҲОРАТ ВА НЕКӢ", "ИГРА НАВЫКОВ И ДОБРА", "A GAME OF SKILLS AND KINDNESS"))
+        Spacer(Modifier.height(20.dp))
+        Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(3.dp)) {
+            Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(11.dp)) {
+                Text(tr(language, "Ҳисоби ШАҲРВАНД", "Аккаунт SHAHRVAND", "SHAHRVAND account"), color = Navy, fontSize = 22.sp, fontWeight = FontWeight.Black)
+                Text(tr(language, "Барои нигоҳ доштани профил ва ворид шудан аз дастгоҳҳои дигар.", "Создай аккаунт, чтобы сохранить профиль и входить с других устройств.", "Create an account to keep your profile and sign in on other devices."), color = Muted, fontSize = 12.sp, lineHeight = 18.sp)
+                Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Page).padding(4.dp)) {
+                    listOf(true, false).forEach { register ->
+                        Box(Modifier.weight(1f).clip(RoundedCornerShape(9.dp)).background(if (isRegister == register) Navy else Color.Transparent)
+                            .clickable(enabled = !loading) { isRegister = register; errorText = "" }.padding(vertical = 11.dp), contentAlignment = Alignment.Center) {
+                            Text(if (register) tr(language, "Регистрация", "Регистрация", "Sign up") else tr(language, "Вход", "Вход", "Sign in"),
+                                color = if (isRegister == register) Color.White else Ink, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        }
+                    }
+                }
+                if (isRegister) {
+                    OutlinedTextField(firstName, { firstName = it.take(60); errorText = "" }, Modifier.fillMaxWidth(), singleLine = true, label = { Text(tr(language, "Ном", "Имя", "First name")) })
+                    OutlinedTextField(lastName, { lastName = it.take(60) }, Modifier.fillMaxWidth(), singleLine = true, label = { Text(tr(language, "Насаб (ихтиёрӣ)", "Фамилия (необязательно)", "Last name (optional)")) })
+                    OutlinedTextField(ageText, { ageText = it.filter(Char::isDigit).take(3); errorText = "" }, Modifier.fillMaxWidth(), singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), label = { Text(tr(language, "Синну сол", "Возраст", "Age")) })
+                }
+                OutlinedTextField(login, { login = it.filter { ch -> ch.isLetterOrDigit() || ch in "._-" }.take(24); errorText = "" },
+                    Modifier.fillMaxWidth(), singleLine = true, label = { Text(tr(language, "Логин", "Логин", "Username")) },
+                    supportingText = if (isRegister) ({ Text(tr(language, "4–24 аломат; a–z, 0–9, нуқта, _ ё -", "4–24 символа; a–z, 0–9, точка, _ или -", "4–24 characters; a–z, 0–9, dot, _ or -")) }) else null)
+                OutlinedTextField(password, { password = it; errorText = "" }, Modifier.fillMaxWidth(), singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(), label = { Text(tr(language, "Парол", "Пароль", "Password")) })
+                if (errorText.isNotBlank()) Text(errorText, color = MaterialTheme.colorScheme.error, fontSize = 12.sp, lineHeight = 17.sp)
+                Button(onClick = {
+                    if (loading) return@Button
+                    loading = true
+                    errorText = ""
+                    scope.launch {
+                        val result = if (isRegister) {
+                            val age = ageText.toIntOrNull()
+                            if (age == null) Result.failure(IllegalArgumentException("Синну солро дуруст ворид кунед."))
+                            else SupabaseAuthRepository.register(firstName, lastName, age, login, password)
+                        } else SupabaseAuthRepository.signIn(login, password)
+                        loading = false
+                        result.onSuccess(onAuthenticated).onFailure { errorText = it.message ?: tr(language, "Хатогӣ рух дод.", "Произошла ошибка.", "Something went wrong.") }
+                    }
+                }, enabled = !loading, modifier = Modifier.fillMaxWidth().height(52.dp), shape = RoundedCornerShape(13.dp)) {
+                    if (loading) CircularProgressIndicator(Modifier.size(20.dp), color = Color.White, strokeWidth = 2.dp)
+                    else Text(if (isRegister) tr(language, "Сохтани ҳисоб", "Создать аккаунт", "Create account") else tr(language, "Ворид шудан", "Войти", "Sign in"), fontWeight = FontWeight.Bold)
+                }
+                Text(tr(language, "Маълумоти профил дар Supabase нигоҳ дошта мешавад. Парол танҳо тавассути Supabase Auth ҳифз мешавад.", "Данные профиля хранятся в Supabase. Пароль защищён Supabase Auth.", "Your profile is stored in Supabase. Passwords are handled by Supabase Auth."), color = Muted, fontSize = 10.sp, lineHeight = 15.sp)
+            }
+        }
+        Spacer(Modifier.height(12.dp))
+        Text("SHAHRVAND • " + tr(language, "Ҳисоби ягонаи корбар", "Единый аккаунт пользователя", "One user account"), color = Muted, fontSize = 10.sp, textAlign = TextAlign.Center)
     }
 }
