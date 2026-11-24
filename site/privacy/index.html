@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="SHAHRVAND privacy policy for version 1.0.0">
+  <meta name="description" content="SHAHRVAND account and app privacy policy">
   <meta name="theme-color" content="#20384b">
   <title>SHAHRVAND — Сиёсати махфият</title>
   <style>
@@ -11,7 +11,7 @@
     *{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.65 system-ui,-apple-system,"Segoe UI",sans-serif}
     main{max-width:850px;margin:auto;padding:24px}.top{display:flex;gap:12px;align-items:center;margin:10px 0 25px}
     .mark{width:45px;height:45px;border-radius:13px;background:var(--navy);color:#fff;display:grid;place-items:center;font-size:26px;font-weight:900}
-    h1,h2,h3{color:var(--navy)}h1{font-size:30px}h2{margin-top:32px;font-size:21px}h3{font-size:16px}
+    h1,h2,h3{color:var(--navy)}h1{font-size:30px}h2{margin-top:30px;font-size:21px}h3{font-size:16px}
     .panel{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px;margin:14px 0}
     .date{color:var(--muted);font-size:12px}.callout{background:#fff8e8;border-left:4px solid var(--gold);padding:13px 16px;border-radius:9px}
     a{color:var(--navy)}li{margin:5px 0}footer{border-top:1px solid var(--line);margin-top:35px;padding-top:16px;color:var(--muted);font-size:12px}
@@ -21,114 +21,133 @@
 <main>
   <header class="top">
     <div class="mark">Ш</div>
-    <div><strong style="color:#20384b;font-size:20px">ШАҲРВАНД</strong><div class="date">Версияи 1.0.0 · 24 ноябри 2026</div></div>
+    <div><strong style="color:#20384b;font-size:20px">ШАҲРВАНД</strong><div class="date">Сиёсати махфият · 24 ноябри 2026</div></div>
   </header>
+
   <h1>Сиёсати махфият</h1>
   <p class="date">Охирин навсозӣ: 24 ноябри 2026</p>
-  <div class="callout"><strong>Хулоса:</strong> барои синни то 18 сола барнома маълумоти профил ё пешрафтро ба сервер намефиристад. Барнома GPS, микрофон, камера, чат, реклама ё таҳлилгари рафтор надорад.</div>
+  <div class="callout"><strong>Хулоса:</strong> сабти ном дар сомона аз 7-солагӣ ҳатмист. Ном, насаб, синну сол, логин ва ID-и ягона дар Supabase нигоҳ дошта мешаванд. Паролро Supabase Auth коркард мекунад; он дар ҷадвали профил сабт намешавад. Почта ва телефон талаб карда намешаванд.</div>
 
-  <h2>1. Маълумоте, ки дар телефон нигоҳ дошта мешавад</h2>
-  <p>Барнома метавонад тахаллуси ихтиёрӣ, гурӯҳи синнусолӣ, забони интерфейс, холҳои XP, шумораи миссияҳои иҷрошуда ва рӯйхати миссияҳои имрӯзаро дар хотираи маҳаллии барнома нигоҳ дорад. Номи ҳақиқӣ, насаб, санаи таваллуд, рақами телефон ва почтаи электронӣ талаб карда намешаванд.</p>
-
-  <h2>2. Гурӯҳҳои синнусолӣ ва пайвасти шабакавӣ</h2>
+  <h2>1. Маълумоте, ки ҳангоми сабти номи сомона ҷамъ мешавад</h2>
   <div class="panel">
-    <h3>7–12 ва 13–17 сола</h3>
-    <p>Барнома феҳристи миссияҳои дохилиро истифода мебарад. Дар ин режим дархости шабакавӣ ба Supabase ё дигар сервер иҷро намешавад. Профил, тахаллус, синну сол ва пешрафт дар дастгоҳ мемонанд.</p>
-    <h3>18+ сола</h3>
-    <p>Барнома метавонад танҳо феҳристи оммавии миссияҳоро аз Supabase бо дархости хонданӣ (HTTP GET) нав кунад. Тахаллус, гурӯҳи синнусолӣ, XP, таърихи миссияҳо ё маълумоти профил ба ин дархост дохил карда намешаванд. Агар сервер дастрас набошад, барнома феҳристи дохилиро истифода мебарад.</p>
-    <p>Ҳангоми дархости шабакавии 18+ провайдер метавонад маълумоти техникии зарурӣ, аз ҷумла суроғаи IP, вақти дархост ва сарлавҳаҳои стандартии HTTP-ро дар журналҳои амниятӣ ва хизматрасонӣ коркард кунад. Ин маълумот аз ҷониби барнома барои сохтани профил ё рейтинг истифода намешавад.</p>
+    <ul>
+      <li>Ном ва насаб.</li>
+      <li>Синну сол (аз 7 то 120).</li>
+      <li>Логини интихобкардаи корбар.</li>
+      <li>ID-и ягонаи UUID, ки ҳангоми сохтани ҳисоб ба таври автоматӣ дода мешавад, ва вақти сохтани ҳисоб.</li>
+      <li>Маълумоти аутентификатсия, ки Supabase Auth барои санҷиши парол ва идоракунии сессия истифода мебарад.</li>
+    </ul>
+    <p>Парол дар ҷадвали профили SHAHRVAND нигоҳ дошта намешавад ва ҳамчун матни одӣ ба корбарон ё дигар шаҳрвандон намоиш дода намешавад. Барои воридшавӣ почтаи электронӣ ё рақами телефон лозим нест; логин ҳамчун номи воридшавӣ истифода мешавад.</p>
   </div>
 
-  <h2>3. Иҷозатҳо ва хусусиятҳои истифода нашаванда</h2>
-  <ul>
-    <li>Ҷойгиршавии дақиқ ё GPS ҷамъоварӣ намешавад.</li>
-    <li>Дастрасӣ ба камера, микрофон, алоқаҳо, SMS ё файлҳо дархост намешавад.</li>
-    <li>Акс ё видео ба сервер бор карда намешавад.</li>
-    <li>Чат, паёмҳои шахсӣ, реклама, таблиғоти мақсаднок ё SDK-и таҳлили рафтор вуҷуд надоранд.</li>
-    <li>Рейтинг ва натиҷаҳои оммавии корбарон дар V1 фаъол нестанд.</li>
-  </ul>
+  <h2>2. Барои чӣ маълумот истифода мешавад</h2>
+  <p>Маълумот барои сохтани ҳисоби шахсӣ, воридшавии такрорӣ, шинохтани профили худи корбар ва додани ID-и ягона истифода мешавад. Ҳар корбар тавассути сиёсати амнияти пойгоҳи додаҳо танҳо профили худро хонда метавонад. Дар айни ҳол рӯйхати оммавии профилҳо ё рейтинги воқеии корбарон дар сомона фаъол нест.</p>
 
-  <h2>4. Чӣ гуна маълумотро нест кардан мумкин аст</h2>
-  <p>Дар дохили барнома ба <strong>Танзимот → Нест кардани ҳамаи маълумоти маҳаллӣ</strong> гузаред. Ин профил, XP ва пешрафти дар телефон нигоҳдоштаро нест мекунад. Нест кардани барнома низ маълумоти хусусии маҳаллии онро аз дастгоҳ пок мекунад. Дар V1 профили серверӣ вуҷуд надорад.</p>
+  <h2>3. Маълумоти кӯдакон</h2>
+  <p>Сабти ном аз 7-солагӣ имкон дорад. Барои корбарони то 18-сола падару модар ё васӣ бояд аз сабти ном огоҳ бошанд ва иҷозат диҳанд. Формаи сомона шахсияти падару модар ё васиро мустақилона тасдиқ намекунад; ин санҷиш ҳоло дар система фаъол нест.</p>
 
-  <h2>5. Кӯдакон ва амният</h2>
-  <p>Миссияҳо бояд дар муҳити бехатар иҷро шаванд. Барои корҳои берунӣ, истифодаи асбобҳо ё ҳар фаъолияте, ки иҷозат мехоҳад, кӯдак бояд аз падару модар ё калонсол иҷозат гирад. Холҳо танҳо нишондиҳандаи пешрафти шахсӣ мебошанд; онҳо мукофоти пулӣ, натиҷаи расман тасдиқшуда ё баҳои саломатӣ нестанд.</p>
+  <h2>4. Парол, логин ва барқарорсозии ҳисоб</h2>
+  <p>Парол тавассути Supabase Auth санҷида ва нигоҳдорӣ мешавад; барнома онро дар ҷадвали профил ҳамчун матни одӣ сабт намекунад. Логин бояд аз 4 то 24 аломати лотинӣ, рақам, нуқта, хатти поён ё дефис иборат бошад ва такрорӣ буда наметавонад.</p>
+  <p>Ҳангоми сабти ном почта ё телефон ҷамъ намешавад. Аз ин сабаб барқарорсозии худкори пароли фаромӯшшуда тавассути почта ё SMS ҳоло дастрас нест. Логин ва паролро дар ҷойи бехатар нигоҳ доред. Дархости кӯмакро тавассути GitHub Issues фиристодан мумкин аст; маълумоти махфиро дар масъалаи оммавӣ нанависед.</p>
 
-  <h2>6. Хизматрасониҳои беруна</h2>
-  <p>Барои нав кардани феҳристи оммавии миссияҳо дар гурӯҳи 18+ барнома аз API-и <a href="https://supabase.com/privacy">Supabase</a> истифода мебарад. Барои гурӯҳҳои то 18 сола чунин дархостҳо иҷро намешаванд. Барнома ҳисоб ё аутентификатсияи Supabase эҷод намекунад.</p>
+  <h2>5. Нигоҳдорӣ, амният ва хизматрасониҳои беруна</h2>
+  <p>Маълумоти профил дар пойгоҳи додаи Supabase нигоҳ дошта мешавад. Дастрасӣ бо Row Level Security маҳдуд шудааст: корбари воридшуда танҳо профили ба ID-и ҳисоби худ тааллуқдоштаро хонда метавонад. Пароли махфӣ ба браузер ё ҷадвали профил баргардонида намешавад.</p>
+  <p>Барои пешгирӣ аз кӯшишҳои аз ҳад зиёди сабти ном ва воридшавӣ, система шакли ҳешшудаи нишондиҳандаи шабакавии дархостро дар равзанаҳои маҳдуди вақт истифода мебарад. Сабтҳои кӯҳна ҳангоми дархостҳои минбаъдаи аутентификатсия тоза карда мешаванд. Худи суроғаи IP дар ҷадвали ин маҳдудиятҳо нигоҳ дошта намешавад.</p>
+  <p>Провайдери хизматрасонӣ метавонад маълумоти техникии зарурии дархостҳоро тибқи сиёсати худ коркард кунад. Маълумоти бештар: <a href="https://supabase.com/privacy">Supabase Privacy</a>.</p>
 
-  <h2>7. Тағйирот ба сиёсат</h2>
-  <p>Агар дар версияҳои оянда ҷамъоварӣ ё истифодаи маълумот тағйир ёбад, сиёсати махфият пеш аз нашри он версия нав карда мешавад. Хусусиятҳои оянда то эълони расмӣ фаъол ҳисоб намешаванд.</p>
+  <h2>6. Барномаи Android ва маълумоти маҳаллӣ</h2>
+  <p>Барномаи Android-и версияи 1.0.0 ҳоло аз ҳисоби сомона ҷудо аст. Тахаллус, гурӯҳи синнусолӣ, забон, XP ва пешрафти дохили бозӣ дар хотираи хусусии телефон нигоҳ дошта мешаванд ва бо ҳисоби сомона ҳамоҳанг намешаванд. Ин маънои онро надорад, ки профили сомона низ танҳо дар телефон нигоҳ дошта мешавад.</p>
+  <p>Дар версияи Android функсияҳои GPS, камера, микрофон, чат, реклама ва боркунии акс ё видео ба сервер истифода намешаванд.</p>
 
-  <h2>8. Тамос</h2>
-  <p>Барои саволҳо ё гузориши мушкилоти махфият аз <a href="https://github.com/Khayom1/SHAHRVAND/issues">саҳифаи Issues дар GitHub</a> истифода баред. Маълумоти шахсии ҳассосро дар масъалаҳои оммавӣ нанависед.</p>
+  <h2>7. Ҳуқуқи корбар ва дархостҳо</h2>
+  <p>Дар версияи ҷорӣ тугмаи худхизматрасонии нест кардани ҳисоби серверӣ ё барқарорсозии парол мавҷуд нест. Барои дархости ислоҳ ё нест кардани профил аз <a href="https://github.com/Khayom1/SHAHRVAND/issues">GitHub Issues</a> истифода баред ва логин, парол ё маълумоти ҳассосро дар масъалаи оммавӣ нанависед.</p>
+
+  <h2>8. Тамос ва тағйирот</h2>
+  <p>Агар тарзи коркарди маълумот дар версияҳои оянда тағйир ёбад, ин саҳифа нав карда мешавад. Хусусиятҳое, ки ҳоло нашр нашудаанд, фаъол ҳисоб намешаванд.</p>
 
   <hr style="border:0;border-top:1px solid #e4d9c8;margin:35px 0">
   <h1>Privacy Policy — English</h1>
-  <p class="date">Last updated: 24 November 2026 · Version 1.0.0</p>
-  <div class="callout"><strong>Summary:</strong> users under 18 do not send profile or progress data to a server. The app does not use GPS, microphone, camera, chat, advertising, or behavioural analytics.</div>
+  <p class="date">Last updated: 24 November 2026</p>
+  <div class="callout"><strong>Summary:</strong> website registration is required from age 7. The site stores a first name, surname, age, chosen username, and unique account ID in Supabase. Supabase Auth handles the password; it is not stored in the profile table. No email address or phone number is required.</div>
 
-  <h2>1. Data stored on the device</h2>
-  <p>The app may store an optional nickname, selected age band, interface language, XP, completed mission count, and today's completed mission IDs in app-private local storage. A real name, surname, date of birth, phone number, or email address is not required.</p>
-  <h2>2. Age groups and network access</h2>
+  <h2>1. Website account data</h2>
   <div class="panel">
-    <h3>Ages 7–12 and 13–17</h3>
-    <p>The app uses its bundled mission catalogue and makes no network requests to Supabase or another application server. Profile details, nickname, age band, and progress remain on the device.</p>
-    <h3>Ages 18+</h3>
-    <p>The app may make a read-only HTTP GET request to Supabase to refresh the public mission catalogue. The request does not include the nickname, age band, XP, mission history, or profile data. If the service is unavailable, the app uses its bundled catalogue.</p>
-    <p>For an 18+ catalogue request, the service provider may process basic technical request information such as IP address, request time, and standard HTTP headers in operational or security logs. The app does not use this information to create a profile or leaderboard.</p>
+    <ul>
+      <li>First name and surname.</li>
+      <li>Age (7–120).</li>
+      <li>The username selected by the user.</li>
+      <li>A unique UUID assigned automatically and the account creation time.</li>
+      <li>Authentication data processed by Supabase Auth to verify passwords and manage sessions.</li>
+    </ul>
+    <p>The password is not stored in the SHAHRVAND profile table or shown to other users. A user signs in with a username; an email address or phone number is not requested.</p>
   </div>
-  <h2>3. Permissions and features not used</h2>
-  <ul>
-    <li>No precise location or GPS collection.</li>
-    <li>No camera, microphone, contacts, SMS, or file access is requested.</li>
-    <li>No photo or video is uploaded to a server.</li>
-    <li>No chat, direct messages, advertising, targeted ads, or behavioural analytics SDKs.</li>
-    <li>No public leaderboard or user-to-user ranking in V1.</li>
-  </ul>
-  <h2>4. Deleting local data</h2>
-  <p>Open <strong>Settings → Delete all local data</strong> to remove the local profile, XP, and progress. Uninstalling the app also removes its app-private local data. V1 does not create a server-side user profile.</p>
-  <h2>5. Children and safety</h2>
-  <p>Activities should be completed safely. A child must ask a parent or responsible adult before outdoor activities, using tools, or doing anything that requires permission. Points represent personal progress only; they are not money, official verification, or a health assessment.</p>
-  <h2>6. Third-party service</h2>
-  <p>For the public mission catalogue only, the 18+ mode may use the <a href="https://supabase.com/privacy">Supabase</a> API. Users under 18 do not make these requests. The app does not create a Supabase account or authenticate a user.</p>
-  <h2>7. Policy changes</h2>
-  <p>Any future change to data collection or use will be reflected here before the affected app version is released. Planned features are not active features.</p>
-  <h2>8. Contact</h2>
-  <p>For privacy questions or to report an issue, use the <a href="https://github.com/Khayom1/SHAHRVAND/issues">GitHub issue tracker</a>. Do not post sensitive personal information in public issues.</p>
+
+  <h2>2. How the data is used</h2>
+  <p>Data is used to create an account, allow repeat sign-ins, identify the account owner's profile, and assign a unique ID. Database security policies restrict each signed-in user to reading their own profile. A public user directory or real user leaderboard is not active on the website at this time.</p>
+
+  <h2>3. Children</h2>
+  <p>Website registration is available from age 7. For users under 18, a parent or guardian should know about and approve the registration. The website form does not independently verify a parent's or guardian's identity; that verification is not currently implemented.</p>
+
+  <h2>4. Passwords, usernames, and account recovery</h2>
+  <p>Supabase Auth handles password verification and storage; the app does not save a plain-text password in the profile table. A username must contain 4–24 Latin letters, digits, dots, underscores, or hyphens and must be unique.</p>
+  <p>No email or phone number is collected during registration. Therefore, automatic password recovery by email or SMS is not currently available. Keep the username and password in a safe place. You may request help through GitHub Issues; do not post passwords or sensitive data in a public issue.</p>
+
+  <h2>5. Storage, security, and service providers</h2>
+  <p>Profile data is stored in Supabase. Row Level Security restricts a signed-in user to reading the profile associated with their own account ID. The password is not returned to the browser or stored in the profile table.</p>
+  <p>To prevent excessive registration and login attempts, the system uses a hashed form of a network request identifier in limited time windows. Old rate-limit records are cleaned during later authentication requests. The raw IP address is not stored in that rate-limit table.</p>
+  <p>The service provider may process necessary technical request information under its own privacy policy. See <a href="https://supabase.com/privacy">Supabase Privacy</a>.</p>
+
+  <h2>6. Android app and local data</h2>
+  <p>Android app version 1.0.0 is currently separate from the website account. Its nickname, age band, language, XP, and game progress are stored in private app storage on the device and are not synchronised with the website account. This does not mean that the website account is stored only on the device.</p>
+  <p>The Android version does not use GPS, camera, microphone, chat, advertising, or server photo/video uploads.</p>
+
+  <h2>7. User requests</h2>
+  <p>The current version does not provide self-service server-account deletion or password recovery. To request a profile correction or deletion, use <a href="https://github.com/Khayom1/SHAHRVAND/issues">GitHub Issues</a>. Do not post usernames together with passwords or other sensitive details in public issues.</p>
+
+  <h2>8. Contact and changes</h2>
+  <p>This page will be updated if data practices change in a future release. Features that have not been released are not active.</p>
 
   <hr style="border:0;border-top:1px solid #e4d9c8;margin:35px 0">
   <h1>Политика конфиденциальности — Русский</h1>
-  <p class="date">Обновлено: 24 ноября 2026 · Версия 1.0.0</p>
-  <div class="callout"><strong>Кратко:</strong> пользователи младше 18 лет не отправляют профиль или прогресс на сервер. В приложении нет GPS, микрофона, камеры, чата, рекламы и поведенческой аналитики.</div>
-  <h2>1. Данные на устройстве</h2>
-  <p>Приложение может хранить на устройстве необязательный игровой псевдоним, выбранную возрастную группу, язык интерфейса, XP, количество выполненных заданий и список заданий за сегодня. Настоящее имя, фамилия, дата рождения, телефон и электронная почта не требуются.</p>
-  <h2>2. Возрастные группы и сеть</h2>
+  <p class="date">Обновлено: 24 ноября 2026 года</p>
+  <div class="callout"><strong>Кратко:</strong> регистрация на сайте обязательна с 7 лет. В Supabase сохраняются имя, фамилия, возраст, выбранный логин и уникальный ID аккаунта. Пароль обрабатывает Supabase Auth; он не хранится в таблице профилей. Электронная почта и номер телефона не требуются.</div>
+
+  <h2>1. Данные веб-аккаунта</h2>
   <div class="panel">
-    <h3>7–12 и 13–17 лет</h3>
-    <p>Приложение использует встроенный список заданий и не отправляет сетевые запросы в Supabase или другой сервер приложения. Профиль, псевдоним, возрастная группа и прогресс остаются на устройстве.</p>
-    <h3>18+ лет</h3>
-    <p>Приложение может выполнить только GET-запрос к Supabase для обновления публичного списка заданий. Псевдоним, возрастная группа, XP, история заданий и данные профиля в запрос не включаются. При недоступности сервера используется встроенный список.</p>
-    <p>При запросе для режима 18+ поставщик сервиса может обрабатывать технические данные запроса, например IP-адрес, время запроса и стандартные HTTP-заголовки, в служебных журналах и целях безопасности. Приложение не использует их для создания профиля или рейтинга.</p>
+    <ul>
+      <li>Имя и фамилия.</li>
+      <li>Возраст (от 7 до 120 лет).</li>
+      <li>Выбранный пользователем логин.</li>
+      <li>Автоматически созданный уникальный UUID и время создания аккаунта.</li>
+      <li>Данные аутентификации, которые Supabase Auth использует для проверки пароля и управления сессиями.</li>
+    </ul>
+    <p>Пароль не хранится в таблице профилей SHAHRVAND и не показывается другим пользователям. Для входа используется логин; адрес электронной почты и номер телефона не запрашиваются.</p>
   </div>
-  <h2>3. Разрешения и функции, которые не используются</h2>
-  <ul>
-    <li>Точное местоположение и GPS не собираются.</li>
-    <li>Камера, микрофон, контакты, SMS и доступ к файлам не запрашиваются.</li>
-    <li>Фотографии и видео на сервер не загружаются.</li>
-    <li>Нет чата, личных сообщений, рекламы, таргетированной рекламы и SDK поведенческой аналитики.</li>
-    <li>В V1 нет публичного рейтинга или сравнения пользователей.</li>
-  </ul>
-  <h2>4. Удаление локальных данных</h2>
-  <p>Откройте <strong>Настройки → Удалить все локальные данные</strong>, чтобы удалить локальный профиль, XP и прогресс. Удаление приложения также удаляет его локальные данные. В V1 серверный профиль пользователя не создаётся.</p>
-  <h2>5. Дети и безопасность</h2>
-  <p>Задания необходимо выполнять безопасно. Перед занятиями на улице, использованием инструментов или другими действиями, требующими разрешения, ребёнок должен спросить родителя или ответственного взрослого. Очки показывают только личный прогресс; это не деньги, не официальное подтверждение и не медицинская оценка.</p>
-  <h2>6. Внешний сервис</h2>
-  <p>Только для обновления публичного списка заданий режим 18+ может использовать API <a href="https://supabase.com/privacy">Supabase</a>. Пользователи младше 18 лет такие запросы не выполняют. Приложение не создаёт аккаунт Supabase и не выполняет аутентификацию пользователя.</p>
-  <h2>7. Изменения политики</h2>
-  <p>Любые будущие изменения сбора или использования данных будут отражены здесь до выпуска соответствующей версии. Запланированные функции не являются активными функциями.</p>
-  <h2>8. Контакты</h2>
-  <p>По вопросам конфиденциальности используйте <a href="https://github.com/Khayom1/SHAHRVAND/issues">GitHub Issues</a>. Не публикуйте чувствительные персональные данные в открытых обращениях.</p>
+
+  <h2>2. Использование данных</h2>
+  <p>Данные нужны для создания аккаунта, повторного входа, идентификации собственного профиля и назначения уникального ID. Политики безопасности базы данных позволяют вошедшему пользователю читать только собственный профиль. Публичный каталог пользователей и реальный рейтинг на сайте пока не активны.</p>
+
+  <h2>3. Дети</h2>
+  <p>Регистрация на сайте доступна с 7 лет. Для пользователей младше 18 лет родитель или опекун должен знать о регистрации и разрешить её. Форма сайта самостоятельно не проверяет личность родителя или опекуна; такая проверка пока не реализована.</p>
+
+  <h2>4. Пароль, логин и восстановление доступа</h2>
+  <p>Проверку и хранение пароля выполняет Supabase Auth; приложение не сохраняет пароль открытым текстом в таблице профилей. Логин должен содержать 4–24 латинских буквы, цифры, точки, подчёркивания или дефисы и быть уникальным.</p>
+  <p>При регистрации электронная почта и номер телефона не собираются. Поэтому автоматическое восстановление пароля через почту или SMS пока недоступно. Храните логин и пароль в безопасном месте. Запросить помощь можно через GitHub Issues; не публикуйте пароль и другие чувствительные данные в открытом обращении.</p>
+
+  <h2>5. Хранение, безопасность и сторонние сервисы</h2>
+  <p>Данные профиля хранятся в Supabase. Row Level Security ограничивает вошедшего пользователя чтением профиля, связанного с его собственным ID. Пароль не возвращается браузеру и не сохраняется в таблице профилей.</p>
+  <p>Для защиты от чрезмерного количества регистраций и попыток входа система использует хешированную форму сетевого идентификатора в ограниченных временных окнах. Старые записи лимитов очищаются во время последующих запросов аутентификации. Исходный IP-адрес в этой таблице лимитов не хранится.</p>
+  <p>Поставщик сервиса может обрабатывать необходимые технические данные запросов в соответствии со своей политикой. Подробнее: <a href="https://supabase.com/privacy">Supabase Privacy</a>.</p>
+
+  <h2>6. Android-приложение и локальные данные</h2>
+  <p>Android-приложение версии 1.0.0 пока не связано с веб-аккаунтом. Псевдоним, возрастная группа, язык, XP и игровой прогресс хранятся в приватном хранилище приложения на устройстве и не синхронизируются с веб-аккаунтом. Это не означает, что веб-аккаунт хранится только на устройстве.</p>
+  <p>В Android-версии не используются GPS, камера, микрофон, чат, реклама и загрузка фото или видео на сервер.</p>
+
+  <h2>7. Запросы пользователя</h2>
+  <p>В текущей версии нет самостоятельного удаления серверного аккаунта или восстановления пароля. Для исправления или удаления профиля используйте <a href="https://github.com/Khayom1/SHAHRVAND/issues">GitHub Issues</a>. Не публикуйте логин вместе с паролем или другими чувствительными данными в открытых обращениях.</p>
+
+  <h2>8. Контакты и изменения</h2>
+  <p>При изменении обработки данных в будущих версиях эта страница будет обновлена. Не выпущенные функции не считаются активными.</p>
 
   <footer><a href="../">← Ба саҳифаи асосӣ / Back to home / На главную</a></footer>
 </main>
