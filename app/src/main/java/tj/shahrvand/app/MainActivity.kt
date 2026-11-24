@@ -219,7 +219,6 @@ private fun ShahrvandApp() {
             nickname = account.login
             prefs.edit()
                 .putBoolean("auth_signed_in", true)
-                .putString("auth_access_token", account.accessToken)
                 .putString("auth_user_id", account.userId)
                 .putString("first_name", account.firstName)
                 .putString("last_name", account.lastName ?: "")
