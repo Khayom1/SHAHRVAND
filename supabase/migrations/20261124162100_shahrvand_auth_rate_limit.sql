@@ -32,6 +32,9 @@ begin
         return false;
     end if;
 
+    delete from private.shahrvand_auth_rate_limits
+    where window_start < now() - interval '1 day';
+
     insert into private.shahrvand_auth_rate_limits as current_limit
         (ip_hash, action, window_start, attempts)
     values (
