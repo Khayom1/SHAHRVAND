@@ -1,18 +1,13 @@
 # SHAHRVAND documentation
 
-These documents describe the repository as it exists on the `uiux/v1-prototype` branch. They are based on the source files and GitHub Actions runs inspected on **2026-11-24**.
+These documents describe the 1.0.0 release candidate on `release/v1.0.0`.
 
-## Documents
+- [V1 release definition](V1_RELEASE.md) — product scope, safety rules, backend boundary, publication checklist.
+- [Privacy policy](PRIVACY_POLICY.md) — local data, age-group network behaviour, deletion, and service disclosure.
+- [Technical status](TECHNICAL_STATUS.md) — implementation, configuration, validation, and release blockers.
+- [Architecture](ARCHITECTURE.md) — Android, local persistence, and Supabase public catalogue.
+- [Build and deployment](BUILD_AND_DEPLOYMENT.md) — reproducible commands, CI, APK artifacts, Pages.
 
-- [Technical status](TECHNICAL_STATUS.md) — repository branches, implemented components, current behaviour, validation evidence, and known limitations.
-- [Architecture](ARCHITECTURE.md) — Android, browser, admin mock, local storage, and deployment boundaries.
-- [Build and deployment](BUILD_AND_DEPLOYMENT.md) — exact build requirements, commands, CI workflows, and GitHub Pages notes.
-- [UI/UX iteration notes](UI_UX_V1.md) — historical iteration notes; not the authoritative source for current technical values.
+[UI/UX iteration notes](UI_UX_V1.md) are historical prototype documentation and are not the current technical source of truth.
 
-## Important scope note
-
-The default branch is `main`. The Android app, browser prototype, admin mock, and this documentation set are on `uiux/v1-prototype`. That branch has not been merged into `main`. Do not assume that files visible on this branch are present in the default branch or currently served by GitHub Pages.
-
-## Source of truth
-
-For implementation details, inspect the code and configuration linked from the technical documents. A feature is not considered server-backed merely because a UI screen exists. The current prototype uses local device/browser state; there is no connected application backend, remote authentication, evidence upload, or production leaderboard.
+The release branch is the current implementation. The default branch is unchanged until the release is merged. Planned features must not be represented as implemented.
