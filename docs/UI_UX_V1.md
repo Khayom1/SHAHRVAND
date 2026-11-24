@@ -1,3 +1,7 @@
+> **ARCHIVED ITERATION NOTES — NOT THE CURRENT TECHNICAL SOURCE OF TRUTH.**
+>
+> This file preserves notes from an earlier UI iteration. Some values and implementation details below were later changed. For the verified repository state, current XP values, branch layout, validation evidence, and known limitations, use [Technical Status](TECHNICAL_STATUS.md), [Architecture](ARCHITECTURE.md), and [Build and Deployment](BUILD_AND_DEPLOYMENT.md). In particular, the current native GPS test reward values and current CI status are documented in those files.
+
 # SHAHRVAND UI prototype — iteration 2
 
 ## Test modes
