@@ -71,7 +71,7 @@ private fun ageBandLabel(lang: String, band: String): String = when (band) {
     else -> tr(lang, "18+ сола", "18+ лет", "Ages 18+")
 }
 
-private data class Mission(
+data class Mission(
     val id: String,
     val titleTg: String,
     val titleRu: String,
