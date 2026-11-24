@@ -56,7 +56,7 @@ object SupabaseAuthRepository {
 
             val signup = request("/auth/v1/signup", "POST", signupBody, authenticated = false)
             val signupError = signup.optString("msg").ifBlank { signup.optString("message") }
-            if (signup.has("id") && !signup.has("access_token")) {
+            if ((signup.optJSONObject("user")?.has("id") == true || signup.has("id")) && !signup.has("access_token")) {
                 // Email confirmation is enabled; do not claim the account is ready.
                 error("Supabase ҳанӯз тасдиқи email талаб мекунад. Дар Auth → Providers → Email тасдиқи email-ро хомӯш кунед ва дубора сабти ном кунед.")
             }
@@ -160,7 +160,7 @@ object SupabaseAuthRepository {
                     ?: "Хатои сервер: HTTP $code"
                 error(message)
             }
-            return if (response.isBlank()) JSONObject() else JSONObject(response)
+            return when {\n                response.isBlank() -> JSONObject()\n                response.trimStart().startsWith("[") -> JSONObject().put("data", org.json.JSONArray(response))\n                else -> JSONObject(response)\n            }
         } finally {
             connection?.disconnect()
         }
