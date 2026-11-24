@@ -59,6 +59,21 @@ Accept: application/json
 
 No nickname, age band, progress, auth token, or user profile is sent. Under-18 modes do not call the repository. If the request fails, bundled content is used. Verify that Data API is enabled and `public` is exposed.
 
+
+## Website citizen accounts
+
+The public browser site at `site/index.html` uses the existing Supabase project. Registration requires first name, surname, age (7–120), unique username (4–24 lowercase Latin letters/digits/dot/underscore/hyphen), and a password of at least 8 characters. No real email or phone number is collected.
+
+- Profile table: `public.shahrvand_profiles`; each row is keyed by the Supabase Auth UUID.
+- Security: RLS restricts profile reads to the authenticated owner. The table contains no password column.
+- Edge Function source: `supabase/functions/shahrvand-auth/index.ts`; deployed function: `shahrvand-auth`.
+- The function uses server-side Supabase credentials to create Auth users and map a username to an internal authentication identifier. The secret key is never included in website code.
+- The function limits registration and login attempts using a hashed network identifier and a 10-minute window.
+- Password recovery and account self-deletion are not implemented because no real email or phone is collected.
+- Website profiles are separate from Android app-private progress; cross-device Android sync and public ranking are not implemented.
+
+The deployed Edge Function has `verify_jwt=false` because registration and login begin before a user session exists. It validates the request, restricts browser origins to the GitHub Pages origin, uses the server-side secret key, and returns a Supabase Auth session only after successful account creation or password verification.
+
 ## Manual device verification
 
 1. Fresh install: test age-group selection and optional nickname.
