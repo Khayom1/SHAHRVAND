@@ -68,8 +68,8 @@ No GPS, location verification, photos/videos, uploads, chat, public ranking, adm
 2. Physical Android device testing.
 3. Verify no network request in 7–17 modes and successful/fallback catalogue behaviour in 18+ mode.
 4. Verify Pages landing/privacy site.
-5. Complete Google Play audience, content-rating, and Data safety declarations for the final signed APK.
+5. Complete Google Play target-audience, content-rating, and Data safety declarations for the final signed AAB. Verify the package name and developer identity registration in Play Console.
 6. Sign with an owner-controlled private release keystore.
 7. Create the public release only after the signed APK is validated.
 
-A signed distributable APK and physical-device validation remain release blockers.
+A signed upload AAB (for Google Play), any separately signed APK for direct distribution, and physical-device validation remain release blockers. New Google Play submissions must target API 36 or higher; this app targets 36.
