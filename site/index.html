@@ -22,6 +22,35 @@
     .primary{background:#fff;color:var(--navy)}.secondary{background:var(--gold);color:#fff}.outline{border:1px solid var(--line);color:var(--navy)}
     .notice{background:#fff8e8;border-left:4px solid var(--gold);padding:14px 17px;border-radius:10px;font-size:14px}
     footer{border-top:1px solid var(--line);margin-top:40px;padding:18px 0;color:var(--muted);font-size:12px}
+
+    .auth-section{margin:30px 0;background:#fff;border:1px solid var(--line);border-radius:22px;padding:22px}
+    .auth-section h2{color:var(--navy);margin:0 0 8px;font-size:24px}
+    .auth-lead{color:var(--muted);margin:0 0 18px;font-size:14px}
+    .auth-card{max-width:620px;margin:auto;border:1px solid var(--line);border-radius:17px;padding:18px;background:#fff}
+    .auth-tabs{display:flex;gap:8px;margin-bottom:18px}
+    .auth-tabs button{flex:1;border:1px solid var(--line);border-radius:11px;padding:11px 9px;background:#f7f4ed;color:var(--navy);font-weight:800;cursor:pointer}
+    .auth-tabs button.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+    .auth-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .auth-field{display:flex;flex-direction:column;gap:5px;margin:10px 0}
+    .auth-field.full{grid-column:1/-1}
+    .auth-field label{font-size:13px;font-weight:800;color:var(--navy)}
+    .auth-field input{width:100%;min-height:46px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;background:#fff;color:var(--ink)}
+    .auth-field input:focus{outline:2px solid #b98a50;outline-offset:1px}
+    .auth-submit{width:100%;border:0;border-radius:11px;padding:13px;background:var(--navy);color:#fff;font:inherit;font-weight:850;cursor:pointer;margin-top:8px}
+    .auth-submit:disabled{opacity:.55;cursor:wait}
+    .auth-message{min-height:24px;margin:10px 0 0;font-size:13px;font-weight:700;color:var(--green)}
+    .auth-message.error{color:#a33b35}
+    .auth-note{background:#fff8e8;border-left:4px solid var(--gold);border-radius:9px;padding:11px 13px;margin:14px 0 0;font-size:12px;color:#66543b}
+    .account-panel{max-width:620px;margin:auto;border:1px solid var(--line);border-radius:17px;padding:18px;background:#fff}
+    .account-panel h3{color:var(--navy);margin:0 0 12px}
+    .account-id{padding:12px;border-radius:10px;background:#f4efe5;overflow-wrap:anywhere;font:12px ui-monospace,monospace}
+    .account-meta{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:14px 0}
+    .account-meta div{background:#f8f6f1;border:1px solid var(--line);border-radius:10px;padding:10px}
+    .account-meta small{display:block;color:var(--muted);font-size:11px}
+    .account-meta strong{display:block;color:var(--navy);overflow-wrap:anywhere}
+    .logout{border:1px solid var(--line);background:#fff;color:var(--navy);border-radius:10px;padding:10px 14px;font-weight:800;cursor:pointer}
+    @media(max-width:560px){.auth-section{padding:15px}.auth-grid{grid-template-columns:1fr}.auth-field.full{grid-column:auto}.account-meta{grid-template-columns:1fr}}
+
     @media(max-width:560px){.wrap{padding:15px}.hero{padding:25px 20px}.top{margin-bottom:24px}}
   </style>
 </head>
@@ -43,17 +72,88 @@
       </div>
     </section>
 
+
+    <section class="auth-section" id="account">
+      <h2>Ҳисоби шахсии шаҳрванд</h2>
+      <p class="auth-lead">Аз синни 7-солагӣ сабти ном ҳатмист. Ҳар шаҳрванд ID-и ягона мегирад ва баъд бо логин ва пароли худ дубора ворид шуда метавонад.</p>
+
+      <div class="auth-card" id="authForms">
+        <div class="auth-tabs" role="tablist" aria-label="Ҳисоби шаҳрванд">
+          <button id="registerTab" class="active" type="button" role="tab" aria-selected="true">Сабти ном</button>
+          <button id="loginTab" type="button" role="tab" aria-selected="false">Воридшавӣ</button>
+        </div>
+
+        <form id="registerForm" autocomplete="on">
+          <div class="auth-grid">
+            <div class="auth-field">
+              <label for="firstName">Ном</label>
+              <input id="firstName" name="given-name" autocomplete="given-name" maxlength="60" required>
+            </div>
+            <div class="auth-field">
+              <label for="lastName">Насаб</label>
+              <input id="lastName" name="family-name" autocomplete="family-name" maxlength="60" required>
+            </div>
+            <div class="auth-field">
+              <label for="age">Синну сол</label>
+              <input id="age" name="age" type="number" inputmode="numeric" min="7" max="120" step="1" placeholder="7" required>
+            </div>
+            <div class="auth-field">
+              <label for="registerLogin">Логин</label>
+              <input id="registerLogin" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" minlength="4" maxlength="24" pattern="[A-Za-z0-9][A-Za-z0-9._-]{3,23}" placeholder="misol_123" required>
+            </div>
+            <div class="auth-field full">
+              <label for="registerPassword">Парол</label>
+              <input id="registerPassword" name="new-password" type="password" autocomplete="new-password" minlength="8" maxlength="128" required>
+            </div>
+            <div class="auth-field full">
+              <label for="confirmPassword">Паролро такрор кунед</label>
+              <input id="confirmPassword" name="confirm-password" type="password" autocomplete="new-password" minlength="8" maxlength="128" required>
+            </div>
+          </div>
+          <button class="auth-submit" id="registerSubmit" type="submit">Сохтани ҳисоб</button>
+        </form>
+
+        <form id="loginForm" hidden>
+          <div class="auth-field">
+            <label for="loginName">Логин</label>
+            <input id="loginName" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" minlength="4" maxlength="24" required>
+          </div>
+          <div class="auth-field">
+            <label for="loginPassword">Парол</label>
+            <input id="loginPassword" name="current-password" type="password" autocomplete="current-password" minlength="8" maxlength="128" required>
+          </div>
+          <button class="auth-submit" id="loginSubmit" type="submit">Ворид шудан</button>
+        </form>
+        <div class="auth-message" id="authMessage" role="status" aria-live="polite"></div>
+        <div class="auth-note">Почтаи электронӣ ва рақами телефон талаб намешавад. Паролро фаромӯш накунед: барқарорсозии худкори парол бе почта ё телефон ҳоло дастрас нест. Барои кӯдакони то 18-сола сабти ном бояд бо иҷозати падару модар ё васӣ анҷом дода шавад.</div>
+      </div>
+
+      <div class="account-panel" id="accountPanel" hidden>
+        <h3>Ҳисоби шумо фаъол аст</h3>
+        <p id="accountGreeting"></p>
+        <div class="account-meta">
+          <div><small>Ном ва насаб</small><strong id="accountName"></strong></div>
+          <div><small>Синну сол</small><strong id="accountAge"></strong></div>
+          <div><small>Логин</small><strong id="accountLogin"></strong></div>
+          <div><small>ID-и шаҳрванд</small><strong>Нодир ва доимӣ</strong></div>
+        </div>
+        <div class="account-id" id="accountId"></div>
+        <p class="auth-note">ID-и шумо дар сервер нигоҳ дошта мешавад. Барои воридшавӣ аз дастгоҳи дигар логин ва паролро истифода баред.</p>
+        <button class="logout" id="logoutButton" type="button">Баромадан</button>
+      </div>
+    </section>
+
     <section class="grid" aria-label="Хусусиятҳо">
       <article class="card"><h2>🎯 Миссияҳои кӯтоҳ</h2><p>7 миссияи омӯзишӣ, некӣ, табиат ва тартиби шахсӣ. Ҳар миссияро дар як рӯз як бор анҷом деҳ.</p></article>
       <article class="card"><h2>🏅 Пешрафти шахсӣ</h2><p>XP, сатҳҳо ва нишонҳо. Рейтингҳои сохта ё рақобати маҷбурӣ вуҷуд надоранд.</p></article>
-      <article class="card"><h2>🔒 Оғози осон</h2><p>Ҳисоб, почтаи электронӣ, телефон, парол ё номи ҳақиқӣ талаб карда намешавад.</p></article>
+      <article class="card"><h2>🆔 Ҳисоби ягона</h2><p>Аз синни 7-солагӣ сабти ном, логин, парол ва ID-и инфиродӣ барои ҳар шаҳрванд.</p></article>
       <article class="card"><h2>🌐 Се забон</h2><p>Тоҷикӣ, русӣ ва англисӣ дар интерфейси барнома.</p></article>
     </section>
 
     <section class="section">
       <h2>Махфият аз аввал</h2>
-      <div class="notice">Барои гурӯҳҳои 7–12 ва 13–17 сола тамоми профил ва пешрафт дар худи телефон мемонад. Ин гурӯҳҳо аз барнома ба сервер дархост намефиристанд. GPS, камера, микрофон, чат, реклама ва пайгирии рафтор истифода намешаванд.</div>
-      <p>Барои гурӯҳи 18+ танҳо феҳристи оммавии миссияҳо метавонад аз Supabase хонда шавад. Номи бозӣ, гурӯҳи синнусолӣ, XP ва таърихи миссияҳо ба сервер фиристода намешаванд. Барои тафсилот сиёсати махфиятро хонед.</p>
+      <div class="notice">Ҳангоми сабти ном дар сомона ном, насаб, синну сол, логин ва ID-и ягона дар Supabase нигоҳ дошта мешаванд. Паролро Supabase Auth идора мекунад; он дар ҷадвали профил ҳамчун матни одӣ сабт намешавад. Барои тафсилот сиёсати махфиятро хонед.</div>
+      <p>Профили сомона аз маълумоти маҳаллии барномаи Android ҷудо аст; ҳамоҳангсозии пурраи пешрафти APK бо ҳисобҳои сомона ҳоло фаъол нест.</p>
     </section>
 
     <section class="section">
@@ -69,9 +169,9 @@
 
     <section class="section">
       <h2>Русский</h2>
-      <p>SHAHRVAND — игра личного развития: короткие задания на обучение, доброту, заботу о природе и полезные привычки. В версии 1.0.0 нет чата, рекламы, GPS и загрузки фотографий. Для пользователей младше 18 лет профиль и прогресс остаются на устройстве; сетевые запросы не выполняются.</p>
+      <p>SHAHRVAND — игра личного развития: короткие задания на обучение, доброту, заботу о природе и полезные привычки. В версии 1.0.0 нет чата, рекламы, GPS и загрузки фотографий. Для регистрации на сайте сохраняются имя, фамилия, возраст, логин и уникальный ID. Прогресс Android-приложения пока не синхронизируется с веб-аккаунтом.</p>
       <h2>English</h2>
-      <p>SHAHRVAND is a personal-growth game built around small learning, kindness, nature, and organisation missions. Version 1.0.0 has no chat, ads, GPS, or photo uploads. For users under 18, profile data and progress stay on the device and the app makes no network requests.</p>
+      <p>SHAHRVAND is a personal-growth game built around small learning, kindness, nature, and organisation missions. Version 1.0.0 has no chat, ads, GPS, or photo uploads. Website registration stores a name, surname, age, username, and unique account ID. Android app progress is not yet synchronised with the website account.</p>
     </section>
 
     <footer>
@@ -79,5 +179,204 @@
       <div>Код ва масъалаҳои техникӣ: <a href="https://github.com/Khayom1/SHAHRVAND">GitHub repository</a></div>
     </footer>
   </main>
+
+  <script type="module">
+    import { createClient } from "https://esm.sh/@supabase/supabase-js@2.105.0";
+
+    const SUPABASE_URL = "https://bgfcpnlxztziigrsyuqp.supabase.co";
+    const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_EZp3LgM4zcqtFKBUkphGaQ_FmWpyOWz";
+    const AUTH_URL = SUPABASE_URL + "/functions/v1/shahrvand-auth";
+    const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
+    });
+
+    const el = (id) => document.getElementById(id);
+    const authForms = el("authForms");
+    const accountPanel = el("accountPanel");
+    const authMessage = el("authMessage");
+    let activeMode = "register";
+
+    const messages = {
+      INVALID_LOGIN: "Логин бояд 4–24 аломати лотинӣ, рақам, нуқта, хат ё дефис дошта бошад.",
+      INVALID_PASSWORD: "Парол бояд на камтар аз 8 аломат дошта бошад.",
+      INVALID_NAME: "Ном ва насабро дуруст ворид кунед.",
+      INVALID_AGE: "Синну сол бояд аз 7 то 120 бошад.",
+      LOGIN_ALREADY_USED: "Ин логин аллакай истифода мешавад. Логини дигар интихоб кунед.",
+      ACCOUNT_CREATION_FAILED: "Ҳисоб сохта нашуд. Логини дигар интихоб карда, дубора кӯшиш кунед.",
+      PROFILE_CREATION_FAILED: "Профил сохта нашуд. Баъдтар дубора кӯшиш кунед.",
+      INVALID_CREDENTIALS: "Логин ё парол нодуруст аст.",
+      RATE_LIMITED: "Кӯшишҳо зиёд шуданд. Пас аз 10 дақиқа дубора кӯшиш кунед.",
+      SERVICE_TEMPORARILY_UNAVAILABLE: "Хизматрасонӣ муваққатан дастнорас аст. Баъдтар кӯшиш кунед.",
+      ORIGIN_NOT_ALLOWED: "Ин сомона барои воридшавӣ иҷозат надорад."
+    };
+
+    function setMessage(text, isError = false) {
+      authMessage.textContent = text || "";
+      authMessage.classList.toggle("error", isError);
+    }
+
+    function switchMode(mode) {
+      activeMode = mode;
+      const register = mode === "register";
+      el("registerForm").hidden = !register;
+      el("loginForm").hidden = register;
+      el("registerTab").classList.toggle("active", register);
+      el("loginTab").classList.toggle("active", !register);
+      el("registerTab").setAttribute("aria-selected", String(register));
+      el("loginTab").setAttribute("aria-selected", String(!register));
+      setMessage("");
+    }
+
+    function showProfile(profile) {
+      authForms.hidden = true;
+      accountPanel.hidden = false;
+      el("accountGreeting").textContent = "Салом, " + profile.first_name + "!";
+      el("accountName").textContent = profile.first_name + " " + profile.last_name;
+      el("accountAge").textContent = profile.age + " сол";
+      el("accountLogin").textContent = profile.login;
+      el("accountId").textContent = "ID: " + profile.id;
+    }
+
+    function showAuth() {
+      accountPanel.hidden = true;
+      authForms.hidden = false;
+    }
+
+    async function authRequest(payload) {
+      const response = await fetch(AUTH_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": SUPABASE_PUBLISHABLE_KEY
+        },
+        body: JSON.stringify(payload)
+      });
+      let data = {};
+      try { data = await response.json(); } catch {}
+      if (!response.ok) {
+        const code = data.error || "SERVICE_TEMPORARILY_UNAVAILABLE";
+        throw new Error(messages[code] || messages.SERVICE_TEMPORARILY_UNAVAILABLE);
+      }
+      return data;
+    }
+
+    async function saveSession(data) {
+      if (!data.session) return false;
+      const { error } = await supabase.auth.setSession({
+        access_token: data.session.access_token,
+        refresh_token: data.session.refresh_token
+      });
+      if (error) throw error;
+      if (data.profile) showProfile(data.profile);
+      return true;
+    }
+
+    function setBusy(form, busy, label) {
+      const button = form.querySelector('button[type="submit"]');
+      button.disabled = busy;
+      if (busy) {
+        button.dataset.previousText = button.textContent;
+        button.textContent = label;
+      } else if (button.dataset.previousText) {
+        button.textContent = button.dataset.previousText;
+        delete button.dataset.previousText;
+      }
+    }
+
+    el("registerTab").addEventListener("click", () => switchMode("register"));
+    el("loginTab").addEventListener("click", () => switchMode("login"));
+
+    el("registerForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const password = el("registerPassword").value;
+      if (password !== el("confirmPassword").value) {
+        setMessage("Паролҳо мувофиқат намекунанд.", true);
+        return;
+      }
+      setBusy(form, true, "Ҳисоб сохта мешавад…");
+      setMessage("");
+      try {
+        const result = await authRequest({
+          action: "register",
+          first_name: el("firstName").value.trim(),
+          last_name: el("lastName").value.trim(),
+          age: Number(el("age").value),
+          login: el("registerLogin").value.trim().toLowerCase(),
+          password
+        });
+        if (result.session) {
+          await saveSession(result);
+        } else {
+          switchMode("login");
+          el("loginName").value = el("registerLogin").value.trim().toLowerCase();
+          setMessage("Ҳисоб сохта шуд. Акнун бо логин ва парол ворид шавед.");
+        }
+        form.reset();
+      } catch (error) {
+        setMessage(error.message || messages.SERVICE_TEMPORARILY_UNAVAILABLE, true);
+      } finally {
+        setBusy(form, false);
+      }
+    });
+
+    el("loginForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      setBusy(form, true, "Ворид шуда истодааст…");
+      setMessage("");
+      try {
+        const result = await authRequest({
+          action: "login",
+          login: el("loginName").value.trim().toLowerCase(),
+          password: el("loginPassword").value
+        });
+        await saveSession(result);
+        form.reset();
+      } catch (error) {
+        setMessage(error.message || messages.SERVICE_TEMPORARILY_UNAVAILABLE, true);
+      } finally {
+        setBusy(form, false);
+      }
+    });
+
+    el("logoutButton").addEventListener("click", async () => {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        setMessage("Баромадан иҷро нашуд. Дубора кӯшиш кунед.", true);
+        return;
+      }
+      showAuth();
+      switchMode("login");
+      setMessage("Шумо аз ҳисоб баромадед.");
+    });
+
+    async function restoreSession() {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError || !user) {
+          await supabase.auth.signOut();
+          return;
+        }
+        const { data: profile, error } = await supabase
+          .from("shahrvand_profiles")
+          .select("id, first_name, last_name, age, login")
+          .eq("id", user.id)
+          .single();
+        if (error || !profile) {
+          await supabase.auth.signOut();
+          return;
+        }
+        showProfile(profile);
+      } catch (error) {
+        console.error("Could not restore SHAHRVAND session:", error);
+      }
+    }
+
+    restoreSession();
+  </script>
+
 </body>
 </html>
