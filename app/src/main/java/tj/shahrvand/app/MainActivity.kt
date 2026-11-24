@@ -609,6 +609,7 @@ private fun ProgressScreen(language: String, xp: Int, completed: Int, doneToday:
 
 @Composable
 private fun FutureScreen(language: String, ageBand: String, catalogStatus: String) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
         BrandHeader(tr(language, "Мақсади бузург", "Большая цель", "The bigger vision"),
             tr(language, "Роҳи рушди ШАҲРВАНД", "Путь развития SHAHRVAND", "The SHAHRVAND roadmap"))
@@ -646,6 +647,18 @@ private fun FutureScreen(language: String, ageBand: String, catalogStatus: Strin
                 "Локальный режим. Данные пользователей младше 18 лет не отправляются на сервер.",
                 "Local mode. Data from users under 18 is not sent to a server."),
             color = Muted, fontSize = 10.sp, lineHeight = 15.sp)
+        OutlinedButton(
+            onClick = {
+                val intent = android.content.Intent(
+                    android.content.Intent.ACTION_VIEW,
+                    android.net.Uri.parse("https://khayom1.github.io/SHAHRVAND/privacy/")
+                )
+                context.startActivity(intent)
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(tr(language, "Сиёсати махфият", "Политика конфиденциальности", "Privacy policy"))
+        }
         Spacer(Modifier.height(10.dp))
         Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(14.dp)) {
             Column(Modifier.padding(13.dp)) {
