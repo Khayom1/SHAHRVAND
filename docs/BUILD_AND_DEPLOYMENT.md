@@ -19,7 +19,7 @@ From repository root:
 ```bash
 gradle :app:testDebugUnitTest
 gradle :app:assembleDebug
-gradle :app:assembleRelease
+gradle :app:assembleRelease :app:bundleRelease
 ```
 
 Outputs:
@@ -27,9 +27,10 @@ Outputs:
 ```text
 app/build/outputs/apk/debug/app-debug.apk
 app/build/outputs/apk/release/app-release-unsigned.apk
+app/build/outputs/bundle/release/app-release.aab
 ```
 
-The release APK is intentionally unsigned. Keep the private release keystore and passwords out of source control. Sign with the owner's key before public distribution.
+The release APK and AAB are intentionally unsigned. New Google Play apps must be published as an Android App Bundle (AAB), then signed with the owner's upload key before submission. Keep the private keystore and passwords out of source control. The workflow uploads the unsigned AAB as a separate artifact for final signing.
 
 ## Android CI
 
