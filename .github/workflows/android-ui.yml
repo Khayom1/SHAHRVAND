@@ -1,6 +1,7 @@
 name: SHAHRVAND v1 Android CI
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - "release/**"
@@ -11,6 +12,10 @@ on:
 
 permissions:
   contents: read
+
+concurrency:
+  group: shahrvand-android-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   verify-and-build:
