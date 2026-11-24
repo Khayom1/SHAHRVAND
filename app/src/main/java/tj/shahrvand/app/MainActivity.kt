@@ -462,7 +462,7 @@ private fun HomeScreen(
         }
         Spacer(Modifier.height(10.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            SummaryCard(tr(language, "Имрӯз", "Сегодня", "Today"), "$\{completedToday.size}/$DAILY_TARGET", Modifier.weight(1f))
+            SummaryCard(tr(language, "Имрӯз", "Сегодня", "Today"), completedToday.size.toString() + "/" + DAILY_TARGET.toString(), Modifier.weight(1f))
             SummaryCard(tr(language, "Ҳамаи миссияҳо", "Всего заданий", "Completed"), totalCompleted.toString(), Modifier.weight(1f))
         }
         Spacer(Modifier.height(14.dp))
