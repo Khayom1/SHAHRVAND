@@ -16,7 +16,7 @@ The repository has two branches:
 | `main` | Default branch | Minimal repository scaffold. Contains `LICENSE`, an 11-byte `README.md`, and two Pages workflows. It does not contain the Android module, browser app, admin mock, or prototype documentation. |
 | `uiux/v1-prototype` | Current implementation/prototype | Contains the Android app, browser UI, static admin mock, UI iteration notes, and branch-specific CI workflows. Not merged into `main`. |
 
-The default branch was at commit `c2256cc4ef5c034617caf73bab5d23cafd9bd309`. The implementation branch was at commit `108c0c2ea45eeb7f51dbab5b7ff44cbe5ef091f3`.
+The default branch was at commit `c2256cc4ef5c034617caf73bab5d23cafd9bd309`. The implementation branch's product-code snapshot was commit `108c0c2ea45eeb7f51dbab5b7ff44cbe5ef091f3`. After the source inspection, documentation-only commits were added to the same branch; the current documentation commit at the time of this update is `1f3ae1ee7008a9d92b7f7595da570556b1bd65dd`.
 
 **Consequences:** GitHub's default branch currently does not contain the product implementation described below. Changes made only on `uiux/v1-prototype` do not automatically become part of `main`.
 
