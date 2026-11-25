@@ -98,8 +98,145 @@ Deno.serve(async (req: Request) => {
     return json({ error: "INVALID_REQUEST" }, 400, origin);
   }
 
-  const action = input.action === "register" || input.action === "login" ? input.action : null;
+  const action = typeof input.action === "string" &&
+    ["register", "login", "update_profile", "change_password"].includes(input.action)
+    ? input.action
+    : null;
   if (!action) return json({ error: "INVALID_ACTION" }, 400, origin);
+
+  if (action === "update_profile" || action === "change_password") {
+    const authorization = req.headers.get("authorization") ?? "";
+    const token = authorization.match(/^Bearer\\s+(.+)$/i)?.[1] ?? "";
+    if (!token) return json({ error: "INVALID_SESSION" }, 401, origin);
+
+    try {
+      const { admin, publicClient } = clients();
+      const { data: authData, error: authError } = await admin.auth.getUser(token);
+      const user = authData.user;
+      if (authError || !user) return json({ error: "INVALID_SESSION" }, 401, origin);
+
+      if (action === "change_password") {
+        const currentPassword = typeof input.current_password === "string" ? input.current_password : "";
+        const newPassword = typeof input.new_password === "string" ? input.new_password : "";
+        if (!currentPassword || newPassword.length < 8 || newPassword.length > 128) {
+          return json({ error: "INVALID_PASSWORD" }, 400, origin);
+        }
+        if (!user.email) return json({ error: "INVALID_SESSION" }, 401, origin);
+
+        const { data: verified, error: verifyError } = await publicClient.auth.signInWithPassword({
+          email: user.email,
+          password: currentPassword,
+        });
+        if (verifyError || !verified.user) {
+          return json({ error: "INVALID_CURRENT_PASSWORD" }, 401, origin);
+        }
+
+        const { error: passwordError } = await admin.auth.admin.updateUserById(user.id, {
+          password: newPassword,
+        });
+        if (passwordError) {
+          console.error("Password update failed:", passwordError.message);
+          return json({ error: "PASSWORD_UPDATE_FAILED" }, 500, origin);
+        }
+        return json({ ok: true }, 200, origin);
+      }
+
+      const firstName = input.first_name;
+      const lastName = input.last_name;
+      const age = Number(input.age);
+      const nextLogin = normaliseLogin(input.login);
+      if (!validName(firstName) || !validOptionalName(lastName)) {
+        return json({ error: "INVALID_NAME" }, 400, origin);
+      }
+      if (!Number.isInteger(age) || age < 7 || age > 120) {
+        return json({ error: "INVALID_AGE" }, 400, origin);
+      }
+      if (!/^[a-z0-9][a-z0-9._-]{3,23}$/.test(nextLogin)) {
+        return json({ error: "INVALID_LOGIN" }, 400, origin);
+      }
+
+      const { data: currentProfile, error: currentProfileError } = await admin
+        .from("shahrvand_profiles")
+        .select("id, first_name, last_name, age, login")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (currentProfileError || !currentProfile) {
+        console.error("Current profile lookup failed:", currentProfileError?.message ?? "Profile not found");
+        return json({ error: "PROFILE_UPDATE_FAILED" }, 404, origin);
+      }
+
+      if (nextLogin !== currentProfile.login) {
+        const { data: existing, error: lookupError } = await admin
+          .from("shahrvand_profiles")
+          .select("id")
+          .eq("login", nextLogin)
+          .neq("id", user.id)
+          .maybeSingle();
+        if (lookupError) {
+          console.error("Login availability check failed:", lookupError.message);
+          return json({ error: "SERVICE_TEMPORARILY_UNAVAILABLE" }, 503, origin);
+        }
+        if (existing) return json({ error: "LOGIN_ALREADY_USED" }, 409, origin);
+      }
+
+      const nextLastName = typeof lastName === "string" ? (lastName.trim() || null) : null;
+      const metadata = {
+        ...(user.user_metadata ?? {}),
+        first_name: firstName.trim(),
+        last_name: nextLastName,
+        age,
+        login: nextLogin,
+      };
+      const { error: authUpdateError } = await admin.auth.admin.updateUserById(user.id, {
+        email: emailForLogin(nextLogin),
+        email_confirm: true,
+        user_metadata: metadata,
+      });
+      if (authUpdateError) {
+        console.error("Auth profile update failed:", authUpdateError.message);
+        if (authUpdateError.code === "email_exists") {
+          return json({ error: "LOGIN_ALREADY_USED" }, 409, origin);
+        }
+        return json({ error: "PROFILE_UPDATE_FAILED" }, 500, origin);
+      }
+
+      const { data: updatedProfile, error: profileUpdateError } = await admin
+        .from("shahrvand_profiles")
+        .update({
+          first_name: firstName.trim(),
+          last_name: nextLastName,
+          age,
+          login: nextLogin,
+        })
+        .eq("id", user.id)
+        .select("id, first_name, last_name, age, login")
+        .single();
+
+      if (profileUpdateError || !updatedProfile) {
+        await admin.auth.admin.updateUserById(user.id, {
+          email: emailForLogin(currentProfile.login),
+          email_confirm: true,
+          user_metadata: {
+            ...(user.user_metadata ?? {}),
+            first_name: currentProfile.first_name,
+            last_name: currentProfile.last_name,
+            age: currentProfile.age,
+            login: currentProfile.login,
+          },
+        });
+        console.error("Profile table update failed:", profileUpdateError?.message ?? "No profile returned");
+        if (profileUpdateError?.code === "23505") {
+          return json({ error: "LOGIN_ALREADY_USED" }, 409, origin);
+        }
+        return json({ error: "PROFILE_UPDATE_FAILED" }, 500, origin);
+      }
+
+      return json({ ok: true, profile: updatedProfile }, 200, origin);
+    } catch (error) {
+      console.error("Authenticated account update failed:", error);
+      return json({ error: "SERVICE_TEMPORARILY_UNAVAILABLE" }, 500, origin);
+    }
+  }
 
   const login = normaliseLogin(input.login);
   const password = typeof input.password === "string" ? input.password : "";
