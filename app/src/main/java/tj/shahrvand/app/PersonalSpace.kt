@@ -31,6 +31,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
+import java.time.Instant
 import java.time.LocalDate
 import java.util.Locale
 
@@ -209,6 +210,7 @@ object PersonalSpaceRepository {
             .put("title", title.trim())
             .put("body", body.trim())
             .put("planned_on", plannedOn?.takeIf { it.isNotBlank() } ?: JSONObject.NULL)
+            .put("updated_at", Instant.now().toString())
         val path = if (existingId.isNullOrBlank()) {
             payload.put("user_id", userId)
             "/rest/v1/shahrvand_notes"
@@ -260,7 +262,8 @@ object PersonalSpaceRepository {
         require(entryType == "income" || entryType == "expense") { "Навъи амалиёт нодуруст аст." }
         require(amount.isFinite() && amount > 0.0 && amount <= 999999999.99) { "Маблағро дуруст ворид кунед." }
         LocalDate.parse(occurredOn)
-        require(category in (expenseCategories + incomeCategories).map { it.code }) { "Категория нодуруст аст." }
+        val allowedCategories = if (entryType == "income") incomeCategories else expenseCategories
+        require(category in allowedCategories.map { it.code }) { "Ин категория ба навъи интихобшуда мувофиқ нест." }
         if (category == "other") require(!customCategory.isNullOrBlank() && customCategory.trim().length <= 60) {
             "Номи категорияи дигарро нависед (то 60 аломат)."
         }
@@ -272,6 +275,7 @@ object PersonalSpaceRepository {
             .put("currency", "TJS")
             .put("comment", comment?.trim()?.takeIf { it.isNotBlank() } ?: JSONObject.NULL)
             .put("occurred_on", occurredOn)
+            .put("updated_at", Instant.now().toString())
         val path = if (existingId.isNullOrBlank()) {
             payload.put("user_id", userId)
             "/rest/v1/shahrvand_financial_entries"
