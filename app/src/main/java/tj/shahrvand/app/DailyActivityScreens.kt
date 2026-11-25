@@ -2,6 +2,7 @@ package tj.shahrvand.app
 
 import android.Manifest
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationListener
@@ -391,18 +392,16 @@ private fun ActivitySessionDialog(language: String, task: ActivityTask, session:
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
-    var distance by remember(session.id) { mutableIntStateOf(0) }
-    var gpsSamples by remember(session.id) { mutableIntStateOf(0) }
-    var avgAccuracy by remember(session.id) { mutableDoubleStateOf(999.0) }
-    var maxSpeed by remember(session.id) { mutableDoubleStateOf(0.0) }
-    var steps by remember(session.id) { mutableIntStateOf(0) }
-    var route by remember(session.id) { mutableStateOf("") }
     var poseMetrics by remember(session.id) { mutableStateOf(PoseMetrics()) }
     var quizStarted by remember(session.id) { mutableStateOf(false) }
     var quizAnswers by remember(session.id) { mutableStateOf(mapOf<Int,Int>()) }
     var submitting by remember { mutableStateOf(false) }
     var status by remember { mutableStateOf("") }
-    val started = remember(session.id) { SystemClock.elapsedRealtime() }
+    val started = remember(session.id) {
+        val serverStart = runCatching { Instant.parse(session.startedAt).toEpochMilli() }
+            .getOrDefault(System.currentTimeMillis())
+        SystemClock.elapsedRealtime() - (System.currentTimeMillis() - serverStart).coerceAtLeast(0L)
+    }
     LaunchedEffect(session.id) {
         var lastTick = SystemClock.elapsedRealtime()
         while (true) {
@@ -416,64 +415,24 @@ private fun ActivitySessionDialog(language: String, task: ActivityTask, session:
     }
     val gps = task.type.startsWith("gps_")
     val pose = task.type.startsWith("pose_")
-    var stepStart by remember(session.id) { mutableFloatStateOf(-1f) }
-    var stepCurrent by remember(session.id) { mutableFloatStateOf(-1f) }
 
+    val gpsMetrics by GpsTrackingStore.metrics.collectAsState()
+    val distance = gpsMetrics.distanceM
+    val gpsSamples = gpsMetrics.samples
+    val avgAccuracy = gpsMetrics.averageAccuracyM
+    val maxSpeed = gpsMetrics.maxSpeedKmh
+    val steps = gpsMetrics.stepCount
     DisposableEffect(session.id, gps) {
-        if (!gps) return@DisposableEffect onDispose {}
-        val manager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
-        val sensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)
-        val sensorListener = object : SensorEventListener {
-            override fun onSensorChanged(event: SensorEvent) {
-                if (stepStart < 0f) stepStart = event.values[0]
-                stepCurrent = event.values[0]
-                steps = max(0, (stepCurrent - stepStart).roundToInt())
-            }
-            override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+        if (gps) {
+            GpsTrackingStore.reset()
+            runCatching {
+                ContextCompat.startForegroundService(context, Intent(context, ActivityLocationService::class.java))
+            }.onFailure { status = it.message ?: "GPS service failed to start" }
         }
-        if (sensor != null && ContextCompat.checkSelfPermission(context, Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED) {
-            sensorManager.registerListener(sensorListener,sensor,SensorManager.SENSOR_DELAY_NORMAL)
-        }
-        val coords = mutableListOf<String>()
-        var distanceMeters = 0f
-        var previous: Location? = null
-        var accuracySum = 0.0
-        val listener = object : LocationListener {
-            override fun onLocationChanged(location: Location) {
-                if (!location.hasAccuracy() || location.accuracy > 35f) return
-                val old = previous
-                if (old != null) {
-                    val delta = old.distanceTo(location)
-                    val seconds = (location.time-old.time).coerceAtLeast(1L)/1000f
-                    val speed = delta/seconds*3.6
-                    if (delta in 1f..80f && speed <= 55.0) {
-                        distanceMeters += delta
-                        maxSpeed = max(maxSpeed,speed)
-                    }
-                }
-                previous=location
-                gpsSamples++
-                accuracySum += location.accuracy.toDouble()
-                avgAccuracy=accuracySum/gpsSamples
-                coords.add("%.6f,%.6f,%d".format(java.util.Locale.US,location.latitude,location.longitude,location.time))
-                if(coords.size>600) coords.removeAt(0)
-                route = coords.joinToString("|")
-                distance=distanceMeters.roundToInt()
-            }
-            @Deprecated("Deprecated in Android")
-            override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {}
-            override fun onProviderEnabled(provider: String) {}
-            override fun onProviderDisabled(provider: String) {}
-        }
-        try {
-            if (ContextCompat.checkSelfPermission(context,Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED) {
-                manager.requestLocationUpdates(LocationManager.GPS_PROVIDER,1000L,2f,listener)
-            }
-        } catch (_: SecurityException) {}
         onDispose {
-            runCatching { manager.removeUpdates(listener) }
-            sensorManager.unregisterListener(sensorListener)
+            if (gps) {
+                context.stopService(Intent(context, ActivityLocationService::class.java))
+            }
         }
     }
 
@@ -521,10 +480,9 @@ private fun ActivitySessionDialog(language: String, task: ActivityTask, session:
                     try {
                         val evidence=JSONObject()
                         if(gps) {
-                            val hash=MessageDigest.getInstance("SHA-256").digest(route.toByteArray()).joinToString(""){"%02x".format(it)}
-                            val healthSteps = if (task.type=="gps_walk") readHealthSteps(context,session.startedAt) else 0L
+                            val healthSteps = if (task.type=="gps_walk" || task.type=="gps_run") readHealthSteps(context,session.startedAt) else 0L
                             evidence.put("distance_m",distance).put("gps_samples",gpsSamples).put("avg_accuracy_m",avgAccuracy)
-                                .put("max_speed_kmh",maxSpeed).put("step_count",max(steps,healthSteps.toInt())).put("route_hash",hash)
+                                .put("max_speed_kmh",maxSpeed).put("step_count",max(steps,healthSteps.toInt())).put("route_hash",gpsMetrics.routeHash)
                         } else if(pose) {
                             evidence.put("valid_reps",poseMetrics.reps).put("camera_frames",poseMetrics.frames)
                                 .put("pose_visible_ratio",poseMetrics.visibleRatio).put("pose_confidence",poseMetrics.confidence)
