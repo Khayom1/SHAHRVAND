@@ -57,7 +57,17 @@ object SupabaseCompetitionRepository {
             val code = c.responseCode
             val stream = if (code in 200..299) c.inputStream else c.errorStream
             val raw = stream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }.orEmpty()
-            if (code !in 200..299) throw IllegalStateException(runCatching { JSONObject(raw).optString("message") }.getOrNull()?.takeIf { it.isNotBlank() } ?: "HTTP " + code)
+            if (code !in 200..299) {
+                val message = runCatching { JSONObject(raw).optString("message") }.getOrNull().orEmpty()
+                val friendly = when {
+                    message.contains("TASK_ALREADY_COMPLETED") -> "Ин вазифа аллакай иҷро шудааст."
+                    message.contains("TASK_NOT_AVAILABLE_TODAY") -> "Ин вазифа имрӯз дастрас нест."
+                    message.contains("AUTH_REQUIRED") -> "Сессия ба охир расид. Дубора ворид шавед."
+                    message.contains("PROFILE_REQUIRED") -> "Профили корбар ёфт нашуд."
+                    else -> message.takeIf { it.isNotBlank() } ?: "HTTP " + code
+                }
+                throw IllegalStateException(friendly)
+            }
             raw
         } finally { c?.disconnect() }
     }
