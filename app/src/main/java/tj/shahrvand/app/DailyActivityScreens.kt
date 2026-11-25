@@ -39,7 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle\nimport androidx.lifecycle.LifecycleEventObserver\nimport androidx.lifecycle.compose.LocalLifecycleOwner
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.pose.PoseDetection
 import com.google.mlkit.vision.pose.PoseLandmark
@@ -377,6 +377,20 @@ private fun ActivitySessionDialog(language: String, task: ActivityTask, session:
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var elapsed by remember(session.id) { mutableLongStateOf(0L) }
+    var foregroundMs by remember(session.id) { mutableLongStateOf(0L) }
+    var isForeground by remember { mutableStateOf(true) }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_RESUME -> isForeground = true
+                Lifecycle.Event.ON_PAUSE, Lifecycle.Event.ON_STOP -> isForeground = false
+                else -> Unit
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
     var distance by remember(session.id) { mutableIntStateOf(0) }
     var gpsSamples by remember(session.id) { mutableIntStateOf(0) }
     var avgAccuracy by remember(session.id) { mutableDoubleStateOf(999.0) }
@@ -390,7 +404,15 @@ private fun ActivitySessionDialog(language: String, task: ActivityTask, session:
     var status by remember { mutableStateOf("") }
     val started = remember(session.id) { SystemClock.elapsedRealtime() }
     LaunchedEffect(session.id) {
-        while (true) { elapsed=(SystemClock.elapsedRealtime()-started)/1000L; delay(500) }
+        var lastTick = SystemClock.elapsedRealtime()
+        while (true) {
+            delay(500)
+            val now = SystemClock.elapsedRealtime()
+            val delta = (now - lastTick).coerceAtLeast(0L)
+            elapsed = (now - started) / 1000L
+            if (isForeground) foregroundMs += delta
+            lastTick = now
+        }
     }
     val gps = task.type.startsWith("gps_")
     val pose = task.type.startsWith("pose_")
@@ -463,7 +485,7 @@ private fun ActivitySessionDialog(language: String, task: ActivityTask, session:
     val canSubmit = when {
         gps -> distanceReached && timeReady && !timedOut && gpsSamples >= 12
         pose -> repsReached && timeReady && !timedOut && poseMetrics.frames >= 30
-        else -> elapsed >= 1200 && quizStarted && quizAnswers.size == 5
+        else -> elapsed >= 1200 && foregroundMs >= 1140000L && quizStarted && quizAnswers.size == 5
     }
 
     AlertDialog(
@@ -487,7 +509,7 @@ private fun ActivitySessionDialog(language: String, task: ActivityTask, session:
                         "Only full, correct repetitions count. Camera processing stays on-device; video is not saved or uploaded."),fontSize=11.sp,color=A_Muted)
                     Text(aTr(language,"Вақт: $elapsed / ${task.limitSec} сония","Время: $elapsed / ${task.limitSec} секунд","Time: $elapsed / ${task.limitSec} seconds"),fontWeight=FontWeight.Bold,color=A_Green)
                 } else {
-                    LearningPanel(language, interestCode, elapsed, quizStarted, {quizStarted=true}, quizAnswers, {i,v->quizAnswers=quizAnswers+(i to v)})
+                    LearningPanel(language, interestCode, foregroundMs/1000L, quizStarted, {quizStarted=true}, quizAnswers, {i,v->quizAnswers=quizAnswers+(i to v)})
                 }
                 if(status.isNotBlank()) Text(status,color=MaterialTheme.colorScheme.error,fontSize=11.sp)
             }
@@ -507,7 +529,7 @@ private fun ActivitySessionDialog(language: String, task: ActivityTask, session:
                             evidence.put("valid_reps",poseMetrics.reps).put("camera_frames",poseMetrics.frames)
                                 .put("pose_visible_ratio",poseMetrics.visibleRatio).put("pose_confidence",poseMetrics.confidence)
                         } else {
-                            evidence.put("foreground_ms",elapsed*1000).put("quiz_total",5)
+                            evidence.put("foreground_ms",foregroundMs).put("quiz_total",5)
                                 .put("quiz_correct",quizAnswers.count{(index,answer)->answer==quizCorrectAnswers[index]})
                                 .put("interest_code",interestCode)
                         }
