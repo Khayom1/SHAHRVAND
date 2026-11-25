@@ -328,11 +328,14 @@ private fun ShahrvandApp() {
                         tr(language, "Миссияҳо", "Задания", "Missions"),
                         tr(language, "Пешрафт", "Прогресс", "Progress"),
                         tr(language, "Ёддошт", "Заметки", "Notes"),
-                        tr(language, "Молия", "Финансы", "Money")
+                        tr(language, "Молия", "Финансы", "Money"),
+                        tr(language, "Рейтинг", "Рейтинг", "Ranking"),
+                        tr(language, "Ҳафта", "Неделя", "Weekly")
                     )
                     val icons = listOf(
                         Icons.Filled.Home, Icons.Filled.TaskAlt, Icons.Filled.EmojiEvents,
-                        Icons.Filled.NoteAlt, Icons.Filled.AccountBalanceWallet
+                        Icons.Filled.NoteAlt, Icons.Filled.AccountBalanceWallet,
+                        Icons.Filled.EmojiEvents, Icons.Filled.Explore
                     )
                     labels.forEachIndexed { index, label ->
                         NavigationBarItem(
@@ -372,9 +375,17 @@ private fun ShahrvandApp() {
                 3 -> PersonalNotesScreen(
                     language, prefs.getString("auth_user_id", "") ?: "", ::getValidAccessToken
                 )
-                else -> PersonalFinanceScreen(
+                4 -> PersonalFinanceScreen(
                     language, prefs.getString("auth_user_id", "") ?: "",
                     financeEntries, { financeEntries = it }, ::getValidAccessToken
+                )
+                5 -> LeaderboardScreen(language, ageBand ?: "18_plus", ::getValidAccessToken)
+                6 -> WeeklyChallengesScreen(language, ::getValidAccessToken)
+                else -> HomeScreen(
+                    language, nickname, ageBand ?: "7_12", totalXp, totalCompleted,
+                    completedToday, missions, catalogStatus, isLoadingCatalog, financeEntries,
+                    onOpenMissions = { tab = 1 }, onOpenFinance = { tab = 4 },
+                    onComplete = ::finishMission, onProfile = { showProfile = true }
                 )
             }
         }
