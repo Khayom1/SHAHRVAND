@@ -384,7 +384,7 @@ private fun ShahrvandApp() {
             lastName = accountLastName,
             age = accountAge,
             login = accountLogin,
-            accessToken = accessToken,
+            getAccessToken = ::getValidAccessToken,
             fontScale = fontScale,
             fontFamilyChoice = fontFamilyChoice,
             onClose = { settingsOpen = false },
