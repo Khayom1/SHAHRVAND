@@ -37,6 +37,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
 import kotlinx.coroutines.launch
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.time.LocalDate
@@ -174,7 +175,7 @@ private fun ShahrvandApp() {
 
     val baseDensity = LocalDensity.current
     val scaledDensity = remember(baseDensity, fontScale) {
-        baseDensity.copy(fontScale = baseDensity.fontScale * fontScale)
+        Density(baseDensity.density, baseDensity.fontScale * fontScale)
     }
     val appFontFamily = when (fontFamilyChoice) {
         "sans" -> FontFamily.SansSerif
