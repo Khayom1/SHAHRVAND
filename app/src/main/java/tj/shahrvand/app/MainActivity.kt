@@ -188,9 +188,9 @@ private fun ShahrvandApp() {
         } else {
             missions = builtInMissions
             catalogStatus = tr(language,
-                "Маълумот танҳо дар ҳамин телефон мемонад.",
-                "Данные остаются только на этом устройстве.",
-                "Your game data stays on this device.")
+                "Профил дар Supabase нигоҳ дошта мешавад; пешрафт дар ҳамин телефон мемонад.",
+                "Профиль хранится в Supabase; игровой прогресс остаётся на этом устройстве.",
+                "Your profile is stored in Supabase; game progress stays on this device.")
         }
     }
 
@@ -326,9 +326,9 @@ private fun WelcomeScreen(
         Text(tr(language, "Хуш омадӣ!", "Добро пожаловать!", "Welcome!"),
             color = Navy, fontSize = 25.sp, fontWeight = FontWeight.Black)
         Text(
-            tr(language, "Барои оғоз ҳисоб, рақами телефон ё парол лозим нест.",
-                "Для начала не нужны аккаунт, номер телефона или пароль.",
-                "No account, phone number, or password is needed to start."),
+            tr(language, "Барои истифода сабти ном бо ном, синну сол, логин ва парол ҳатмист. Email ва телефон талаб намешавад.",
+                "Для использования обязательна регистрация: имя, возраст, логин и пароль. Email и телефон не нужны.",
+                "Registration is required: first name, age, username, and password. No email or phone number is needed."),
             color = Muted, fontSize = 13.sp, textAlign = TextAlign.Center,
             modifier = Modifier.padding(top = 7.dp, bottom = 16.dp)
         )
@@ -345,17 +345,17 @@ private fun WelcomeScreen(
             modifier = Modifier.fillMaxWidth())
         Spacer(Modifier.height(8.dp))
         AgeChoice(selectedBand == "7_12", tr(language, "7–12 сола", "7–12 лет", "Ages 7–12"),
-            tr(language, "Бозӣ дар телефон мемонад. Барои корҳои берунӣ аз калонсол иҷозат пурс.",
-                "Данные остаются на телефоне. Для занятий на улице спроси разрешение взрослого.",
-                "Game data stays on this device. Ask an adult before outdoor activities.")) { selectedBand = "7_12" }
+            tr(language, "Профил дар Supabase нигоҳ дошта мешавад; пешрафти бозӣ дар телефон мемонад. Барои корҳои берунӣ аз калонсол иҷозат пурс.",
+                "Профиль хранится в Supabase, игровой прогресс — на телефоне. Для занятий на улице спроси разрешение взрослого.",
+                "Your profile is stored in Supabase; game progress stays on this device. Ask an adult before outdoor activities.")) { selectedBand = "7_12" }
         AgeChoice(selectedBand == "13_17", tr(language, "13–17 сола", "13–17 лет", "Ages 13–17"),
-            tr(language, "Режими маҳаллӣ: ҳисоб ва пешрафт танҳо дар ҳамин телефон нигоҳ дошта мешавад.",
-                "Локальный режим: прогресс хранится только на этом устройстве.",
-                "Local mode: progress stays on this device.")) { selectedBand = "13_17" }
+            tr(language, "Профил дар Supabase, пешрафти бозӣ дар ҳамин телефон нигоҳ дошта мешавад.",
+                "Профиль хранится в Supabase, игровой прогресс — на этом устройстве.",
+                "Your profile is stored in Supabase; game progress stays on this device.")) { selectedBand = "13_17" }
         AgeChoice(selectedBand == "18_plus", tr(language, "18+ сола", "18+ лет", "Ages 18+"),
-            tr(language, "Метавонӣ феҳристи оммавии миссияҳоро аз сервер нав кунӣ. Профил ва холҳо фиристода намешаванд.",
-                "Можно обновлять публичный список заданий с сервера. Профиль и очки не отправляются.",
-                "You can refresh the public mission list. Your profile and score are not uploaded.")) { selectedBand = "18_plus" }
+            tr(language, "Феҳристи миссияҳо аз сервер нав мешавад; профили регистрация дар Supabase нигоҳ дошта мешавад, холҳо ҳоло дар телефон мемонанд.",
+                "Список заданий обновляется с сервера; регистрационный профиль хранится в Supabase, очки пока остаются на устройстве.",
+                "The public mission list is refreshed from the server; your registration profile is stored in Supabase, while scores remain on this device for now.")) { selectedBand = "18_plus" }
         Spacer(Modifier.height(15.dp))
         Button(onClick = { onContinue(selectedBand) },
             modifier = Modifier.fillMaxWidth().height(52.dp), shape = RoundedCornerShape(14.dp)) {
@@ -364,9 +364,9 @@ private fun WelcomeScreen(
         Spacer(Modifier.height(10.dp))
         Text(
             tr(language,
-                "Версияи аввал: бе реклама, чат, геолокатсия ва боркунии акс. Барои кӯдакон маълумот ба сервер намеравад.",
-                "Первая версия: без рекламы, чата, геолокации и загрузки фото. Данные детей не отправляются на сервер.",
-                "Version 1: no ads, chat, location tracking, or photo uploads. Children's data is not sent to a server."),
+                "Версияи аввал: бе реклама, чат, геолокатсия ва боркунии акс. Маълумоти ҳисоб дар Supabase, пешрафти бозӣ дар телефон нигоҳ дошта мешавад.",
+                "Первая версия: без рекламы, чата, геолокации и загрузки фото. Данные аккаунта хранятся в Supabase, игровой прогресс — на устройстве.",
+                "Version 1: no ads, chat, location tracking, or photo uploads. Account data is stored in Supabase; game progress stays on the device."),
             color = Muted, fontSize = 10.sp, lineHeight = 15.sp, textAlign = TextAlign.Center
         )
     }
