@@ -202,7 +202,7 @@ internal fun ShahrvandSettingsDialog(
     lastName: String,
     age: Int,
     login: String,
-    accessToken: String,
+    getAccessToken: suspend () -> String,
     fontScale: Float,
     fontFamilyChoice: String,
     onClose: () -> Unit,
@@ -307,10 +307,12 @@ internal fun ShahrvandSettingsDialog(
                                 savingProfile = true
                                 message = ""
                                 scope.launch {
-                                    val result = SupabaseAuthRepository.updateProfile(
-                                        accessToken, editedFirstName.trim(), editedLastName.trim(),
-                                        parsedAge, editedLogin.trim()
-                                    )
+                                    val result = runCatching {
+                                        SupabaseAuthRepository.updateProfile(
+                                            getAccessToken(), editedFirstName.trim(), editedLastName.trim(),
+                                            parsedAge, editedLogin.trim()
+                                        ).getOrThrow()
+                                    }
                                     result.onSuccess {
                                         onProfileSaved(it)
                                         editedFirstName = it.firstName
@@ -375,7 +377,9 @@ internal fun ShahrvandSettingsDialog(
                                 changingPassword = true
                                 message = ""
                                 scope.launch {
-                                    val result = SupabaseAuthRepository.changePassword(accessToken, currentPassword, newPassword)
+                                    val result = runCatching {
+                                        SupabaseAuthRepository.changePassword(getAccessToken(), currentPassword, newPassword).getOrThrow()
+                                    }
                                     result.onSuccess {
                                         currentPassword = ""
                                         newPassword = ""
