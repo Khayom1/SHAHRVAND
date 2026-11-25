@@ -324,6 +324,23 @@ fun DailyActivitiesScreen(language: String, getAccessToken: suspend () -> String
     }
 }
 
+private suspend fun readHealthSteps(context: Context, startedAt: String): Long {
+    if (HealthConnectClient.getSdkStatus(context) != HealthConnectClient.SDK_AVAILABLE) return 0L
+    return runCatching {
+        val client = HealthConnectClient.getOrCreate(context)
+        val permission = HealthPermission.getReadPermission(StepsRecord::class)
+        if (permission !in client.permissionController.getGrantedPermissions()) return@runCatching 0L
+        val start = Instant.parse(startedAt)
+        val response = client.readRecords(
+            ReadRecordsRequest(
+                recordType = StepsRecord::class,
+                timeRangeFilter = TimeRangeFilter.between(start, Instant.now())
+            )
+        )
+        response.records.sumOf { it.count }
+    }.getOrDefault(0L)
+}
+
 private fun taskIcon(type: String) = when(type) {
     "gps_walk" -> "🚶"; "gps_run" -> "🏃"; "gps_cycle" -> "🚴"; "pose_squat" -> "🏋️"; "pose_pushup" -> "💪"; else -> "📚"
 }
@@ -477,8 +494,9 @@ private fun ActivitySessionDialog(language: String, task: ActivityTask, session:
                         val evidence=JSONObject()
                         if(gps) {
                             val hash=MessageDigest.getInstance("SHA-256").digest(route.toByteArray()).joinToString(""){"%02x".format(it)}
+                            val healthSteps = if (task.type=="gps_walk") readHealthSteps(context,session.startedAt) else 0L
                             evidence.put("distance_m",distance).put("gps_samples",gpsSamples).put("avg_accuracy_m",avgAccuracy)
-                                .put("max_speed_kmh",maxSpeed).put("step_count",steps).put("route_hash",hash)
+                                .put("max_speed_kmh",maxSpeed).put("step_count",max(steps,healthSteps.toInt())).put("route_hash",hash)
                         } else if(pose) {
                             evidence.put("valid_reps",poseMetrics.reps).put("camera_frames",poseMetrics.frames)
                                 .put("pose_visible_ratio",poseMetrics.visibleRatio).put("pose_confidence",poseMetrics.confidence)
