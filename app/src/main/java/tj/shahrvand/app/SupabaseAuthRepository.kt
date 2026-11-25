@@ -52,7 +52,7 @@ object SupabaseAuthRepository {
                 JSONObject()
                     .put("action", "register")
                     .put("first_name", firstName.trim())
-                    .put("last_name", lastName.trim().ifBlank { JSONObject.NULL })
+                    .put("last_name", if (lastName.isBlank()) JSONObject.NULL else lastName.trim())
                     .put("age", age)
                     .put("login", normalizedLogin)
                     .put("password", password),
