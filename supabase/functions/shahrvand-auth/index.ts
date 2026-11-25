@@ -106,7 +106,7 @@ Deno.serve(async (req: Request) => {
 
   if (action === "update_profile" || action === "change_password") {
     const authorization = req.headers.get("authorization") ?? "";
-    const token = authorization.match(/^Bearer\\s+(.+)$/i)?.[1] ?? "";
+    const token = authorization.match(/^Bearer\s+(.+)$/i)?.[1] ?? "";
     if (!token) return json({ error: "INVALID_SESSION" }, 401, origin);
 
     try {
