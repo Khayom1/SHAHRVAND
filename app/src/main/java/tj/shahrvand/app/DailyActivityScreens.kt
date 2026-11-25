@@ -228,7 +228,7 @@ fun DailyActivitiesScreen(language: String, getAccessToken: suspend () -> String
         if (task != null) {
             val required = if (task.type.startsWith("gps_")) listOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACTIVITY_RECOGNITION)
                 else listOf(Manifest.permission.CAMERA)
-            if (required.any { grants[it] == true || ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED }) {
+            if (required.all { grants[it] == true || ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED }) {
                 scope.launch { begin(task) }
             } else error = aTr(language, "Иҷозати зарурӣ дода нашуд.", "Не предоставлено необходимое разрешение.", "Required permission was not granted.")
         }
@@ -337,7 +337,7 @@ private suspend fun readHealthSteps(context: Context, startedAt: String): Long {
                 timeRangeFilter = TimeRangeFilter.between(start, Instant.now())
             )
         )
-        response.records.sumOf { it.count }
+        response.records.filter { it.metadata.dataOrigin.packageName == "com.sec.android.app.shealth" }.sumOf { it.count }
     }.getOrDefault(0L)
 }
 
@@ -354,7 +354,7 @@ private fun InterestPicker(language: String, selected: Set<String>, onToggle: (S
         Text("${selected.size}/5", color=A_Gold, fontWeight=FontWeight.Bold)
         LazyColumn(Modifier.weight(1f), verticalArrangement=Arrangement.spacedBy(4.dp)) {
             items(activityInterests, key={it.code}) { item ->
-                FilterChip(selected=item.code in selected, onClick={onToggle(item.code), enabled= !saving},
+                FilterChip(selected=item.code in selected, onClick={onToggle(item.code)}, enabled=!saving,
                     label={Text(aTr(language,item.tg,item.ru,item.en))})
             }
         }
@@ -582,11 +582,15 @@ private fun LearningPanel(language:String, interestCode:String, elapsed:Long, qu
 private fun PoseCameraCounter(type:String, onMetrics:(PoseMetrics)->Unit, modifier:Modifier=Modifier) {
     val context= LocalContext.current
     val owner= LocalLifecycleOwner.current
+    val cleanup = remember { mutableStateOf<(() -> Unit)?>(null) }
+    DisposableEffect(Unit) { onDispose { cleanup.value?.invoke() } }
     AndroidView(modifier=modifier, factory={ viewContext ->
         val previewView=PreviewView(viewContext).apply { scaleType=PreviewView.ScaleType.FILL_CENTER }
         val executor=Executors.newSingleThreadExecutor()
         val detector=PoseDetection.getClient(PoseDetectorOptions.Builder().setDetectorMode(PoseDetectorOptions.STREAM_MODE).build())
         var provider: ProcessCameraProvider?=null
+        var analysisUseCase: ImageAnalysis?=null
+        cleanup.value = { provider?.unbindAll(); analysisUseCase?.clearAnalyzer(); detector.close(); executor.shutdown() }
         val future=ProcessCameraProvider.getInstance(viewContext)
         future.addListener({
             try {
@@ -595,6 +599,7 @@ private fun PoseCameraCounter(type:String, onMetrics:(PoseMetrics)->Unit, modifi
                 var reps=0; var frames=0; var bottomSeen=false; var visibleSum=0.0; var confidenceSum=0.0
                 val analysis=ImageAnalysis.Builder().setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                     .setTargetResolution(android.util.Size(480,640)).build()
+                analysisUseCase=analysis
                 analysis.setAnalyzer(executor) { proxy ->
                     val media=proxy.image
                     if(media==null){proxy.close()} else {
