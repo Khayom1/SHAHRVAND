@@ -41,7 +41,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.Lifecycle\nimport androidx.lifecycle.LifecycleEventObserver\nimport androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.pose.PoseDetection
 import com.google.mlkit.vision.pose.PoseLandmark
@@ -445,7 +447,7 @@ private fun ActivitySessionDialog(language: String, task: ActivityTask, session:
     val canSubmit = when {
         gps -> distanceReached && timeReady && !timedOut && gpsSamples >= 12
         pose -> repsReached && timeReady && !timedOut && poseMetrics.frames >= 30
-        else -> elapsed >= 1200 && foregroundMs >= 1140000L && quizStarted && quizAnswers.size == 5
+        else -> elapsed >= 1200 && foregroundMs >= 1200000L && quizStarted && quizAnswers.size == 5
     }
 
     AlertDialog(
@@ -459,7 +461,7 @@ private fun ActivitySessionDialog(language: String, task: ActivityTask, session:
                     Text(aTr(language,"GPS намунаҳо: $gpsSamples · Қадамҳо: $steps · дақиқии миёна: %.1f м".format(avgAccuracy),
                         "GPS-точки: $gpsSamples · шаги: $steps · средняя точность: %.1f м".format(avgAccuracy),
                         "GPS samples: $gpsSamples · steps: $steps · average accuracy: %.1f m".format(avgAccuracy)),fontSize=11.sp,color=A_Muted)
-                    if(task.type=="gps_run" || task.type=="gps_cycle") Text(aTr(language,"Мӯҳлат: ${limit/60} дақиқа","Лимит: ${limit/60} минут","Time limit: ${limit/60} min"),color=A_Muted,fontSize=11.sp)
+                    if(task.type.startsWith("gps_")) Text(aTr(language,"Мӯҳлат: ${limit/60} дақиқа","Лимит: ${limit/60} минут","Time limit: ${limit/60} min"),color=A_Muted,fontSize=11.sp)
                     Text(aTr(language,"Роҳро бехатар интихоб кун. Телефон GPS-ро танҳо ҳангоми фаъол будани сессия истифода мебарад.","Выбирай безопасный маршрут. GPS работает только во время активной сессии.","Choose a safe route. GPS is used only during this active session."),fontSize=11.sp,color=A_Muted)
                 } else if (pose) {
                     PoseCameraCounter(task.type,onMetrics={poseMetrics=it},modifier=Modifier.fillMaxWidth().height(230.dp))
