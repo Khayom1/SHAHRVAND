@@ -307,12 +307,6 @@ private fun ShahrvandApp() {
                 .putString("nickname", account.login)
                 .putString("language", language)
                 .apply()
-            prefs.edit()
-                .putString("first_name", account.firstName)
-                .putString("last_name", account.lastName ?: "")
-                .putInt("account_age", account.age)
-                .putString("login", account.login)
-                .apply()
         }
         }
         return
