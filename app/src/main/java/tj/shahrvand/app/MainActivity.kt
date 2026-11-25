@@ -658,8 +658,8 @@ private fun FutureScreen(language: String, ageBand: String, catalogStatus: Strin
             Column(Modifier.padding(13.dp)) {
                 Text(tr(language, "Қоидаҳои версияи 1", "Правила версии 1", "Version 1 principles"),
                     color = Navy, fontWeight = FontWeight.Bold)
-                PrivacyLine(tr(language, "Маълумоти профил дар телефон мемонад.",
-                    "Данные профиля остаются на устройстве.", "Profile data stays on device."))
+                PrivacyLine(tr(language, "Маълумоти профил дар Supabase, пешрафт дар телефон нигоҳ дошта мешавад.",
+                    "Данные профиля хранятся в Supabase, игровой прогресс — на устройстве.", "Profile data is stored in Supabase; game progress stays on device."))
                 PrivacyLine(tr(language, "Барои кӯдакон ва наврасон пайвасти шабакавӣ истифода намешавад.",
                     "Для детей и подростков сетевое подключение не используется.", "Children and teens do not use network features."))
                 PrivacyLine(tr(language, "GPS, микрофон, камера, чат ва реклама нест.",
@@ -813,7 +813,7 @@ private fun AuthScreen(
                     OutlinedTextField(ageText, { ageText = it.filter(Char::isDigit).take(3); errorText = "" }, Modifier.fillMaxWidth(), singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), label = { Text(tr(language, "Синну сол", "Возраст", "Age")) })
                 }
-                OutlinedTextField(login, { login = it.filter { ch -> ch.isLetterOrDigit() || ch in "._-" }.take(24); errorText = "" },
+                OutlinedTextField(login, { login = it.filter { ch -> ch in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-" }.take(24); errorText = "" },
                     Modifier.fillMaxWidth(), singleLine = true, label = { Text(tr(language, "Логин", "Логин", "Username")) },
                     supportingText = if (isRegister) ({ Text(tr(language, "4–24 аломат; a–z, 0–9, нуқта, _ ё -", "4–24 символа; a–z, 0–9, точка, _ или -", "4–24 characters; a–z, 0–9, dot, _ or -")) }) else null)
                 OutlinedTextField(password, { password = it; errorText = "" }, Modifier.fillMaxWidth(), singleLine = true,
