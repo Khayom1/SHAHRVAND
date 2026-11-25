@@ -24,6 +24,12 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
+import androidx.health.connect.client.HealthConnectClient
+import androidx.health.connect.client.PermissionController
+import androidx.health.connect.client.permission.HealthPermission
+import androidx.health.connect.client.records.StepsRecord
+import androidx.health.connect.client.request.ReadRecordsRequest
+import androidx.health.connect.client.time.TimeRangeFilter
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,6 +53,7 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 import java.security.MessageDigest
+import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.util.concurrent.Executors
@@ -202,11 +209,24 @@ fun DailyActivitiesScreen(language: String, getAccessToken: suspend () -> String
         finally { busy = false }
     }
 
+    val healthPermissions = remember { setOf(HealthPermission.getReadPermission(StepsRecord::class)) }
+    var healthConnected by remember { mutableStateOf(false) }
+    val healthPermissionLauncher = rememberLauncherForActivityResult(PermissionController.createRequestPermissionResultContract()) { granted ->
+        healthConnected = healthPermissions.all { it in granted }
+    }
+    LaunchedEffect(Unit) {
+        if (HealthConnectClient.getSdkStatus(context) == HealthConnectClient.SDK_AVAILABLE) {
+            runCatching {
+                val client = HealthConnectClient.getOrCreate(context)
+                healthConnected = healthPermissions.all { it in client.permissionController.getGrantedPermissions() }
+            }
+        }
+    }
     val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { grants ->
         val task = pendingTask
         pendingTask = null
         if (task != null) {
-            val required = if (task.type.startsWith("gps_")) listOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
+            val required = if (task.type.startsWith("gps_")) listOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACTIVITY_RECOGNITION)
                 else listOf(Manifest.permission.CAMERA)
             if (required.any { grants[it] == true || ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED }) {
                 scope.launch { begin(task) }
@@ -227,6 +247,13 @@ fun DailyActivitiesScreen(language: String, getAccessToken: suspend () -> String
     Column(Modifier.fillMaxSize().padding(14.dp)) {
         Text(aTr(language,"Вазифаҳои ҳаррӯза","Ежедневные задания","Daily challenges"), color=A_Navy, fontSize=21.sp, fontWeight=FontWeight.Black)
         Text(aTr(language,"Ҳама як меъёр · далелҳо дар телефон ҷамъ мешаванд","Одинаковые нормы для всех · доказательства собираются на телефоне","Same targets for everyone · evidence is collected on-device"), color=A_Muted, fontSize=11.sp)
+        if (HealthConnectClient.getSdkStatus(context) == HealthConnectClient.SDK_AVAILABLE && !healthConnected) {
+            TextButton(onClick={healthPermissionLauncher.launch(healthPermissions)}) {
+                Text(aTr(language,"Пайваст кардани Samsung Health / Health Connect","Подключить Samsung Health / Health Connect","Connect Samsung Health / Health Connect"))
+            }
+        } else if (healthConnected) {
+            Text(aTr(language,"Қадамҳо аз Health Connect низ санҷида мешаванд.","Шаги также сверяются с Health Connect.","Steps are also cross-checked with Health Connect."),color=A_Green,fontSize=10.sp)
+        }
         Spacer(Modifier.height(10.dp))
         if (loading && overview == null) Box(Modifier.fillMaxSize(), contentAlignment=Alignment.Center) { CircularProgressIndicator() }
         else if (overview == null) {
@@ -273,7 +300,7 @@ fun DailyActivitiesScreen(language: String, getAccessToken: suspend () -> String
                             Text(task.description(language), color=A_Muted, fontSize=11.sp, lineHeight=16.sp, modifier=Modifier.padding(top=4.dp))
                             if (completed != null) Text("✓ "+aTr(language,"Иҷро шуд","Выполнено","Completed")+" · +$completed XP", color=A_Green, fontWeight=FontWeight.Bold, fontSize=11.sp, modifier=Modifier.padding(top=7.dp))
                             else Button(onClick={
-                                val permissions = if(task.type.startsWith("gps_")) arrayOf(Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION)
+                                val permissions = if(task.type.startsWith("gps_")) arrayOf(Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION,Manifest.permission.ACTIVITY_RECOGNITION)
                                     else if(task.type.startsWith("pose_")) arrayOf(Manifest.permission.CAMERA) else emptyArray()
                                 val missing = permissions.filter { ContextCompat.checkSelfPermission(context,it) != PackageManager.PERMISSION_GRANTED }
                                 if(missing.isEmpty()) scope.launch { begin(task) }
@@ -292,7 +319,7 @@ fun DailyActivitiesScreen(language: String, getAccessToken: suspend () -> String
     val task = activeTask
     val session = activeSession
     if (task != null && session != null) {
-        ActivitySessionDialog(language, task, session, getAccessToken, onFinish={ refresh++; activeTask=null; activeSession=null },
+        ActivitySessionDialog(language, task, session, selectedInterests.firstOrNull() ?: "science", getAccessToken, onFinish={ refresh++; activeTask=null; activeSession=null },
             onCancel={ activeTask=null; activeSession=null; refresh++ })
     }
 }
@@ -323,7 +350,7 @@ private fun InterestPicker(language: String, selected: Set<String>, onToggle: (S
 
 @Composable
 private fun ActivitySessionDialog(language: String, task: ActivityTask, session: ActivitySession,
-                                  getAccessToken: suspend ()->String, onFinish: ()->Unit, onCancel: ()->Unit) {
+                                  interestCode: String, getAccessToken: suspend ()->String, onFinish: ()->Unit, onCancel: ()->Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var elapsed by remember(session.id) { mutableLongStateOf(0L) }
@@ -437,7 +464,7 @@ private fun ActivitySessionDialog(language: String, task: ActivityTask, session:
                         "Only full, correct repetitions count. Camera processing stays on-device; video is not saved or uploaded."),fontSize=11.sp,color=A_Muted)
                     Text(aTr(language,"Вақт: $elapsed / ${task.limitSec} сония","Время: $elapsed / ${task.limitSec} секунд","Time: $elapsed / ${task.limitSec} seconds"),fontWeight=FontWeight.Bold,color=A_Green)
                 } else {
-                    LearningPanel(language, task, elapsed, quizStarted, {quizStarted=true}, quizAnswers, {i,v->quizAnswers=quizAnswers+(i to v)})
+                    LearningPanel(language, interestCode, elapsed, quizStarted, {quizStarted=true}, quizAnswers, {i,v->quizAnswers=quizAnswers+(i to v)})
                 }
                 if(status.isNotBlank()) Text(status,color=MaterialTheme.colorScheme.error,fontSize=11.sp)
             }
@@ -456,10 +483,9 @@ private fun ActivitySessionDialog(language: String, task: ActivityTask, session:
                             evidence.put("valid_reps",poseMetrics.reps).put("camera_frames",poseMetrics.frames)
                                 .put("pose_visible_ratio",poseMetrics.visibleRatio).put("pose_confidence",poseMetrics.confidence)
                         } else {
-                            val interest=activityInterests.firstOrNull { item -> item.code==task.titleTg }?.code
                             evidence.put("foreground_ms",elapsed*1000).put("quiz_total",5)
                                 .put("quiz_correct",quizAnswers.count{(index,answer)->answer==quizCorrectAnswers[index]})
-                                .put("interest_code",interest ?: "science")
+                                .put("interest_code",interestCode)
                         }
                         val result=DailyActivityRepository.finish(getAccessToken(),session,evidence)
                         if(result.optBoolean("ok")) { status=aTr(language,"Сервер тасдиқ кард!","Сервер подтвердил!","Verified by server!"); delay(650); onFinish() }
@@ -477,7 +503,7 @@ private fun ActivitySessionDialog(language: String, task: ActivityTask, session:
     )
 }
 
-private val quizCorrectAnswers = listOf(1,2,0,1,2)
+private val quizCorrectAnswers = listOf(0,1,1,1,2)
 private data class LessonCopy(val tg:String,val ru:String,val en:String)
 private fun lessonFor(code:String,lang:String):String {
     val lesson=when(code) {
@@ -498,9 +524,9 @@ private fun lessonFor(code:String,lang:String):String {
 }
 
 @Composable
-private fun LearningPanel(language:String, task:ActivityTask, elapsed:Long, quizStarted:Boolean,
+private fun LearningPanel(language:String, interestCode:String, elapsed:Long, quizStarted:Boolean,
                           onQuiz:()->Unit, answers:Map<Int,Int>, onAnswer:(Int,Int)->Unit) {
-    val interest = activityInterests.firstOrNull { item -> item.code==task.titleTg }?.code ?: "science"
+    val interest = interestCode
     Column(Modifier.fillMaxWidth().heightIn(max=430.dp),verticalArrangement=Arrangement.spacedBy(8.dp)) {
         Text(aTr(language,"Дарси шахсӣ","Персональный урок","Personal lesson"),color=A_Navy,fontWeight=FontWeight.Bold)
         Text(lessonFor(interest,language),fontSize=12.sp,lineHeight=18.sp,color=A_Muted)
