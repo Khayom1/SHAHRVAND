@@ -272,12 +272,18 @@ internal fun ShahrvandSettingsDialog(
                         label = { Text(profileTr(language, "Насаб (ихтиёрӣ)", "Фамилия (необязательно)", "Last name (optional)")) }
                     )
                     OutlinedTextField(
-                        value = editedAge,
-                        onValueChange = { editedAge = it.filter(Char::isDigit).take(3); message = "" },
+                        value = age.toString(),
+                        onValueChange = {},
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        label = { Text(profileTr(language, "Синну сол", "Возраст", "Age")) }
+                        enabled = false,
+                        label = { Text(profileTr(language, "Синну сол", "Возраст", "Age")) },
+                        supportingText = {
+                            Text(profileTr(language,
+                                "Синну сол барои адолати рейтинг баъди сабти ном тағйир намеёбад.",
+                                "Возраст нельзя менять после регистрации, чтобы сохранить честность рейтинга.",
+                                "Age is locked after registration to protect leaderboard fairness."))
+                        }
                     )
                     OutlinedTextField(
                         value = editedLogin,
