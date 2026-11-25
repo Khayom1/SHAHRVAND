@@ -380,7 +380,7 @@ private fun ShahrvandApp() {
                     financeEntries, { financeEntries = it }, ::getValidAccessToken
                 )
                 5 -> LeaderboardScreen(language, ageBand ?: "18_plus", ::getValidAccessToken)
-                6 -> WeeklyChallengesScreen(language, ::getValidAccessToken)
+                6 -> DailyActivitiesScreen(language, ::getValidAccessToken)
                 else -> HomeScreen(
                     language, nickname, ageBand ?: "7_12", totalXp, totalCompleted,
                     completedToday, missions, catalogStatus, isLoadingCatalog, financeEntries,
