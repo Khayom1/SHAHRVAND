@@ -29,7 +29,6 @@ import androidx.compose.ui.window.DialogProperties
 import kotlinx.coroutines.launch
 
 private val ProfileNavy = Color(0xFF20384B)
-private val ProfileGold = Color(0xFFB98A50)
 private val ProfileGreen = Color(0xFF36766D)
 private val ProfilePage = Color(0xFFF4EFE5)
 private val ProfileInk = Color(0xFF263640)
@@ -184,8 +183,15 @@ private fun ProfileSectionTitle(title: String) {
 @Composable
 private fun ProfileInfoRow(label: String, value: String) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Text(label, color = ProfileMuted, fontSize = 12.sp, modifier = Modifier.weight(1f))
-        Text(value, color = ProfileInk, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+        Text(label, color = ProfileMuted, fontSize = 12.sp, modifier = Modifier.weight(0.9f))
+        Text(
+            value,
+            color = ProfileInk,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.SemiBold,
+            textAlign = TextAlign.End,
+            modifier = Modifier.weight(1.1f)
+        )
     }
 }
 
