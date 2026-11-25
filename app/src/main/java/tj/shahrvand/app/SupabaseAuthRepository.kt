@@ -234,6 +234,7 @@ object SupabaseAuthRepository {
     private fun humanError(code: String): String = when (code) {
         "INVALID_NAME" -> "Номро дуруст ворид кунед. Насаб ихтиёрӣ аст."
         "INVALID_AGE" -> "Синну сол бояд аз 7 то 120 бошад."
+        "AGE_CHANGE_NOT_ALLOWED" -> "Синну сол баъди сабти ном барои адолати рейтинг тағйир дода намешавад."
         "INVALID_LOGIN" -> "Логин бояд 4–24 аломат дошта бошад."
         "INVALID_PASSWORD" -> "Парол бояд аз 8 то 128 аломат бошад."
         "LOGIN_ALREADY_USED" -> "Ин логин аллакай истифода шудааст."
