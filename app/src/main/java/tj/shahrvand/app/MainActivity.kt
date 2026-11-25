@@ -749,9 +749,9 @@ private fun SettingsDialog(
             onDismissRequest = { confirmReset = false },
             title = { Text(tr(language, "Ҳамаи маълумот нест шавад?", "Удалить все данные?", "Delete all data?")) },
             text = { Text(tr(language,
-                "Профил, холҳо ва пешрафти ҳамин телефон пок мешаванд.",
-                "Профиль, очки и прогресс на этом устройстве будут удалены.",
-                "The profile, points, and progress on this device will be deleted.")) },
+                "Сессияи воридшавӣ ва пешрафти маҳаллӣ пок мешаванд. Ҳисоби серверӣ боқӣ мемонад.",
+                "Состояние входа и локальный прогресс будут удалены. Серверный аккаунт сохранится.",
+                "Your sign-in state and local progress will be cleared. Your server account will remain.")) },
             confirmButton = {
                 TextButton(onClick = onReset) {
                     Text(tr(language, "Нест кардан", "Удалить", "Delete"), color = MaterialTheme.colorScheme.error)
