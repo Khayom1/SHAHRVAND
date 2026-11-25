@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.TaskAlt
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.NoteAlt
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material3.*
@@ -28,6 +29,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.KeyboardType
@@ -152,6 +156,12 @@ private fun ShahrvandApp() {
         mutableStateOf(prefs.getBoolean("auth_signed_in", false) && accessToken.isNotBlank() && refreshToken.isNotBlank())
     }
     var nickname by remember { mutableStateOf(prefs.getString("nickname", "") ?: "") }
+    var accountFirstName by remember { mutableStateOf(prefs.getString("first_name", "") ?: "") }
+    var accountLastName by remember { mutableStateOf(prefs.getString("last_name", "") ?: "") }
+    var accountAge by remember { mutableIntStateOf(prefs.getInt("account_age", 18)) }
+    var accountLogin by remember { mutableStateOf(prefs.getString("login", "") ?: "") }
+    var fontScale by remember { mutableFloatStateOf(prefs.getFloat("font_scale", 1.0f).coerceIn(0.90f, 1.15f)) }
+    var fontFamilyChoice by remember { mutableStateOf(prefs.getString("font_family", "system") ?: "system") }
     var financeEntries by remember { mutableStateOf(emptyList<MoneyEntry>()) }
     var tab by remember { mutableIntStateOf(0) }
     var totalXp by remember { mutableIntStateOf(prefs.getInt("total_xp", 0)) }
@@ -160,6 +170,17 @@ private fun ShahrvandApp() {
     var catalogStatus by remember { mutableStateOf("") }
     var isLoadingCatalog by remember { mutableStateOf(false) }
     var settingsOpen by remember { mutableStateOf(false) }
+    var showProfile by remember { mutableStateOf(false) }
+
+    val baseDensity = LocalDensity.current
+    val scaledDensity = remember(baseDensity, fontScale) {
+        baseDensity.copy(fontScale = baseDensity.fontScale * fontScale)
+    }
+    val appFontFamily = when (fontFamilyChoice) {
+        "sans" -> FontFamily.SansSerif
+        "serif" -> FontFamily.Serif
+        else -> FontFamily.Default
+    }
 
     val today = remember { LocalDate.now().toString() }
     val storedDay = remember { prefs.getString("progress_day", "") ?: "" }
@@ -257,10 +278,18 @@ private fun ShahrvandApp() {
     }
 
     if (!isAuthenticated) {
+        CompositionLocalProvider(
+            LocalDensity provides scaledDensity,
+            LocalTextStyle provides LocalTextStyle.current.copy(fontFamily = appFontFamily)
+        ) {
         AuthScreen(language = language, onLanguage = ::changeLanguage) { account ->
             isAuthenticated = true
             ageBand = account.ageBand
             nickname = account.login
+            accountFirstName = account.firstName
+            accountLastName = account.lastName.orEmpty()
+            accountAge = account.age
+            accountLogin = account.login
             accessToken = account.accessToken
             refreshToken = account.refreshToken
             expiresAt = account.expiresAt
@@ -278,11 +307,22 @@ private fun ShahrvandApp() {
                 .putString("nickname", account.login)
                 .putString("language", language)
                 .apply()
+            prefs.edit()
+                .putString("first_name", account.firstName)
+                .putString("last_name", account.lastName ?: "")
+                .putInt("account_age", account.age)
+                .putString("login", account.login)
+                .apply()
+        }
         }
         return
     }
     if (ageBand == null) ageBand = prefs.getString("age_band", "18_plus") ?: "18_plus"
 
+    CompositionLocalProvider(
+        LocalDensity provides scaledDensity,
+        LocalTextStyle provides LocalTextStyle.current.copy(fontFamily = appFontFamily)
+    ) {
     Scaffold(
         containerColor = Page,
         bottomBar = {
@@ -309,14 +349,26 @@ private fun ShahrvandApp() {
         }
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
-            when (tab) {
+            if (showProfile) {
+                ShahrvandProfileScreen(
+                    language = language,
+                    firstName = accountFirstName,
+                    lastName = accountLastName,
+                    age = accountAge,
+                    login = accountLogin,
+                    totalXp = totalXp,
+                    totalCompleted = totalCompleted,
+                    onBack = { showProfile = false },
+                    onSettings = { settingsOpen = true }
+                )
+            } else when (tab) {
                 0 -> HomeScreen(
                     language, nickname, ageBand ?: "7_12", totalXp, totalCompleted,
                     completedToday, missions, catalogStatus, isLoadingCatalog, financeEntries,
                     onOpenMissions = { tab = 1 },
                     onOpenFinance = { tab = 4 },
                     onComplete = ::finishMission,
-                    onSettings = { settingsOpen = true }
+                    onProfile = { showProfile = true }
                 )
                 1 -> MissionsScreen(language, missions, completedToday, onComplete = ::finishMission)
                 2 -> ProgressScreen(language, totalXp, totalCompleted, completedToday.size)
@@ -332,34 +384,88 @@ private fun ShahrvandApp() {
     }
 
     if (settingsOpen) {
-        SettingsDialog(
+        ShahrvandSettingsDialog(
             language = language,
-            nickname = nickname,
-            ageBand = ageBand ?: "7_12",
+            firstName = accountFirstName,
+            lastName = accountLastName,
+            age = accountAge,
+            login = accountLogin,
+            accessToken = accessToken,
+            fontScale = fontScale,
+            fontFamilyChoice = fontFamilyChoice,
             onClose = { settingsOpen = false },
             onLanguage = ::changeLanguage,
-            onSaveNickname = { value ->
-                nickname = safeNickname(value)
-                prefs.edit().putString("nickname", nickname).apply()
+            onFontScale = { value ->
+                fontScale = value.coerceIn(0.90f, 1.15f)
+                prefs.edit().putFloat("font_scale", fontScale).apply()
             },
-            onReset = {
-                prefs.edit().clear().apply()
+            onFontFamily = { value ->
+                fontFamilyChoice = value
+                prefs.edit().putString("font_family", value).apply()
+            },
+            onProfileSaved = { profile ->
+                accountFirstName = profile.firstName
+                accountLastName = profile.lastName.orEmpty()
+                accountAge = profile.age
+                accountLogin = profile.login
+                nickname = profile.login
+                ageBand = profile.ageBand
+                prefs.edit()
+                    .putString("first_name", profile.firstName)
+                    .putString("last_name", profile.lastName ?: "")
+                    .putInt("account_age", profile.age)
+                    .putString("login", profile.login)
+                    .putString("nickname", profile.login)
+                    .putString("age_band", profile.ageBand)
+                    .apply()
+            },
+            onSignOut = {
+                prefs.edit()
+                    .putBoolean("auth_signed_in", false)
+                    .remove("access_token")
+                    .remove("refresh_token")
+                    .remove("session_expires_at")
+                    .remove("auth_user_id")
+                    .remove("first_name")
+                    .remove("last_name")
+                    .remove("account_age")
+                    .remove("login")
+                    .remove("age_band")
+                    .remove("nickname")
+                    .putInt("total_xp", 0)
+                    .putInt("total_completed", 0)
+                    .putStringSet("completed_today", emptySet())
+                    .apply()
                 isAuthenticated = false
                 accessToken = ""
                 refreshToken = ""
                 expiresAt = 0L
                 financeEntries = emptyList()
-                language = "tg"
                 nickname = ""
-                ageBand = null
+                accountFirstName = ""
+                accountLastName = ""
+                accountAge = 18
+                accountLogin = ""
                 totalXp = 0
                 totalCompleted = 0
                 completedToday.clear()
-                missions = builtInMissions
-                tab = 0
+                showProfile = false
                 settingsOpen = false
+                tab = 0
+            },
+            onClearLocalProgress = {
+                prefs.edit()
+                    .putInt("total_xp", 0)
+                    .putInt("total_completed", 0)
+                    .putStringSet("completed_today", emptySet())
+                    .putString("progress_day", today)
+                    .apply()
+                totalXp = 0
+                totalCompleted = 0
+                completedToday.clear()
             }
         )
+    }
     }
 }
 
@@ -499,7 +605,7 @@ private fun HomeScreen(
     onOpenMissions: () -> Unit,
     onOpenFinance: () -> Unit,
     onComplete: (Mission) -> Unit,
-    onSettings: () -> Unit
+    onProfile: () -> Unit
 ) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -507,8 +613,8 @@ private fun HomeScreen(
                 BrandHeader(tr(language, "Ҳар қадам — як пешрафт", "Каждый шаг — прогресс", "Every step is progress"),
                     tr(language, "БОЗИИ МАҲОРАТ ВА НЕКӢ", "ИГРА НАВЫКОВ И ДОБРА", "A GAME OF SKILLS AND KINDNESS"))
             }
-            IconButton(onClick = onSettings) {
-                Icon(Icons.Filled.Settings, contentDescription = tr(language, "Танзимот", "Настройки", "Settings"), tint = Navy)
+            IconButton(onClick = onProfile) {
+                Icon(Icons.Filled.AccountCircle, contentDescription = tr(language, "Профил", "Профиль", "Profile"), tint = Navy)
             }
         }
         Spacer(Modifier.height(12.dp))
