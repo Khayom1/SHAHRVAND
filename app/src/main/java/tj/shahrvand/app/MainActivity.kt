@@ -320,24 +320,26 @@ private fun ShahrvandApp() {
     Scaffold(
         containerColor = Page,
         bottomBar = {
-            NavigationBar(containerColor = Color.White, tonalElevation = 6.dp) {
-                val labels = listOf(
-                    tr(language, "Асосӣ", "Главная", "Home"),
-                    tr(language, "Миссияҳо", "Задания", "Missions"),
-                    tr(language, "Пешрафт", "Прогресс", "Progress"),
-                    tr(language, "Ёддошт", "Заметки", "Notes"),
-                    tr(language, "Молия", "Финансы", "Money")
-                )
-                val icons = listOf(
-                    Icons.Filled.Home, Icons.Filled.TaskAlt, Icons.Filled.EmojiEvents,
-                    Icons.Filled.NoteAlt, Icons.Filled.AccountBalanceWallet
-                )
-                labels.forEachIndexed { index, label ->
-                    NavigationBarItem(
-                        selected = tab == index, onClick = { tab = index },
-                        icon = { Icon(icons[index], contentDescription = label) },
-                        label = { Text(label, fontSize = 10.sp) }
+            if (!showProfile) {
+                NavigationBar(containerColor = Color.White, tonalElevation = 6.dp) {
+                    val labels = listOf(
+                        tr(language, "Асосӣ", "Главная", "Home"),
+                        tr(language, "Миссияҳо", "Задания", "Missions"),
+                        tr(language, "Пешрафт", "Прогресс", "Progress"),
+                        tr(language, "Ёддошт", "Заметки", "Notes"),
+                        tr(language, "Молия", "Финансы", "Money")
                     )
+                    val icons = listOf(
+                        Icons.Filled.Home, Icons.Filled.TaskAlt, Icons.Filled.EmojiEvents,
+                        Icons.Filled.NoteAlt, Icons.Filled.AccountBalanceWallet
+                    )
+                    labels.forEachIndexed { index, label ->
+                        NavigationBarItem(
+                            selected = tab == index, onClick = { tab = index },
+                            icon = { Icon(icons[index], contentDescription = label) },
+                            label = { Text(label, fontSize = 10.sp) }
+                        )
+                    }
                 }
             }
         }
