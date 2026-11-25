@@ -165,6 +165,11 @@ Deno.serve(async (req: Request) => {
         return json({ error: "PROFILE_UPDATE_FAILED" }, 404, origin);
       }
 
+      // Age determines the public competition band. It cannot be edited after registration.
+      if (age !== currentProfile.age) {
+        return json({ error: "AGE_CHANGE_NOT_ALLOWED" }, 403, origin);
+      }
+
       if (nextLogin !== currentProfile.login) {
         const { data: existing, error: lookupError } = await admin
           .from("shahrvand_profiles")
