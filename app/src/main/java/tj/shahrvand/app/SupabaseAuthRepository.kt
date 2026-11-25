@@ -25,6 +25,20 @@ data class ShahrvandAccount(
         }
 }
 
+data class ShahrvandProfile(
+    val firstName: String,
+    val lastName: String?,
+    val age: Int,
+    val login: String
+) {
+    val ageBand: String
+        get() = when {
+            age <= 12 -> "7_12"
+            age <= 17 -> "13_17"
+            else -> "18_plus"
+        }
+}
+
 data class ShahrvandTokens(
     val accessToken: String,
     val refreshToken: String,
@@ -86,6 +100,70 @@ object SupabaseAuthRepository {
                 signInInternal(normalizedLogin, password)
             }.onFailure { Log.w(TAG, "Sign in failed", it) }
         }
+
+    suspend fun updateProfile(
+        accessToken: String,
+        firstName: String,
+        lastName: String,
+        age: Int,
+        login: String
+    ): Result<ShahrvandProfile> = withContext(Dispatchers.IO) {
+        runCatching {
+            require(accessToken.isNotBlank()) { "Сессия ба охир расид. Дубора ворид шавед." }
+            require(firstName.trim().length in 1..60) { "Номро дуруст ворид кунед." }
+            require(lastName.trim().length <= 60) { "Насаб аз 60 аломат зиёд набошад." }
+            require(age in 7..120) { "Синну сол бояд аз 7 то 120 бошад." }
+            require(login.trim().matches(Regex("^[a-zA-Z0-9][a-zA-Z0-9._-]{3,23}$"))) {
+                "Логин бояд 4–24 аломат дошта бошад."
+            }
+            val response = request(
+                AUTH_FUNCTION,
+                "POST",
+                JSONObject()
+                    .put("action", "update_profile")
+                    .put("first_name", firstName.trim())
+                    .put("last_name", if (lastName.isBlank()) JSONObject.NULL else lastName.trim())
+                    .put("age", age)
+                    .put("login", login.trim().lowercase()),
+                accessToken = accessToken
+            )
+            if (!response.optBoolean("ok")) {
+                throw IllegalStateException(humanError(response.optString("error")))
+            }
+            val profile = response.optJSONObject("profile")
+                ?: throw IllegalStateException("Маълумоти профил аз сервер гирифта нашуд.")
+            ShahrvandProfile(
+                firstName = profile.optString("first_name"),
+                lastName = profile.optString("last_name").takeIf { it.isNotBlank() && it != "null" },
+                age = profile.optInt("age"),
+                login = profile.optString("login")
+            )
+        }.onFailure { Log.w(TAG, "Profile update failed", it) }
+    }
+
+    suspend fun changePassword(
+        accessToken: String,
+        currentPassword: String,
+        newPassword: String
+    ): Result<Unit> = withContext(Dispatchers.IO) {
+        runCatching {
+            require(accessToken.isNotBlank()) { "Сессия ба охир расид. Дубора ворид шавед." }
+            require(currentPassword.isNotBlank()) { "Пароли ҷориро ворид кунед." }
+            require(newPassword.length in 8..128) { "Пароли нав бояд аз 8 то 128 аломат бошад." }
+            val response = request(
+                AUTH_FUNCTION,
+                "POST",
+                JSONObject()
+                    .put("action", "change_password")
+                    .put("current_password", currentPassword)
+                    .put("new_password", newPassword),
+                accessToken = accessToken
+            )
+            if (!response.optBoolean("ok")) {
+                throw IllegalStateException(humanError(response.optString("error")))
+            }
+        }.onFailure { Log.w(TAG, "Password change failed", it) }
+    }
 
     suspend fun refreshSession(refreshToken: String): Result<ShahrvandTokens> = withContext(Dispatchers.IO) {
         runCatching {
@@ -159,6 +237,10 @@ object SupabaseAuthRepository {
         "INVALID_LOGIN" -> "Логин бояд 4–24 аломат дошта бошад."
         "INVALID_PASSWORD" -> "Парол бояд аз 8 то 128 аломат бошад."
         "LOGIN_ALREADY_USED" -> "Ин логин аллакай истифода шудааст."
+        "INVALID_SESSION" -> "Сессия нодуруст ё ба охир расидааст. Дубора ворид шавед."
+        "INVALID_CURRENT_PASSWORD" -> "Пароли ҷорӣ нодуруст аст."
+        "PASSWORD_UPDATE_FAILED" -> "Иваз кардани парол иҷро нашуд."
+        "PROFILE_UPDATE_FAILED" -> "Тағйири профил иҷро нашуд."
         "INVALID_CREDENTIALS" -> "Логин ё парол нодуруст аст."
         "RATE_LIMITED" -> "Кӯшишҳо зиёд шуданд. Баъдтар такрор кунед."
         "SERVICE_TEMPORARILY_UNAVAILABLE" -> "Сервер муваққатан дастнорас аст. Баъдтар кӯшиш кунед."
