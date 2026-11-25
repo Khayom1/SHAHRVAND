@@ -154,6 +154,12 @@ object DailyActivityRepository {
             result.getString("started_at"), result.getString("expires_at"))
     }
 
+    suspend fun cancel(token: String, session: ActivitySession) {
+        val result = JSONObject(request("/rest/v1/rpc/shahrvand_cancel_activity_session", "POST", token,
+            JSONObject().put("p_session_id", session.id).put("p_nonce", session.nonce)))
+        if (!result.optBoolean("cancelled")) throw IllegalStateException("Сессия бекор нашуд.")
+    }
+
     suspend fun finish(token: String, session: ActivitySession, evidence: JSONObject): JSONObject {
         return JSONObject(request("/rest/v1/rpc/shahrvand_finish_activity_session", "POST", token,
             JSONObject().put("p_session_id", session.id).put("p_nonce", session.nonce).put("p_evidence", evidence)))
@@ -516,7 +522,14 @@ private fun ActivitySessionDialog(language: String, task: ActivityTask, session:
             }
         },
         dismissButton = {
-            TextButton(onClick=onCancel,enabled=!submitting) { Text(aTr(language,"Бекор кардан","Отмена","Cancel")) }
+            TextButton(onClick={
+                scope.launch {
+                    submitting=true
+                    try { DailyActivityRepository.cancel(getAccessToken(),session) }
+                    catch(e:Exception) { status=e.message ?: "Cancel failed" }
+                    onCancel()
+                }
+            },enabled=!submitting) { Text(aTr(language,"Бекор кардан","Отмена","Cancel")) }
         }
     )
 }
