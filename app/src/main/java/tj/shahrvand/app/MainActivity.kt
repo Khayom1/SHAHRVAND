@@ -836,6 +836,23 @@ private fun AuthScreen(
                     if (loading) CircularProgressIndicator(Modifier.size(20.dp), color = Color.White, strokeWidth = 2.dp)
                     else Text(if (isRegister) tr(language, "Сохтани ҳисоб", "Создать аккаунт", "Create account") else tr(language, "Ворид шудан", "Войти", "Sign in"), fontWeight = FontWeight.Bold)
                 }
+                TextButton(
+                    onClick = { isRegister = !isRegister; errorText = "" },
+                    enabled = !loading
+                ) {
+                    Text(
+                        if (isRegister) tr(language,
+                            "Ҳисоб доред? Ворид шавед",
+                            "Уже есть аккаунт? Войти",
+                            "Already have an account? Sign in")
+                        else tr(language,
+                            "Ҳисоб надоред? Сабти ном кунед",
+                            "Нет аккаунта? Зарегистрироваться",
+                            "Don’t have an account? Sign up"),
+                        color = Navy,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
                 Text(tr(language, "Маълумоти профил дар Supabase нигоҳ дошта мешавад. Парол танҳо тавассути Supabase Auth ҳифз мешавад.", "Данные профиля хранятся в Supabase. Пароль защищён Supabase Auth.", "Your profile is stored in Supabase. Passwords are handled by Supabase Auth."), color = Muted, fontSize = 10.sp, lineHeight = 15.sp)
             }
         }
