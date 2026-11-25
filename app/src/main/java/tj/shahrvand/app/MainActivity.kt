@@ -164,7 +164,7 @@ private fun ShahrvandApp() {
     var fontScale by remember { mutableFloatStateOf(prefs.getFloat("font_scale", 1.0f).coerceIn(0.90f, 1.15f)) }
     var fontFamilyChoice by remember { mutableStateOf(prefs.getString("font_family", "system") ?: "system") }
     var financeEntries by remember { mutableStateOf(emptyList<MoneyEntry>()) }
-    var tab by remember { mutableIntStateOf(0) }
+    var tab by remember { mutableIntStateOf(1) }
     var totalXp by remember { mutableIntStateOf(prefs.getInt("total_xp", 0)) }
     var totalCompleted by remember { mutableIntStateOf(prefs.getInt("total_completed", 0)) }
     var missions by remember { mutableStateOf(builtInMissions) }
@@ -215,6 +215,7 @@ private fun ShahrvandApp() {
 
     LaunchedEffect(isAuthenticated) {
         if (isAuthenticated) {
+            tab = 1
             val token = try {
                 getValidAccessToken()
             } catch (_: Exception) {
@@ -325,17 +326,14 @@ private fun ShahrvandApp() {
                 NavigationBar(containerColor = Color.White, tonalElevation = 6.dp) {
                     val labels = listOf(
                         tr(language, "Асосӣ", "Главная", "Home"),
-                        tr(language, "Миссияҳо", "Задания", "Missions"),
-                        tr(language, "Пешрафт", "Прогресс", "Progress"),
-                        tr(language, "Ёддошт", "Заметки", "Notes"),
-                        tr(language, "Молия", "Финансы", "Money"),
+                        tr(language, "Фаъолият", "Активность", "Activity"),
                         tr(language, "Рейтинг", "Рейтинг", "Ranking"),
-                        tr(language, "Ҳафта", "Неделя", "Weekly")
+                        tr(language, "Ёддошт", "Заметки", "Notes"),
+                        tr(language, "Молия", "Финансы", "Money")
                     )
                     val icons = listOf(
-                        Icons.Filled.Home, Icons.Filled.TaskAlt, Icons.Filled.EmojiEvents,
-                        Icons.Filled.NoteAlt, Icons.Filled.AccountBalanceWallet,
-                        Icons.Filled.EmojiEvents, Icons.Filled.Explore
+                        Icons.Filled.Home, Icons.Filled.Explore, Icons.Filled.EmojiEvents,
+                        Icons.Filled.NoteAlt, Icons.Filled.AccountBalanceWallet
                     )
                     labels.forEachIndexed { index, label ->
                         NavigationBarItem(
@@ -370,8 +368,8 @@ private fun ShahrvandApp() {
                     onComplete = ::finishMission,
                     onProfile = { showProfile = true }
                 )
-                1 -> MissionsScreen(language, missions, completedToday, onComplete = ::finishMission)
-                2 -> ProgressScreen(language, totalXp, totalCompleted, completedToday.size)
+                1 -> DailyActivitiesScreen(language, ::getValidAccessToken)
+                2 -> LeaderboardScreen(language, ageBand ?: "18_plus", ::getValidAccessToken)
                 3 -> PersonalNotesScreen(
                     language, prefs.getString("auth_user_id", "") ?: "", ::getValidAccessToken
                 )
@@ -379,8 +377,6 @@ private fun ShahrvandApp() {
                     language, prefs.getString("auth_user_id", "") ?: "",
                     financeEntries, { financeEntries = it }, ::getValidAccessToken
                 )
-                5 -> LeaderboardScreen(language, ageBand ?: "18_plus", ::getValidAccessToken)
-                6 -> DailyActivitiesScreen(language, ::getValidAccessToken)
                 else -> HomeScreen(
                     language, nickname, ageBand ?: "7_12", totalXp, totalCompleted,
                     completedToday, missions, catalogStatus, isLoadingCatalog, financeEntries,
@@ -618,57 +614,64 @@ private fun HomeScreen(
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.weight(1f)) {
-                BrandHeader(tr(language, "Ҳар қадам — як пешрафт", "Каждый шаг — прогресс", "Every step is progress"),
-                    tr(language, "БОЗИИ МАҲОРАТ ВА НЕКӢ", "ИГРА НАВЫКОВ И ДОБРА", "A GAME OF SKILLS AND KINDNESS"))
+                BrandHeader(
+                    tr(language, "Ҳар қадам — як пешрафт", "Каждый шаг — прогресс", "Every step is progress"),
+                    tr(language, "САЛОМАТӢ · ДОНИШ · РУШД", "ЗДОРОВЬЕ · ЗНАНИЯ · РАЗВИТИЕ", "HEALTH · LEARNING · GROWTH")
+                )
             }
             IconButton(onClick = onProfile) {
                 Icon(Icons.Filled.AccountCircle, contentDescription = tr(language, "Профил", "Профиль", "Profile"), tint = Navy)
             }
         }
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(16.dp))
         Text(tr(language, "Салом", "Привет", "Hello") + ", " +
             nickname.ifBlank { tr(language, "Шаҳрванд", "Гражданин", "Citizen") } + "!",
-            color = Ink, fontSize = 21.sp, fontWeight = FontWeight.Bold)
-        Text(ageBandLabel(language, ageBand), color = Muted, fontSize = 10.sp)
-        Spacer(Modifier.height(12.dp))
+            color = Ink, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+        Text(ageBandLabel(language, ageBand), color = Muted, fontSize = 11.sp)
+        Spacer(Modifier.height(18.dp))
         Card(colors = CardDefaults.cardColors(containerColor = Navy), shape = RoundedCornerShape(20.dp)) {
-            Column(Modifier.fillMaxWidth().padding(17.dp)) {
-                Text(tr(language, "ПЕШРАФТИ ТУ", "ТВОЙ ПРОГРЕСС", "YOUR PROGRESS"), color = Color(0xFFDCE6ED), fontSize = 10.sp)
-                Text(totalXp.toString() + " XP", color = Color.White, fontSize = 32.sp, fontWeight = FontWeight.Black)
-                Text(tr(language, "Сатҳ", "Уровень", "Level") + " " + ProgressRules.levelFor(totalXp),
-                    color = Color(0xFFE7D4A8), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.height(9.dp))
-                LinearProgressIndicator(
-                    progress = { ProgressRules.levelProgress(totalXp) },
-                    modifier = Modifier.fillMaxWidth().height(8.dp).clip(CircleShape),
-                    color = Gold, trackColor = NavyLight
-                )
-                Text(tr(language, "То сатҳи дигар", "До следующего уровня", "Progress to next level") +
-                    ": " + ProgressRules.xpToNextLevel(totalXp) + " XP",
-                    color = Color(0xFFDCE6ED), fontSize = 10.sp, modifier = Modifier.padding(top = 5.dp))
+            Column(Modifier.fillMaxWidth().padding(18.dp)) {
+                Text(tr(language, "ҲАР РӮЗ ЯК ҚАДАМ ПЕШ", "КАЖДЫЙ ДЕНЬ — ШАГ ВПЕРЁД", "ONE STEP FORWARD EVERY DAY"),
+                    color = Color(0xFFDCE6ED), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(8.dp))
+                Text(tr(language, "Ҳаракат кун. Омӯз. Натиҷаи воқеӣ ҷамъ кун.",
+                    "Двигайся. Учись. Собирай реальные результаты.",
+                    "Move. Learn. Build real progress."),
+                    color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black, lineHeight = 27.sp)
+                Spacer(Modifier.height(8.dp))
+                Text(tr(language, "Масофа, машқ ва дониш бо далелҳо тасдиқ мешаванд. Холҳо танҳо баъди санҷиши сервер дода мешаванд.",
+                    "Дистанция, упражнения и обучение подтверждаются доказательствами. Очки начисляются только после проверки сервером.",
+                    "Distance, exercise, and learning are evidence-checked. XP is awarded only after server verification."),
+                    color = Color(0xFFDCE6ED), fontSize = 11.sp, lineHeight = 17.sp)
+                Spacer(Modifier.height(14.dp))
+                Button(onClick = onOpenMissions, modifier = Modifier.fillMaxWidth().height(48.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Gold), shape = RoundedCornerShape(12.dp)) {
+                    Text(tr(language, "Вазифаҳои имрӯзаро кушо", "Открыть задания на сегодня", "Open today's challenges"),
+                        color = Color.White, fontWeight = FontWeight.Bold)
+                }
             }
         }
-        Spacer(Modifier.height(10.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            SummaryCard(tr(language, "Имрӯз", "Сегодня", "Today"), completedToday.size.toString() + "/" + DAILY_TARGET.toString(), Modifier.weight(1f))
-            SummaryCard(tr(language, "Ҳамаи миссияҳо", "Всего заданий", "Completed"), totalCompleted.toString(), Modifier.weight(1f))
-        }
-        Spacer(Modifier.height(11.dp))
-        FinanceOverviewCard(language, financeEntries, onOpenFinance)
         Spacer(Modifier.height(14.dp))
-        Text(tr(language, "Қадами навбатӣ", "Следующий шаг", "Your next step"),
-            color = Navy, fontSize = 17.sp, fontWeight = FontWeight.Bold)
-        Text(tr(language, "Се кори хурд — пешрафти ҳаррӯза", "Три небольших дела — ежедневный прогресс", "Three small actions make a daily goal"),
-            color = Muted, fontSize = 11.sp)
-        missions.take(3).forEach { mission ->
-            MissionCard(language, mission, mission.id in completedToday, onComplete)
-        }
-        OutlinedButton(onClick = onOpenMissions, modifier = Modifier.fillMaxWidth()) {
-            Text(tr(language, "Ҳамаи миссияҳо", "Все задания", "All missions"))
-        }
-        if (catalogStatus.isNotBlank()) {
-            Text(if (isLoading) tr(language, "Навсозӣ…", "Обновление…", "Refreshing…") else catalogStatus,
-                color = Muted, fontSize = 9.sp, modifier = Modifier.padding(top = 7.dp))
+        FinanceOverviewCard(language, financeEntries, onOpenFinance)
+        Spacer(Modifier.height(12.dp))
+        Card(colors = CardDefaults.cardColors(containerColor = Color.White),
+            border = BorderStroke(1.dp, BorderTone), shape = RoundedCornerShape(16.dp)) {
+            Column(Modifier.fillMaxWidth().padding(14.dp)) {
+                Text(tr(language, "Чӣ гуна кор мекунад?", "Как это работает?", "How it works"),
+                    color = Navy, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Text(tr(language, "1. Вазифаро оғоз кун ва иҷозати заруриро деҳ.",
+                    "1. Начни задание и предоставь необходимое разрешение.",
+                    "1. Start a challenge and grant the required permission."),
+                    color = Muted, fontSize = 11.sp, modifier = Modifier.padding(top = 7.dp))
+                Text(tr(language, "2. Телефон далелҳоро маҳаллӣ ҷамъ мекунад; видео ба сервер намеравад.",
+                    "2. Телефон собирает доказательства локально; видео на сервер не отправляется.",
+                    "2. The phone collects evidence locally; video is never uploaded."),
+                    color = Muted, fontSize = 11.sp, modifier = Modifier.padding(top = 5.dp))
+                Text(tr(language, "3. Сервер меъёрҳоро месанҷад ва танҳо натиҷаи қабулшударо ба рейтинг илова мекунад.",
+                    "3. Сервер проверяет правила и добавляет в рейтинг только принятый результат.",
+                    "3. The server validates the rules and adds only accepted results to the leaderboard."),
+                    color = Muted, fontSize = 11.sp, modifier = Modifier.padding(top = 5.dp))
+            }
         }
     }
 }
