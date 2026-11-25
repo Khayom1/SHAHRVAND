@@ -19,6 +19,8 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.TaskAlt
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.NoteAlt
+import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -143,8 +145,14 @@ private fun ShahrvandApp() {
 
     var language by remember { mutableStateOf(prefs.getString("language", "tg") ?: "tg") }
     var ageBand by remember { mutableStateOf(prefs.getString("age_band", null)) }
-    var isAuthenticated by remember { mutableStateOf(prefs.getBoolean("auth_signed_in", false)) }
+    var accessToken by remember { mutableStateOf(prefs.getString("access_token", "") ?: "") }
+    var refreshToken by remember { mutableStateOf(prefs.getString("refresh_token", "") ?: "") }
+    var expiresAt by remember { mutableLongStateOf(prefs.getLong("session_expires_at", 0L)) }
+    var isAuthenticated by remember {
+        mutableStateOf(prefs.getBoolean("auth_signed_in", false) && accessToken.isNotBlank() && refreshToken.isNotBlank())
+    }
     var nickname by remember { mutableStateOf(prefs.getString("nickname", "") ?: "") }
+    var financeEntries by remember { mutableStateOf(emptyList<MoneyEntry>()) }
     var tab by remember { mutableIntStateOf(0) }
     var totalXp by remember { mutableIntStateOf(prefs.getInt("total_xp", 0)) }
     var totalCompleted by remember { mutableIntStateOf(prefs.getInt("total_completed", 0)) }
@@ -162,6 +170,42 @@ private fun ShahrvandApp() {
     val completedToday = remember {
         mutableStateListOf<String>().apply {
             addAll(prefs.getStringSet("completed_today", emptySet()) ?: emptySet())
+        }
+    }
+
+    suspend fun getValidAccessToken(): String {
+        if (accessToken.isBlank() || refreshToken.isBlank()) {
+            throw IllegalStateException("Сессияи корбар ёфт нашуд. Дубора ворид шавед.")
+        }
+        if (expiresAt <= System.currentTimeMillis() / 1000L + 120L) {
+            val tokens = SupabaseAuthRepository.refreshSession(refreshToken).getOrThrow()
+            accessToken = tokens.accessToken
+            refreshToken = tokens.refreshToken
+            expiresAt = tokens.expiresAt
+            prefs.edit()
+                .putString("access_token", accessToken)
+                .putString("refresh_token", refreshToken)
+                .putLong("session_expires_at", expiresAt)
+                .apply()
+        }
+        return accessToken
+    }
+
+    LaunchedEffect(isAuthenticated) {
+        if (isAuthenticated) {
+            val token = try {
+                getValidAccessToken()
+            } catch (_: Exception) {
+                prefs.edit().putBoolean("auth_signed_in", false)
+                    .remove("access_token").remove("refresh_token").remove("session_expires_at").apply()
+                accessToken = ""
+                refreshToken = ""
+                expiresAt = 0L
+                isAuthenticated = false
+                return@LaunchedEffect
+            }
+            runCatching { PersonalSpaceRepository.fetchMoneyEntries(token) }
+                .onSuccess { financeEntries = it }
         }
     }
 
@@ -217,8 +261,14 @@ private fun ShahrvandApp() {
             isAuthenticated = true
             ageBand = account.ageBand
             nickname = account.login
+            accessToken = account.accessToken
+            refreshToken = account.refreshToken
+            expiresAt = account.expiresAt
             prefs.edit()
                 .putBoolean("auth_signed_in", true)
+                .putString("access_token", account.accessToken)
+                .putString("refresh_token", account.refreshToken)
+                .putLong("session_expires_at", account.expiresAt)
                 .putString("auth_user_id", account.userId)
                 .putString("first_name", account.firstName)
                 .putString("last_name", account.lastName ?: "")
@@ -241,9 +291,13 @@ private fun ShahrvandApp() {
                     tr(language, "Асосӣ", "Главная", "Home"),
                     tr(language, "Миссияҳо", "Задания", "Missions"),
                     tr(language, "Пешрафт", "Прогресс", "Progress"),
-                    tr(language, "Оянда", "Будущее", "Future")
+                    tr(language, "Ёддошт", "Заметки", "Notes"),
+                    tr(language, "Молия", "Финансы", "Money")
                 )
-                val icons = listOf(Icons.Filled.Home, Icons.Filled.TaskAlt, Icons.Filled.EmojiEvents, Icons.Filled.Explore)
+                val icons = listOf(
+                    Icons.Filled.Home, Icons.Filled.TaskAlt, Icons.Filled.EmojiEvents,
+                    Icons.Filled.NoteAlt, Icons.Filled.AccountBalanceWallet
+                )
                 labels.forEachIndexed { index, label ->
                     NavigationBarItem(
                         selected = tab == index, onClick = { tab = index },
@@ -258,14 +312,21 @@ private fun ShahrvandApp() {
             when (tab) {
                 0 -> HomeScreen(
                     language, nickname, ageBand ?: "7_12", totalXp, totalCompleted,
-                    completedToday, missions, catalogStatus, isLoadingCatalog,
+                    completedToday, missions, catalogStatus, isLoadingCatalog, financeEntries,
                     onOpenMissions = { tab = 1 },
+                    onOpenFinance = { tab = 4 },
                     onComplete = ::finishMission,
                     onSettings = { settingsOpen = true }
                 )
                 1 -> MissionsScreen(language, missions, completedToday, onComplete = ::finishMission)
                 2 -> ProgressScreen(language, totalXp, totalCompleted, completedToday.size)
-                else -> FutureScreen(language, ageBand ?: "7_12", catalogStatus)
+                3 -> PersonalNotesScreen(
+                    language, prefs.getString("auth_user_id", "") ?: "", ::getValidAccessToken
+                )
+                else -> PersonalFinanceScreen(
+                    language, prefs.getString("auth_user_id", "") ?: "",
+                    financeEntries, { financeEntries = it }, ::getValidAccessToken
+                )
             }
         }
     }
@@ -284,6 +345,10 @@ private fun ShahrvandApp() {
             onReset = {
                 prefs.edit().clear().apply()
                 isAuthenticated = false
+                accessToken = ""
+                refreshToken = ""
+                expiresAt = 0L
+                financeEntries = emptyList()
                 language = "tg"
                 nickname = ""
                 ageBand = null
@@ -430,7 +495,9 @@ private fun HomeScreen(
     missions: List<Mission>,
     catalogStatus: String,
     isLoading: Boolean,
+    financeEntries: List<MoneyEntry>,
     onOpenMissions: () -> Unit,
+    onOpenFinance: () -> Unit,
     onComplete: (Mission) -> Unit,
     onSettings: () -> Unit
 ) {
@@ -472,6 +539,8 @@ private fun HomeScreen(
             SummaryCard(tr(language, "Имрӯз", "Сегодня", "Today"), completedToday.size.toString() + "/" + DAILY_TARGET.toString(), Modifier.weight(1f))
             SummaryCard(tr(language, "Ҳамаи миссияҳо", "Всего заданий", "Completed"), totalCompleted.toString(), Modifier.weight(1f))
         }
+        Spacer(Modifier.height(11.dp))
+        FinanceOverviewCard(language, financeEntries, onOpenFinance)
         Spacer(Modifier.height(14.dp))
         Text(tr(language, "Қадами навбатӣ", "Следующий шаг", "Your next step"),
             color = Navy, fontSize = 17.sp, fontWeight = FontWeight.Bold)
