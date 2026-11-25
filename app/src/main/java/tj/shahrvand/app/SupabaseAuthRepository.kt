@@ -13,7 +13,9 @@ data class ShahrvandAccount(
     val firstName: String,
     val lastName: String?,
     val age: Int,
-    val login: String
+    val login: String,
+    val refreshToken: String,
+    val expiresAt: Long
 ) {
     val ageBand: String
         get() = when {
@@ -22,6 +24,12 @@ data class ShahrvandAccount(
             else -> "18_plus"
         }
 }
+
+data class ShahrvandTokens(
+    val accessToken: String,
+    val refreshToken: String,
+    val expiresAt: Long
+)
 
 object SupabaseAuthRepository {
     private const val TAG = "ShahrvandAuth"
@@ -79,6 +87,28 @@ object SupabaseAuthRepository {
             }.onFailure { Log.w(TAG, "Sign in failed", it) }
         }
 
+    suspend fun refreshSession(refreshToken: String): Result<ShahrvandTokens> = withContext(Dispatchers.IO) {
+        runCatching {
+            require(refreshToken.isNotBlank()) { "Сессия ба охир расид. Дубора ворид шавед." }
+            val response = request(
+                "/auth/v1/token?grant_type=refresh_token",
+                "POST",
+                JSONObject().put("refresh_token", refreshToken),
+                authenticated = false
+            )
+            val access = response.optString("access_token")
+            val refresh = response.optString("refresh_token")
+            val expires = response.optLong(
+                "expires_at",
+                System.currentTimeMillis() / 1000L + response.optLong("expires_in", 3600L)
+            )
+            if (access.isBlank() || refresh.isBlank()) {
+                throw IllegalStateException("Supabase сессияи навро барнагардонд.")
+            }
+            ShahrvandTokens(access, refresh, expires)
+        }.onFailure { Log.w(TAG, "Session refresh failed", it) }
+    }
+
     private fun signInInternal(login: String, password: String): ShahrvandAccount {
         val response = request(
             AUTH_FUNCTION,
@@ -101,9 +131,14 @@ object SupabaseAuthRepository {
         val session = response.optJSONObject("session")
             ?: throw IllegalStateException("Сессияи воридшавӣ сохта нашуд.")
         val accessToken = session.optString("access_token")
+        val refreshToken = session.optString("refresh_token")
+        val expiresAt = session.optLong(
+            "expires_at",
+            System.currentTimeMillis() / 1000L + session.optLong("expires_in", 3600L)
+        )
         val userId = profile.optString("id")
             .ifBlank { session.optJSONObject("user")?.optString("id").orEmpty() }
-        if (accessToken.isBlank() || userId.isBlank()) {
+        if (accessToken.isBlank() || refreshToken.isBlank() || userId.isBlank()) {
             throw IllegalStateException("Supabase сессияи дурустро барнагардонд.")
         }
         return ShahrvandAccount(
@@ -112,7 +147,9 @@ object SupabaseAuthRepository {
             firstName = profile.optString("first_name"),
             lastName = profile.optString("last_name").takeIf { it.isNotBlank() && it != "null" },
             age = profile.optInt("age"),
-            login = profile.optString("login", fallbackLogin)
+            login = profile.optString("login", fallbackLogin),
+            refreshToken = refreshToken,
+            expiresAt = expiresAt
         )
     }
 
