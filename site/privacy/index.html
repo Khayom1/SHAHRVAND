@@ -30,6 +30,7 @@
   <h2>1. Маълумоте, ки ҷамъоварӣ мешавад</h2>
   <p>Ҳангоми регистрация ном, насаб (ихтиёрӣ), синну сол ва логини интихобшуда ба Supabase фиристода шуда, дар профили корбар нигоҳ дошта мешаванд. Паролро танҳо Supabase Auth коркард ва ҳифз мекунад; он дар ҷадвали профил нигоҳ дошта намешавад. Барои сохтани ҳисоби дохилӣ логин ба нишонии техникии хизматрасонӣ пайваст мешавад, аммо корбар email ё рақами телефон ворид намекунад ва паём намегирад.</p>
   <p>Ёддошт ва нақшаҳо метавонанд матни шахсӣ дошта бошанд. Сабтҳои молиявӣ маблағ, навъи амалиёт (даромад ё хароҷот), категория, сана ва шарҳи ихтиёриро дар бар мегиранд. Ин маълумот ба Supabase фиристода мешавад. Дар телефон забони интерфейс, XP, шумораи миссияҳои иҷрошуда ва рӯйхати миссияҳои имрӯз нигоҳ дошта мешаванд.</p>
+  <p><strong>Маълумоти хоб:</strong> агар корбар бахши «Хоб»-ро пайваст кунад, барнома бо иҷозати алоҳидаи READ_SLEEP сабтҳои хобро аз Health Connect мехонад. Давомнокии сессия, вақтҳои оғозу анҷом ва марҳилаҳои сабтшудаи хоб танҳо дар дохили телефон коркард мешаванд; ин сабтҳо ба Supabase ё сервери SHAHRVAND фиристода намешаванд. Танҳо холҳои шахсӣ ва нишонаи он ки мукофоти ҳамон шаб дода шудааст, дар хотираи маҳаллии барнома нигоҳ дошта мешаванд. Иҷозатро ҳар вақт аз танзимоти Health Connect бозхонд кардан мумкин аст.</p>
 
   <h2>2. Пайвасти шабакавӣ ва амният</h2>
   <div class="panel">
@@ -40,8 +41,9 @@
 
   <h2>3. Иҷозатҳо ва хусусиятҳои истифода нашаванда</h2>
   <ul>
-    <li>Ҷойгиршавии дақиқ ё GPS ҷамъоварӣ намешавад.</li>
-    <li>Дастрасӣ ба камера, микрофон, алоқаҳо, SMS ё файлҳо дархост намешавад.</li>
+    <li>GPS ва камера танҳо ҳангоми оғоз кардани вазифаи дахлдори ҳаракат ё машқи поза, бо иҷозати алоҳида истифода мешаванд.</li>
+    <li>READ_STEPS ва READ_SLEEP танҳо баъди интихоби корбар ва иҷозати Health Connect хонда мешаванд; маълумоти хоб ба сервер фиристода намешавад.</li>
+    <li>Микрофон, алоқаҳо ва SMS истифода намешаванд.</li>
     <li>Акс ё видео ба сервер бор карда намешавад.</li>
     <li>Чат, паёмҳои шахсӣ, реклама, таблиғоти мақсаднок ё SDK-и таҳлили рафтор вуҷуд надоранд.</li>
     <li>Рейтинг ва натиҷаҳои оммавии корбарон дар V1 фаъол нестанд.</li>
@@ -70,6 +72,7 @@
   <h2>1. Data collected</h2>
   <p>During registration, first name, optional last name, age, and chosen username are sent to Supabase and stored in the user's profile. Supabase Auth handles and protects the password; it is not stored in the profile table. The service creates an internal technical email identity from the username, but users do not enter a real email address or phone number and do not receive email.</p>
   <p>Notes and plans may contain personal text. Financial records include the amount, income/expense type, category, date, and optional comment. These records are sent to Supabase. Interface language, XP, completed mission count, and today's completed mission IDs remain in app-private local storage.</p>
+  <p><strong>Sleep data:</strong> if a user connects the Sleep section, the app reads sleep records from Health Connect after the separate READ_SLEEP permission is granted. Sleep-session duration, start/end times, and recorded stages are processed locally on the device; these records are not sent to Supabase or the SHAHRVAND server. Only personal XP and a local marker that the reward for that night has already been issued are stored in app-private storage. The permission can be revoked at any time in Health Connect settings.</p>
   <h2>2. Network access and security</h2>
   <div class="panel">
     <p>All users must create an account. Registration and sign-in requests are sent to a Supabase Edge Function. A hashed IP value is used for rate limiting to reduce abusive attempts; it is not used to create a profile or leaderboard.</p>
@@ -78,8 +81,9 @@
   </div>
   <h2>3. Permissions and features not used</h2>
   <ul>
-    <li>No precise location or GPS collection.</li>
-    <li>No camera, microphone, contacts, SMS, or file access is requested.</li>
+    <li>GPS and camera permissions are used only when a user starts the corresponding location-based or pose-exercise task.</li>
+    <li>READ_STEPS and READ_SLEEP data are read from Health Connect only after the user grants permission; sleep records are not uploaded to the server.</li>
+    <li>No microphone, contacts, or SMS access is used.</li>
     <li>No photo or video is uploaded to a server.</li>
     <li>No chat, direct messages, advertising, targeted ads, or behavioural analytics SDKs.</li>
     <li>No public leaderboard or user-to-user ranking in V1.</li>
@@ -102,6 +106,7 @@
   <h2>1. Собираемые данные</h2>
   <p>При регистрации имя, необязательная фамилия, возраст и выбранный логин отправляются в Supabase и сохраняются в профиле пользователя. Пароль обрабатывается и защищается Supabase Auth; в таблице профилей он не хранится. Сервис создаёт внутреннюю техническую email-идентичность на основе логина, но пользователь не вводит настоящий email или номер телефона и не получает письма.</p>
   <p>Заметки и планы могут содержать личный текст. Финансовые записи включают сумму, тип операции, категорию, дату и необязательный комментарий; эти данные отправляются в Supabase. Язык интерфейса, XP, число выполненных заданий и список заданий за сегодня хранятся локально.</p>
+  <p><strong>Данные о сне:</strong> если пользователь подключает раздел «Сон», приложение после отдельного разрешения READ_SLEEP читает записи сна из Health Connect. Продолжительность сеанса, время начала и окончания, а также записанные стадии сна обрабатываются только локально на устройстве; эти записи не отправляются в Supabase или на сервер SHAHRVAND. В локальном хранилище приложения остаются только личные XP и отметка о том, что награда за эту ночь уже начислена. Разрешение можно отозвать в настройках Health Connect.</p>
   <h2>2. Сеть и безопасность</h2>
   <div class="panel">
     <p>Регистрация обязательна для всех пользователей. Запросы регистрации и входа отправляются в Supabase Edge Function. Хеш IP используется для ограничения частоты попыток и защиты от злоупотреблений; он не используется для создания профиля или рейтинга.</p>
@@ -110,8 +115,9 @@
   </div>
   <h2>3. Разрешения и функции, которые не используются</h2>
   <ul>
-    <li>Точное местоположение и GPS не собираются.</li>
-    <li>Камера, микрофон, контакты, SMS и доступ к файлам не запрашиваются.</li>
+    <li>GPS и камера используются только после разрешения пользователя при запуске соответствующего задания с геолокацией или упражнением на позу.</li>
+    <li>Данные READ_STEPS и READ_SLEEP читаются из Health Connect только после согласия пользователя; записи сна не загружаются на сервер.</li>
+    <li>Микрофон, контакты и SMS не используются.</li>
     <li>Фотографии и видео на сервер не загружаются.</li>
     <li>Нет чата, личных сообщений, рекламы, таргетированной рекламы и SDK поведенческой аналитики.</li>
     <li>В V1 нет публичного рейтинга или сравнения пользователей.</li>
