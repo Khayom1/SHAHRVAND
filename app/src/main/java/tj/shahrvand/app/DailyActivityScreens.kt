@@ -75,7 +75,7 @@ import kotlin.math.min
 import kotlin.math.roundToInt
 
 private const val ACTIVITY_ZONE = "Asia/Dushanbe"
-private val A_Navy: Color @Composable get() = LocalShahrvandPalette.current.navy
+private val A_Navy: Color @Composable get() = LocalShahrvandPalette.current.navyText
 private val A_NavyText: Color @Composable get() = LocalShahrvandPalette.current.navyText
 private val A_Gold: Color @Composable get() = LocalShahrvandPalette.current.gold
 private val A_Green: Color @Composable get() = LocalShahrvandPalette.current.green
@@ -902,12 +902,34 @@ private fun ActivitySessionDialog(
         pose -> repsReached && timeReady && !timedOut && poseMetrics.frames >= 30
         else -> elapsed >= 1200 && foregroundMs >= 1200000L && quizStarted && quizAnswers.size == 5
     }
+    val readinessProgress = when {
+        gps -> (distance.toFloat() / task.distanceM.coerceAtLeast(1)).coerceIn(0f, 1f)
+        pose -> (poseMetrics.reps.toFloat() / task.reps.coerceAtLeast(1)).coerceIn(0f, 1f)
+        else -> (foregroundMs.toFloat() / 1200000f).coerceIn(0f, 1f)
+    }
+    val readinessText = when {
+        gps -> aTr(language,
+            "Масофа: ${distance.toInt()}/${task.distanceM} м · GPS: $gpsSamples/12 · вақт: ${elapsed}/${task.minDurationSec} сония",
+            "Дистанция: ${distance.toInt()}/${task.distanceM} м · GPS: $gpsSamples/12 · время: ${elapsed}/${task.minDurationSec} сек.",
+            "Distance: ${distance.toInt()}/${task.distanceM} m · GPS: $gpsSamples/12 · time: ${elapsed}/${task.minDurationSec} sec")
+        pose -> aTr(language,
+            "Ҳаракат: ${poseMetrics.reps}/${task.reps} · кадрҳои камера: ${poseMetrics.frames}/30",
+            "Повторы: ${poseMetrics.reps}/${task.reps} · кадры камеры: ${poseMetrics.frames}/30",
+            "Reps: ${poseMetrics.reps}/${task.reps} · camera frames: ${poseMetrics.frames}/30")
+        else -> aTr(language,
+            "Омӯзиши фаъол: ${foregroundMs / 60000L}/20 дақ. · ҷавобҳо: ${quizAnswers.size}/5",
+            "Активное обучение: ${foregroundMs / 60000L}/20 мин. · ответы: ${quizAnswers.size}/5",
+            "Active learning: ${foregroundMs / 60000L}/20 min · answers: ${quizAnswers.size}/5")
+    }
 
     AlertDialog(
         onDismissRequest = {},
         title = { Text(task.title(language), color=A_NavyText, fontWeight=FontWeight.Bold) },
         text = {
-            Column(Modifier.fillMaxWidth().heightIn(max=540.dp), verticalArrangement=Arrangement.spacedBy(9.dp)) {
+            Column(
+                Modifier.fillMaxWidth().heightIn(max = 540.dp).verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(9.dp)
+            ) {
                 if (gps) {
                     Text("%02d:%02d".format(elapsed/60,elapsed%60),fontSize=28.sp,color=A_Navy,fontWeight=FontWeight.Black)
                     Text("%.2f / %.2f km".format(java.util.Locale.US,distance/1000.0,task.distanceM/1000.0),fontSize=20.sp,color=A_Green,fontWeight=FontWeight.Bold)
@@ -929,6 +951,21 @@ private fun ActivitySessionDialog(
                     Text(aTr(language,"Вақт: $elapsed / ${task.limitSec} сония","Время: $elapsed / ${task.limitSec} секунд","Time: $elapsed / ${task.limitSec} seconds"),fontWeight=FontWeight.Bold,color=A_Green)
                 } else {
                     LearningPanel(language, interestCodes, foregroundMs/1000L, quizStarted, {quizStarted=true}, quizAnswers, {i,v->quizAnswers=quizAnswers+(i to v)})
+                }
+                LinearProgressIndicator(
+                    progress = { readinessProgress },
+                    modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(8.dp)),
+                    color = A_Green,
+                    trackColor = LocalShahrvandPalette.current.surfaceVariant
+                )
+                Text(readinessText, color = A_Muted, fontSize = 10.sp, lineHeight = 14.sp)
+                if (timedOut) {
+                    Text(
+                        aTr(language, "Мӯҳлати иҷро гузашт. Сессияро бекор карда, аз нав оғоз кун.",
+                            "Время вышло. Отмени сессию и начни заново.",
+                            "The time limit expired. Cancel this session and start again."),
+                        color = MaterialTheme.colorScheme.error, fontSize = 10.sp
+                    )
                 }
                 if(status.isNotBlank()) Text(status,color=MaterialTheme.colorScheme.error,fontSize=11.sp)
             }
@@ -970,7 +1007,13 @@ private fun ActivitySessionDialog(
                     finally{submitting=false}
                 }
             },enabled=canSubmit && !submitting) {
-                Text(if(submitting) "…" else aTr(language,"Санҷидан","Проверить","Submit for verification"))
+                Text(
+                    when {
+                        submitting -> "…"
+                        canSubmit -> aTr(language, "Санҷидан ва сабт", "Проверить и сохранить", "Verify and save")
+                        else -> aTr(language, "Аввал меъёрҳоро иҷро кун", "Сначала выполни условия", "Complete the criteria first")
+                    }
+                )
             }
         },
         dismissButton = {
