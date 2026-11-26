@@ -47,7 +47,7 @@ private val Navy = Color(0xFF183247)
 private val NavyLight = Color(0xFF315A72)
 private val Gold = Color(0xFFC8954A)
 private val Green = Color(0xFF2F7969)
-private val Page = Color(0xFFF3F6F8)
+private val Page = Color(0xFFF1F6FA)
 private val Ink = Color(0xFF1D2C38)
 private val Muted = Color(0xFF687987)
 private val BorderTone = Color(0xFFE0E7EC)
@@ -895,11 +895,12 @@ private fun HomePillarCard(
     Card(
         modifier = modifier,
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        border = BorderStroke(1.dp, BorderTone),
-        shape = RoundedCornerShape(17.dp)
+        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.96f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 7.dp),
+        shape = RoundedCornerShape(21.dp)
     ) {
         Column(
-            Modifier.fillMaxWidth().padding(horizontal = 9.dp, vertical = 12.dp),
+            Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 13.dp),
             verticalArrangement = Arrangement.spacedBy(5.dp)
         ) {
             Text(icon, fontSize = 22.sp)
@@ -919,12 +920,13 @@ private fun HomeShortcutCard(
 ) {
     Card(
         modifier = modifier.clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        border = BorderStroke(1.dp, BorderTone),
-        shape = RoundedCornerShape(17.dp)
+        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.82f)),
+        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.96f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+        shape = RoundedCornerShape(21.dp)
     ) {
         Row(
-            Modifier.fillMaxWidth().padding(13.dp),
+            Modifier.fillMaxWidth().padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
@@ -945,7 +947,13 @@ private fun HomeShortcutCard(
 
 @Composable
 private fun SummaryCard(label: String, value: String, modifier: Modifier = Modifier) {
-    Card(modifier = modifier, colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(14.dp)) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.84f)),
+        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.96f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+        shape = RoundedCornerShape(18.dp)
+    ) {
         Column(Modifier.fillMaxWidth().padding(13.dp)) {
             Text(label, color = Muted, fontSize = 10.sp)
             Text(value, color = Navy, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
@@ -979,9 +987,10 @@ private fun MissionsScreen(
 @Composable
 private fun MissionCard(language: String, mission: Mission, completed: Boolean, onComplete: (Mission) -> Unit) {
     Card(
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        shape = RoundedCornerShape(15.dp),
-        border = BorderStroke(1.dp, if (completed) Green.copy(alpha = .35f) else BorderTone)
+        colors = CardDefaults.cardColors(containerColor = if (completed) Color(0xFFEAF5EF).copy(alpha = 0.92f) else Color.White.copy(alpha = 0.84f)),
+        shape = RoundedCornerShape(21.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 7.dp),
+        border = BorderStroke(1.dp, if (completed) Green.copy(alpha = .42f) else Color.White.copy(alpha = 0.96f))
     ) {
         Column(Modifier.fillMaxWidth().padding(13.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1025,7 +1034,12 @@ private fun ProgressScreen(language: String, xp: Int, completed: Int, doneToday:
         BrandHeader(tr(language, "Пешрафти ман", "Мой прогресс", "My progress"),
             tr(language, "Натиҷаи шахсӣ — бе мусобиқаи сунъӣ", "Личный результат — без искусственного соревнования", "Personal progress, without fake competition"))
         Spacer(Modifier.height(14.dp))
-        Card(colors = CardDefaults.cardColors(containerColor = Navy), shape = RoundedCornerShape(18.dp)) {
+        Card(
+            colors = CardDefaults.cardColors(containerColor = Navy),
+            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.30f)),
+            elevation = CardDefaults.cardElevation(defaultElevation = 9.dp),
+            shape = RoundedCornerShape(24.dp)
+        ) {
             Column(Modifier.fillMaxWidth().padding(16.dp)) {
                 Text(tr(language, "ҲОЛҲОИ ҶАМЪШУДА", "НАКОПЛЕННЫЕ ОЧКИ", "TOTAL POINTS"), color = Color(0xFFDCE6ED), fontSize = 10.sp)
                 Text("$xp XP", color = Color.White, fontSize = 31.sp, fontWeight = FontWeight.Black)
