@@ -40,8 +40,8 @@ private val SpaceGold = Color(0xFFB98A50)
 private val SpaceGreen = Color(0xFF36766D)
 private val SpaceRed = Color(0xFFB45D50)
 private val SpaceMuted = Color(0xFF777F7E)
-private val SpaceBorder = Color(0xFFE4D9C8)
-private val SpacePage = Color(0xFFF4EFE5)
+private val SpaceBorder = Color(0xFFDDE7EF)
+private val SpacePage = Color(0xFFF2F7FB)
 
 private fun spaceTr(lang: String, tg: String, ru: String, en: String): String = when (lang) {
     "ru" -> ru
@@ -363,6 +363,79 @@ fun FinanceOverviewCard(
 }
 
 @Composable
+fun PersonalSpaceHubScreen(
+    language: String,
+    userId: String,
+    initialSection: String,
+    entries: List<MoneyEntry>,
+    onEntriesChanged: (List<MoneyEntry>) -> Unit,
+    getAccessToken: suspend () -> String,
+    onBack: () -> Unit
+) {
+    var section by remember { mutableStateOf(initialSection) }
+    LaunchedEffect(initialSection) {
+        section = if (initialSection == "budget") "budget" else "notes"
+    }
+
+    Column(
+        Modifier.fillMaxSize().background(SpacePage)
+    ) {
+        Column(
+            Modifier.fillMaxWidth().padding(horizontal = 15.dp, vertical = 6.dp),
+            verticalArrangement = Arrangement.spacedBy(3.dp)
+        ) {
+            TextButton(
+                onClick = onBack,
+                contentPadding = PaddingValues(horizontal = 2.dp, vertical = 2.dp)
+            ) {
+                Text("‹ " + spaceTr(language, "Асосӣ", "Главная", "Home"), color = SpaceGold, fontWeight = FontWeight.Bold)
+            }
+            Text(
+                spaceTr(language, "МАРКАЗИ ШАХСӢ", "ЛИЧНОЕ ПРОСТРАНСТВО", "PERSONAL SPACE"),
+                color = SpaceGold, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold
+            )
+            Text(
+                spaceTr(language, "Ёддоштҳо ва буҷет", "Заметки и бюджет", "Notes and budget"),
+                color = SpaceNavy, fontSize = 21.sp, fontWeight = FontWeight.Black
+            )
+        }
+        Surface(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 15.dp, vertical = 5.dp),
+            shape = RoundedCornerShape(20.dp),
+            color = Color.White.copy(alpha = 0.78f),
+            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.96f)),
+            shadowElevation = 7.dp
+        ) {
+            SingleChoiceSegmentedButtonRow(
+                Modifier.fillMaxWidth().padding(5.dp)
+            ) {
+                SegmentedButton(
+                    selected = section == "notes",
+                    onClick = { section = "notes" },
+                    shape = SegmentedButtonDefaults.itemShape(0, 2)
+                ) {
+                    Text(spaceTr(language, "Ёддоштҳо", "Заметки", "Notes"), fontSize = 11.sp)
+                }
+                SegmentedButton(
+                    selected = section == "budget",
+                    onClick = { section = "budget" },
+                    shape = SegmentedButtonDefaults.itemShape(1, 2)
+                ) {
+                    Text(spaceTr(language, "Буҷет", "Бюджет", "Budget"), fontSize = 11.sp)
+                }
+            }
+        }
+        Box(Modifier.weight(1f).fillMaxWidth()) {
+            if (section == "notes") {
+                PersonalNotesScreen(language, userId, getAccessToken)
+            } else {
+                PersonalFinanceScreen(language, userId, entries, onEntriesChanged, getAccessToken)
+            }
+        }
+    }
+}
+
+@Composable
 fun PersonalNotesScreen(
     language: String,
     userId: String,
@@ -391,7 +464,7 @@ fun PersonalNotesScreen(
 
     LaunchedEffect(userId) { reload() }
 
-    Column(Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 13.dp)) {
+    Column(Modifier.fillMaxSize().background(SpacePage).padding(horizontal = 16.dp, vertical = 13.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(spaceTr(language, "Ёддоштҳо ва рӯйдодҳо", "Заметки и события", "Notes and events"),
@@ -412,7 +485,12 @@ fun PersonalNotesScreen(
                 CircularProgressIndicator(color = SpaceNavy)
             }
         } else if (notes.isEmpty()) {
-            Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(16.dp)) {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.84f)),
+                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.96f)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+                shape = RoundedCornerShape(22.dp)
+            ) {
                 Column(Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("📝", fontSize = 38.sp)
                     Text(spaceTr(language, "Ҳоло ёддошт нест", "Пока нет заметок", "No notes yet"),
@@ -426,8 +504,12 @@ fun PersonalNotesScreen(
         } else {
             LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(bottom = 16.dp)) {
                 items(notes, key = { it.id }) { note ->
-                    Card(colors = CardDefaults.cardColors(containerColor = Color.White),
-                        border = BorderStroke(1.dp, SpaceBorder), shape = RoundedCornerShape(15.dp)) {
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.86f)),
+                        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.96f)),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 5.dp),
+                        shape = RoundedCornerShape(20.dp)
+                    ) {
                         Column(Modifier.fillMaxWidth().padding(13.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(noteKindTitle(language, note.kind), color = SpaceGold, fontSize = 10.sp, fontWeight = FontWeight.Bold)
@@ -576,7 +658,7 @@ fun PersonalFinanceScreen(
     val balance = income - expense
     val visibleEntries = entries.filter { filter == "all" || it.entryType == filter }
 
-    Column(Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 12.dp)) {
+    Column(Modifier.fillMaxSize().background(SpacePage).padding(horizontal = 16.dp, vertical = 12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(spaceTr(language, "Даромад ва хароҷот", "Доходы и расходы", "Income and expenses"),
@@ -589,12 +671,17 @@ fun PersonalFinanceScreen(
             }
         }
         Spacer(Modifier.height(10.dp))
-        Card(colors = CardDefaults.cardColors(containerColor = SpaceNavy), shape = RoundedCornerShape(17.dp)) {
+        Card(
+            colors = CardDefaults.cardColors(containerColor = SpaceNavy),
+            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.30f)),
+            elevation = CardDefaults.cardElevation(defaultElevation = 9.dp),
+            shape = RoundedCornerShape(24.dp)
+        ) {
             Column(Modifier.fillMaxWidth().padding(14.dp)) {
                 Text(spaceTr(language, "ҶАМЪБАСТИ МОҲ", "ИТОГО ЗА МЕСЯЦ", "MONTHLY TOTAL"),
                     color = Color(0xFFDCE6ED), fontSize = 10.sp)
                 Text(spaceTr(language, "Бақия", "Баланс", "Balance") + ": " + formatSomoni(balance) + " с.",
-                    color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Black)
+                    color = Color.White, fontSize = 25.sp, fontWeight = FontWeight.Black)
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Column(Modifier.weight(1f)) {
                         Text(spaceTr(language, "Даромад", "Доходы", "Income"), color = Color(0xFFB7E1D2), fontSize = 10.sp)
@@ -609,9 +696,37 @@ fun PersonalFinanceScreen(
                 val total = maxOf(income, expense, 1.0)
                 LinearProgressIndicator(
                     progress = { (income / total).toFloat().coerceIn(0f, 1f) },
-                    modifier = Modifier.fillMaxWidth().height(8.dp),
+                    modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(10.dp)),
                     color = SpaceGreen, trackColor = SpaceRed
                 )
+                Spacer(Modifier.height(10.dp))
+                Canvas(Modifier.fillMaxWidth().height(74.dp)) {
+                    val baseY = size.height - 4f
+                    val maxBar = size.height - 12f
+                    val barWidth = size.width * 0.19f
+                    val incomeHeight = (income / total).toFloat().coerceIn(0f, 1f) * maxBar
+                    val expenseHeight = (expense / total).toFloat().coerceIn(0f, 1f) * maxBar
+                    val incomeX = size.width * 0.24f
+                    val expenseX = size.width * 0.58f
+                    drawRoundRect(
+                        color = Color(0xFF83CDB2),
+                        topLeft = Offset(incomeX, baseY - incomeHeight.coerceAtLeast(4f)),
+                        size = Size(barWidth, incomeHeight.coerceAtLeast(4f)),
+                        cornerRadius = CornerRadius(16f, 16f)
+                    )
+                    drawRoundRect(
+                        color = Color(0xFFE48C80),
+                        topLeft = Offset(expenseX, baseY - expenseHeight.coerceAtLeast(4f)),
+                        size = Size(barWidth, expenseHeight.coerceAtLeast(4f)),
+                        cornerRadius = CornerRadius(16f, 16f)
+                    )
+                    drawLine(
+                        color = Color.White.copy(alpha = 0.38f),
+                        start = Offset(size.width * 0.12f, baseY),
+                        end = Offset(size.width * 0.88f, baseY),
+                        strokeWidth = 2f
+                    )
+                }
             }
         }
         Row(Modifier.fillMaxWidth().padding(vertical = 9.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -631,7 +746,12 @@ fun PersonalFinanceScreen(
                 CircularProgressIndicator(color = SpaceNavy)
             }
         } else if (visibleEntries.isEmpty()) {
-            Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(15.dp)) {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.84f)),
+                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.96f)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+                shape = RoundedCornerShape(21.dp)
+            ) {
                 Column(Modifier.fillMaxWidth().padding(22.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("📊", fontSize = 35.sp)
                     Text(spaceTr(language, "Ҳоло ягон сабт нест", "Пока нет записей", "No records yet"),
@@ -645,8 +765,12 @@ fun PersonalFinanceScreen(
         } else {
             LazyColumn(verticalArrangement = Arrangement.spacedBy(7.dp), contentPadding = PaddingValues(bottom = 16.dp)) {
                 items(visibleEntries, key = { it.id }) { entry ->
-                    Card(colors = CardDefaults.cardColors(containerColor = Color.White),
-                        border = BorderStroke(1.dp, SpaceBorder), shape = RoundedCornerShape(13.dp)) {
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.86f)),
+                        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.96f)),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 5.dp),
+                        shape = RoundedCornerShape(19.dp)
+                    ) {
                         Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                             Text((expenseCategories + incomeCategories).firstOrNull { it.code == entry.category }?.icon ?: "📦",
                                 fontSize = 22.sp)
