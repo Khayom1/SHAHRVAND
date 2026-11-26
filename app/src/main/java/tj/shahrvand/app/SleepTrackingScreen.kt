@@ -73,7 +73,8 @@ private data class SleepNight(
     val end: Instant,
     val minutes: Long,
     val sourcePackage: String,
-    val hasStages: Boolean
+    val hasStages: Boolean,
+    val isManual: Boolean
 )
 
 private object SleepHealthConnectRepository {
@@ -107,9 +108,6 @@ private object SleepHealthConnectRepository {
         )
 
         val candidates = response.records.mapNotNull { record ->
-            if (record.metadata.recordingMethod == Metadata.RECORDING_METHOD_MANUAL_ENTRY) {
-                return@mapNotNull null
-            }
             if (record.endTime.isAfter(now)) return@mapNotNull null
 
             val minutes = if (record.stages.isEmpty()) {
@@ -132,7 +130,8 @@ private object SleepHealthConnectRepository {
                 end = record.endTime,
                 minutes = minutes,
                 sourcePackage = record.metadata.dataOrigin.packageName,
-                hasStages = record.stages.isNotEmpty()
+                hasStages = record.stages.isNotEmpty(),
+                isManual = record.metadata.recordingMethod == Metadata.RECORDING_METHOD_MANUAL_ENTRY
             )
         }
 
@@ -342,6 +341,16 @@ fun SleepTrackingScreen(
                             sleepTr(language, "Марҳилаҳо дастрас нестанд; вақти сессия истифода шуд.", "Стадии недоступны; использовано время сессии.", "Stages are unavailable; session duration is used."),
                         color = SLEEP_MUTED, fontSize = 10.sp
                     )
+                    if (latest.isManual) {
+                        Text(
+                            sleepTr(language,
+                                "Ин вақти тахминӣ ё аз тарафи корбар тасдиқшуда аст.",
+                                "Это примерное время или время, подтверждённое пользователем.",
+                                "This is an estimated or user-confirmed sleep time."
+                            ),
+                            color = SLEEP_GOLD, fontSize = 10.sp
+                        )
+                    }
                     HorizontalDivider(color = SLEEP_BORDER)
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
