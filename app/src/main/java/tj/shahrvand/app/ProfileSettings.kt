@@ -110,9 +110,9 @@ internal fun ShahrvandProfileScreen(
         Card(
             modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
             shape = RoundedCornerShape(27.dp),
-            colors = CardDefaults.cardColors(containerColor = ProfileNavy),
-            border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.32f)),
-            elevation = CardDefaults.cardElevation(defaultElevation = 11.dp)
+            colors = CardDefaults.cardColors(containerColor = LocalShahrvandPalette.current.surface),
+            border = androidx.compose.foundation.BorderStroke(1.dp, ProfileBorder),
+            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
         ) {
             Column(
                 Modifier.fillMaxWidth().padding(20.dp),
@@ -121,22 +121,22 @@ internal fun ShahrvandProfileScreen(
                 val initials = (firstName.trim().firstOrNull()?.uppercase() ?: "Ш") +
                     (lastName.trim().firstOrNull()?.uppercase() ?: "")
                 Box(
-                    Modifier.size(76.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.15f)),
+                    Modifier.size(66.dp).clip(CircleShape).background(LocalShahrvandPalette.current.surfaceVariant),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(initials, color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Black)
+                    Text(initials, color = ProfileNavyText, fontSize = 25.sp, fontWeight = FontWeight.Black)
                 }
                 Spacer(Modifier.height(12.dp))
                 Text(
                     listOf(firstName.trim(), lastName.trim()).filter { it.isNotBlank() }.joinToString(" ")
                         .ifBlank { profileTr(language, "Шаҳрванд", "Гражданин", "Citizen") },
-                    color = Color.White,
-                    fontSize = 21.sp,
+                    color = ProfileNavyText,
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center
                 )
-                Text("@$login", color = Color(0xFFE7D4A8), fontSize = 13.sp)
-                Text(profileAgeLabel(language, age), color = Color(0xFFDCE6ED), fontSize = 12.sp)
+                Text("@$login", color = ProfileMuted, fontSize = 12.sp)
+                Text(profileAgeLabel(language, age), color = ProfileMuted, fontSize = 11.sp)
             }
         }
 
@@ -161,7 +161,7 @@ internal fun ShahrvandProfileScreen(
             shape = RoundedCornerShape(21.dp),
             colors = CardDefaults.cardColors(containerColor = LocalShahrvandPalette.current.surface.copy(alpha = 0.98f)),
             border = androidx.compose.foundation.BorderStroke(1.dp, LocalShahrvandPalette.current.border),
-            elevation = CardDefaults.cardElevation(defaultElevation = 7.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
         ) {
             Column(Modifier.fillMaxWidth().padding(15.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 ProfileInfoRow(profileTr(language, "Ном", "Имя", "First name"), firstName.ifBlank { "—" })
