@@ -423,7 +423,7 @@ fun LeaderboardScreen(language:String,myAgeBand:String,getAccessToken:suspend()-
             ) {
                 items(entries,key={it.login}) { e ->
                     val rowColor = if(e.isMe) LocalShahrvandPalette.current.goldSurface else LocalShahrvandPalette.current.surface.copy(alpha=0.98f)
-                    val rowBorder = if(e.isMe) LocalShahrvandPalette.current.gold else Color.White.copy(alpha=0.96f)
+                    val rowBorder = if(e.isMe) LocalShahrvandPalette.current.gold else LocalShahrvandPalette.current.border
                     Card(
                         modifier=Modifier.fillMaxWidth().animateContentSize(),
                         colors=CardDefaults.cardColors(containerColor=rowColor),

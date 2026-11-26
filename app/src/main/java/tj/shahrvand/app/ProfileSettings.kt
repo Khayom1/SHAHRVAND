@@ -492,7 +492,7 @@ internal fun ShahrvandSettingsDialog(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
                         Text(profileTr(language, "Танзимоти ШАҲРВАНД", "Настройки SHAHRVAND", "SHAHRVAND settings"),
-                            color = ProfileNavy, fontSize = 19.sp, fontWeight = FontWeight.Black)
+                            color = ProfileNavyText, fontSize = 19.sp, fontWeight = FontWeight.Black)
                         Text(profileTr(language, "Ҳисоб, намуди барнома ва амният", "Аккаунт, оформление и безопасность", "Account, appearance and security"),
                             color = ProfileMuted, fontSize = 10.sp)
                     }

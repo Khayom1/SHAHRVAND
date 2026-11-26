@@ -31,6 +31,8 @@ import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.NoteAlt
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Bedtime
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -181,6 +183,7 @@ private fun ShahrvandApp() {
     var fontScale by remember { mutableFloatStateOf(prefs.getFloat("font_scale", 1.0f).coerceIn(0.90f, 1.15f)) }
     var fontFamilyChoice by remember { mutableStateOf(prefs.getString("font_family", "system") ?: "system") }
     var themeMode by remember { mutableStateOf(prefs.getString("theme_mode", "system") ?: "system") }
+    val currentThemeIsDark = LocalShahrvandPalette.current.isDark
     var financeEntries by remember { mutableStateOf(emptyList<MoneyEntry>()) }
     var tab by remember { mutableIntStateOf(0) }
     var totalXp by remember { mutableIntStateOf(prefs.getInt("total_xp", 0)) }
@@ -480,7 +483,11 @@ private fun ShahrvandApp() {
                             homeDestination = "personal"
                         },
                         onOpenSleep = { homeDestination = "sleep" },
-                        onOpenProfile = { tab = 3 }
+                        onOpenProfile = { tab = 3 },
+                        onToggleTheme = {
+                            themeMode = if (currentThemeIsDark) "light" else "dark"
+                            prefs.edit().putString("theme_mode", themeMode).apply()
+                        }
                     )
                 }
                 1 -> DailyActivitiesScreen(language, ::getValidAccessToken)
@@ -523,7 +530,11 @@ private fun ShahrvandApp() {
                         homeDestination = "personal"
                     },
                     onOpenSleep = { homeDestination = "sleep" },
-                    onOpenProfile = { tab = 3 }
+                    onOpenProfile = { tab = 3 },
+                        onToggleTheme = {
+                            themeMode = if (currentThemeIsDark) "light" else "dark"
+                            prefs.edit().putString("theme_mode", themeMode).apply()
+                        }
                 )
             }
         }
@@ -752,7 +763,8 @@ private fun HomeScreen(
     onOpenLeaderboard: () -> Unit,
     onOpenNotes: () -> Unit,
     onOpenSleep: () -> Unit,
-    onOpenProfile: () -> Unit
+    onOpenProfile: () -> Unit,
+    onToggleTheme: () -> Unit
 ) {
     val palette = LocalShahrvandPalette.current
     val xp = summary?.totalXp ?: 0
@@ -765,13 +777,13 @@ private fun HomeScreen(
 
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState())
-            .padding(horizontal = 18.dp, vertical = 17.dp),
-        verticalArrangement = Arrangement.spacedBy(18.dp)
+            .padding(horizontal = 16.dp, vertical = 13.dp),
+        verticalArrangement = Arrangement.spacedBy(15.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text("SHAHRVAND", color = palette.navy, fontSize = 10.sp,
-                    fontWeight = FontWeight.Black, letterSpacing = 1.4.sp)
+                Text("SHAHRVAND", color = palette.muted, fontSize = 10.sp,
+                    fontWeight = FontWeight.ExtraBold, letterSpacing = 1.3.sp)
                 Text(
                     tr(language, "Салом, ", "Привет, ", "Hello, ") +
                         nickname.ifBlank { tr(language, "Шаҳрванд", "Гражданин", "Citizen") },
@@ -780,97 +792,181 @@ private fun HomeScreen(
                 )
                 Text(ageBandLabel(language, ageBand), color = palette.muted, fontSize = 11.sp)
             }
+            FilledTonalButton(
+                onClick = onToggleTheme,
+                modifier = Modifier.height(40.dp),
+                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
+                shape = RoundedCornerShape(13.dp),
+                colors = ButtonDefaults.filledTonalButtonColors(
+                    containerColor = palette.surfaceVariant, contentColor = palette.ink
+                )
+            ) {
+                Icon(
+                    if (palette.isDark) Icons.Filled.LightMode else Icons.Filled.DarkMode,
+                    contentDescription = tr(language, "Иваз кардани мавзӯъ", "Сменить тему", "Switch theme"),
+                    modifier = Modifier.size(17.dp)
+                )
+                Spacer(Modifier.width(5.dp))
+                Text(
+                    if (palette.isDark) tr(language, "Равшан", "Светлая", "Light")
+                    else tr(language, "Торик", "Тёмная", "Dark"),
+                    fontSize = 11.sp, fontWeight = FontWeight.SemiBold
+                )
+            }
+            Spacer(Modifier.width(5.dp))
             IconButton(
                 onClick = onOpenProfile,
-                modifier = Modifier.size(44.dp).clip(CircleShape).background(palette.surface)
+                modifier = Modifier.size(40.dp).clip(CircleShape).background(palette.surface)
             ) {
                 Icon(Icons.Filled.AccountCircle,
                     contentDescription = tr(language, "Профил", "Профиль", "Profile"),
-                    tint = palette.navy)
+                    tint = palette.ink)
             }
         }
 
         Card(
             modifier = Modifier.fillMaxWidth().animateContentSize(),
-            colors = CardDefaults.cardColors(containerColor = palette.navy),
-            shape = RoundedCornerShape(24.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+            colors = CardDefaults.cardColors(containerColor = palette.surface),
+            shape = RoundedCornerShape(22.dp),
+            border = BorderStroke(1.dp, palette.border),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
-            Column(Modifier.fillMaxWidth().padding(18.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                Text(
-                    tr(language, "ҲОЛАТИ ҲОЗИРАИ ТУ", "ТВОЙ ТЕКУЩИЙ СТАТУС", "YOUR CURRENT STATUS"),
-                    color = Color(0xFFE6C991), fontSize = 9.sp,
-                    fontWeight = FontWeight.ExtraBold, letterSpacing = 1.sp
-                )
-                Text(tr(language, "Пешрафти шахсӣ", "Личный прогресс", "Personal progress"),
-                    color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    DashboardMetric(Modifier.weight(1f),
-                        if (summaryLoading) "…" else if (summary == null) "—" else animatedXp.toString(),
-                        "XP", "⚡")
-                    DashboardMetric(Modifier.weight(1f),
-                        if (summaryLoading) "…" else if (summary == null) "—" else animatedTasks.toString(),
-                        tr(language, "Вазифа", "Задания", "Tasks"), "✓")
-                    DashboardMetric(Modifier.weight(1f),
-                        if (summaryLoading) "…" else if (summary == null) "—" else badgeCount.toString(),
-                        tr(language, "Нишон", "Значки", "Badges"), "🏅")
-                }
-                if (summaryLoading) {
-                    LinearProgressIndicator(
-                        modifier = Modifier.fillMaxWidth().height(4.dp).clip(CircleShape),
-                        color = Color(0xFFE6C991),
-                        trackColor = Color.White.copy(alpha = 0.18f)
-                    )
-                } else if (summary == null) {
-                    Text(
-                        tr(language, "Маълумот аз сервер дастрас нест. Профилро боз карда, аз нав санҷ.",
-                            "Данные сервера недоступны. Открой профиль и повтори загрузку.",
-                            "Server data is unavailable. Open Profile to retry."),
-                        color = Color(0xFFDCE6ED), fontSize = 11.sp
-                    )
-                } else {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(tr(language, "То унвони навбатӣ", "До следующего титула", "Next title"),
-                            color = Color(0xFFDCE6ED), fontSize = 10.sp, modifier = Modifier.weight(1f))
-                        Text("$tasks/$nextTarget", color = Color.White, fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold)
+            Column(
+                Modifier.fillMaxWidth().padding(17.dp),
+                verticalArrangement = Arrangement.spacedBy(13.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                        Text(
+                            tr(language, "ПЕШРАФТИ ШАХСӢ", "ЛИЧНЫЙ ПРОГРЕСС", "PERSONAL PROGRESS"),
+                            color = palette.muted, fontSize = 9.sp,
+                            fontWeight = FontWeight.ExtraBold, letterSpacing = 0.8.sp
+                        )
+                        Text(
+                            tr(language, "Ҳолати ту", "Твой статус", "Your status"),
+                            color = palette.ink, fontSize = 19.sp, fontWeight = FontWeight.Bold
+                        )
                     }
-                    LinearProgressIndicator(
-                        progress = { animatedProgress },
-                        modifier = Modifier.fillMaxWidth().height(7.dp).clip(CircleShape),
-                        color = Color(0xFFE6C991),
-                        trackColor = Color.White.copy(alpha = 0.18f)
+                    Surface(color = palette.goldSurface, shape = RoundedCornerShape(13.dp)) {
+                        Text("✦", color = palette.gold, fontSize = 20.sp,
+                            modifier = Modifier.padding(horizontal = 11.dp, vertical = 8.dp))
+                    }
+                }
+                Row(
+                    Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.Bottom,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(tr(language, "ХОЛҲОИ ҶАМЪШУДА", "ВСЕГО ОЧКОВ", "TOTAL POINTS"),
+                            color = palette.muted, fontSize = 9.sp, fontWeight = FontWeight.SemiBold)
+                        Row(verticalAlignment = Alignment.Bottom) {
+                            Text(
+                                if (summaryLoading) "…" else if (summary == null) "—" else animatedXp.toString(),
+                                color = palette.ink, fontSize = 30.sp, fontWeight = FontWeight.Black
+                            )
+                            Spacer(Modifier.width(5.dp))
+                            Text("XP", color = palette.gold, fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 4.dp))
+                        }
+                    }
+                    Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                        Text(tr(language, "Вазифаҳои тасдиқшуда", "Подтверждённые задания", "Verified tasks"),
+                            color = palette.muted, fontSize = 9.sp)
+                        Text(
+                            if (summaryLoading) "…" else if (summary == null) "—" else animatedTasks.toString(),
+                            color = palette.ink, fontSize = 22.sp, fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    DashboardStatPill(
+                        Modifier.weight(1f), "🏅",
+                        if (summaryLoading) "…" else if (summary == null) "—" else badgeCount.toString(),
+                        tr(language, "Нишонҳо", "Значки", "Badges"), palette
+                    )
+                    DashboardStatPill(
+                        Modifier.weight(1f), "✓",
+                        if (summaryLoading) "…" else if (summary == null) "—" else animatedTasks.toString(),
+                        tr(language, "Иҷрошуда", "Выполнено", "Completed"), palette
+                    )
+                }
+                HorizontalDivider(color = palette.border)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        tr(language, "То унвони навбатӣ", "До следующего титула", "Next title"),
+                        color = palette.muted, fontSize = 10.sp, modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        if (summaryLoading) "…" else if (summary == null) "—" else "$tasks/$nextTarget",
+                        color = palette.ink, fontSize = 11.sp, fontWeight = FontWeight.Bold
+                    )
+                }
+                LinearProgressIndicator(
+                    progress = { if (summary == null) 0f else animatedProgress },
+                    modifier = Modifier.fillMaxWidth().height(7.dp).clip(CircleShape),
+                    color = palette.green, trackColor = palette.surfaceVariant
+                )
+                if (!summaryLoading && summary == null) {
+                    Text(
+                        tr(language, "Маълумоти сервер дастрас нест. Пайвастро санҷ ва саҳифаро аз нав кушо.",
+                            "Данные сервера недоступны. Проверь подключение и открой страницу снова.",
+                            "Server data is unavailable. Check your connection and reopen the page."),
+                        color = palette.danger, fontSize = 10.sp, lineHeight = 14.sp
                     )
                 }
             }
         }
 
-        Text(tr(language, "Идома деҳ", "Продолжить", "Continue"),
-            color = palette.ink, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(tr(language, "Идома деҳ", "Продолжить", "Continue"),
+                color = palette.ink, fontSize = 17.sp, fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1f))
+            TextButton(onClick = onOpenMissions, contentPadding = PaddingValues(horizontal = 3.dp)) {
+                Text(tr(language, "Ҳамаи вазифаҳо", "Все задания", "All tasks"),
+                    color = palette.navyLight, fontSize = 10.sp)
+            }
+        }
         DashboardPrimaryAction(
             tr(language, "Вазифаҳои имрӯз", "Задания на сегодня", "Today's tasks"),
-            tr(language, "Оғоз кун ва натиҷаро тасдиқ намо", "Начни и подтверди результат", "Start a task and verify the result"),
+            tr(language, "Оғоз кун ва натиҷаро тасдиқ намо", "Начни и подтверди результат", "Start and verify a task"),
             "✓", palette, onOpenMissions
         )
-        DashboardPrimaryAction(
-            tr(language, "Рейтинг", "Рейтинг", "Leaderboard"),
-            tr(language, "Ҷойгоҳи худро бин", "Посмотри своё место", "See your position"),
-            "🏆", palette, onOpenLeaderboard
-        )
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text(tr(language, "ҚИСМҲО", "РАЗДЕЛЫ", "EXPLORE"),
+            color = palette.muted, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold,
+            letterSpacing = 1.sp)
+        Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+            DashboardShortcut(Modifier.weight(1f), "🏆",
+                tr(language, "Рейтинг", "Рейтинг", "Ranking"), palette, onOpenLeaderboard)
             DashboardShortcut(Modifier.weight(1f), "🗒",
                 tr(language, "Ёддоштҳо", "Заметки", "Notes"), palette, onOpenNotes)
             DashboardShortcut(Modifier.weight(1f), "🌙",
                 tr(language, "Хоб", "Сон", "Sleep"), palette, onOpenSleep)
         }
-        Text(
-            tr(language, "Холҳо ва нишонҳо танҳо баъди тасдиқи сервер ҳисоб мешаванд.",
-                "Очки и значки начисляются только после подтверждения сервером.",
-                "Points and badges are added only after server verification."),
-            color = palette.muted, fontSize = 10.sp, lineHeight = 14.sp,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
+        Spacer(Modifier.height(8.dp))
+    }
+}
+
+@Composable
+private fun DashboardStatPill(
+    modifier: Modifier,
+    icon: String,
+    value: String,
+    label: String,
+    palette: ShahrvandPalette
+) {
+    Row(
+        modifier.clip(RoundedCornerShape(13.dp))
+            .background(palette.surfaceVariant)
+            .padding(horizontal = 10.dp, vertical = 9.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(7.dp)
+    ) {
+        Text(icon, fontSize = 14.sp)
+        Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
+            Text(value, color = palette.ink, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+            Text(label, color = palette.muted, fontSize = 9.sp, maxLines = 1)
+        }
     }
 }
 

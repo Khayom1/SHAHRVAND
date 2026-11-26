@@ -347,7 +347,7 @@ fun FinanceOverviewCard(
                 }
                 Column(Modifier.weight(1f)) {
                     Text(spaceTr(language, "Хароҷот", "Расходы", "Expenses"), color = SpaceRed, fontSize = 10.sp)
-                    Text(formatSomoni(animatedExpense.toDouble()) + " с.", color = SpaceNavy, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
+                    Text(formatSomoni(animatedExpense.toDouble()) + " с.", color = SpaceNavyText, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
                 }
                 Column(Modifier.weight(1f)) {
                     Text(spaceTr(language, "Бақия", "Баланс", "Balance"), color = SpaceGold, fontSize = 10.sp)
@@ -419,7 +419,7 @@ fun PersonalSpaceHubScreen(
             )
             Text(
                 spaceTr(language, "Ёддоштҳо ва буҷет", "Заметки и бюджет", "Notes and budget"),
-                color = SpaceNavy, fontSize = 21.sp, fontWeight = FontWeight.Black
+                color = SpaceNavyText, fontSize = 21.sp, fontWeight = FontWeight.Black
             )
         }
         Surface(
@@ -529,7 +529,7 @@ fun PersonalNotesScreen(
                 items(notes, key = { it.id }) { note ->
                     Card(
                         colors = CardDefaults.cardColors(containerColor = LocalShahrvandPalette.current.surface.copy(alpha = 0.98f)),
-                        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.96f)),
+                        border = BorderStroke(1.dp, LocalShahrvandPalette.current.border),
                         elevation = CardDefaults.cardElevation(defaultElevation = 5.dp),
                         shape = RoundedCornerShape(20.dp)
                     ) {
@@ -539,7 +539,7 @@ fun PersonalNotesScreen(
                                 Spacer(Modifier.weight(1f))
                                 note.plannedOn?.let { Text(it, color = SpaceMuted, fontSize = 10.sp) }
                             }
-                            Text(note.title, color = SpaceNavy, fontWeight = FontWeight.Bold, fontSize = 15.sp,
+                            Text(note.title, color = SpaceNavyText, fontWeight = FontWeight.Bold, fontSize = 15.sp,
                                 modifier = Modifier.padding(top = 5.dp))
                             Text(note.body, color = SpaceMuted, fontSize = 12.sp, lineHeight = 17.sp,
                                 modifier = Modifier.padding(top = 5.dp))
@@ -566,7 +566,7 @@ fun PersonalNotesScreen(
         var localError by remember { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = { if (!saving) editorOpen = false },
-            title = { Text(spaceTr(language, "Ёддошт ё нақша", "Заметка или план", "Note or plan"), color = SpaceNavy) },
+            title = { Text(spaceTr(language, "Ёддошт ё нақша", "Заметка или план", "Note or plan"), color = SpaceNavyText) },
             text = {
                 Column(Modifier.heightIn(max = 480.dp).verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(8.dp)) {

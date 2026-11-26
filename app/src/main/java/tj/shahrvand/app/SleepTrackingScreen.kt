@@ -306,7 +306,7 @@ fun SleepTrackingScreen(
                     }
                     Column(Modifier.weight(1f)) {
                         Text(sleepTr(language, "Ҳадафи хоб", "Цель сна", "Sleep target"),
-                            color = SLEEP_NAVY, fontWeight = FontWeight.Bold)
+                            color = SLEEP_NAVY_TEXT, fontWeight = FontWeight.Bold)
                         Text(
                             when {
                                 age in 7..12 -> sleepTr(language, "9–12 соат дар шабонарӯз", "9–12 часов в сутки", "9–12 hours per day")
@@ -382,7 +382,7 @@ fun SleepTrackingScreen(
         if (permissionGranted && latest != null) {
             Card(
                 colors = CardDefaults.cardColors(containerColor = LocalShahrvandPalette.current.surface.copy(alpha = 0.98f)),
-                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.96f)),
+                border = BorderStroke(1.dp, LocalShahrvandPalette.current.border),
                 elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
                 shape = RoundedCornerShape(22.dp)
             ) {

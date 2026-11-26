@@ -12,7 +12,7 @@ import androidx.compose.ui.graphics.Color
 internal data class ShahrvandPalette(
     val background: Color, val surface: Color, val surfaceVariant: Color,
     val ink: Color, val muted: Color, val border: Color,
-    val navy: Color, val navyText: Color, val navyLight: Color, val gold: Color, val green: Color,
+    val navy: Color, val navyText: Color, val navyLight: Color, val gold: Color, val green: Color, val isDark: Boolean,
     val danger: Color, val selected: Color, val goldSurface: Color,
     val successSurface: Color, val successBorder: Color, val dangerSurface: Color
 )
@@ -23,7 +23,7 @@ private val LightPalette = ShahrvandPalette(
     navy=Color(0xFF183247), navyText=Color(0xFF183247), navyLight=Color(0xFF315A72), gold=Color(0xFFC8954A),
     green=Color(0xFF2F7969), danger=Color(0xFFB45D50), selected=Color(0xFFEDE5F8),
     goldSurface=Color(0xFFFFF5E3), successSurface=Color(0xFFEAF5EF),
-    successBorder=Color(0xFFC9DED1), dangerSurface=Color(0xFFFFF1EE)
+    successBorder=Color(0xFFC9DED1), dangerSurface=Color(0xFFFFF1EE), isDark=false
 )
 
 private val DarkPalette = ShahrvandPalette(
@@ -32,7 +32,7 @@ private val DarkPalette = ShahrvandPalette(
     navy=Color(0xFF203D52), navyText=Color(0xFFD8E6F0), navyLight=Color(0xFF91B6CD), gold=Color(0xFFE3BB79),
     green=Color(0xFF80C8AD), danger=Color(0xFFF18B80), selected=Color(0xFF37344A),
     goldSurface=Color(0xFF3B3327), successSurface=Color(0xFF203B32),
-    successBorder=Color(0xFF315A49), dangerSurface=Color(0xFF3A2928)
+    successBorder=Color(0xFF315A49), dangerSurface=Color(0xFF3A2928), isDark=true
 )
 
 internal val LocalShahrvandPalette = staticCompositionLocalOf { LightPalette }
