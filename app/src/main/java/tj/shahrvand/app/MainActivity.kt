@@ -463,6 +463,10 @@ private fun ShahrvandApp() {
                     totalXp = totalXp,
                     totalCompleted = totalCompleted,
                     getAccessToken = ::getValidAccessToken,
+                    onServerXp = { value ->
+                        totalXp = value
+                        prefs.edit().putInt("total_xp", value).apply()
+                    },
                     onBack = {
                         tab = 0
                         homeDestination = "dashboard"
