@@ -309,7 +309,7 @@ private fun ProfileAchievementsCard(
                                         fontSize = 9.sp, fontWeight = FontWeight.Black)
                                     Text(
                                         title,
-                                        color = if (earned) ProfileNavy else ProfileMuted,
+                                        color = if (earned) ProfilePrimaryText else ProfileMuted,
                                         fontSize = 8.sp,
                                         fontWeight = FontWeight.Bold,
                                         maxLines = 2,
