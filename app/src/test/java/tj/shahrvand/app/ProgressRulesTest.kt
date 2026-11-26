@@ -30,6 +30,15 @@ class ProgressRulesTest {
     }
 
     @Test
+    fun competitionDateUsesDushanbeTimezoneAtMidnightBoundary() {
+        val beforeMidnightUtc = java.time.Instant.parse("2026-11-26T18:59:59Z")
+        val afterMidnightDushanbe = java.time.Instant.parse("2026-11-26T19:00:00Z")
+
+        assertEquals(java.time.LocalDate.parse("2026-11-26"), ProgressRules.competitionDate(beforeMidnightUtc))
+        assertEquals(java.time.LocalDate.parse("2026-11-27"), ProgressRules.competitionDate(afterMidnightDushanbe))
+    }
+
+    @Test
     fun dailyGoalProgressIsClamped() {
         assertEquals(0f, ProgressRules.dailyGoalProgress(-1), 0.0001f)
         assertEquals(1f / 3f, ProgressRules.dailyGoalProgress(1), 0.0001f)
