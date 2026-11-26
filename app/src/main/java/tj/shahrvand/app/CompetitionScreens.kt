@@ -234,6 +234,57 @@ fun LeaderboardScreen(language:String,myAgeBand:String,getAccessToken:suspend()-
                     color=C_Muted,fontSize=10.sp,lineHeight=15.sp,modifier=Modifier.padding(top=4.dp))
             }
         }
+        if (entries.isNotEmpty()) {
+            val topThree = entries.take(3)
+            val maxXp = topThree.maxOf { it.xp }.coerceAtLeast(1)
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.84f)),
+                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.96f)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 7.dp),
+                shape = RoundedCornerShape(21.dp)
+            ) {
+                Column(Modifier.fillMaxWidth().padding(13.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        cTr(language, "ПЕШСАФАРОНИ ҲАФТА", "ЛИДЕРЫ НЕДЕЛИ", "WEEKLY LEADERS"),
+                        color = C_Gold, fontWeight = FontWeight.ExtraBold, fontSize = 9.sp
+                    )
+                    Row(
+                        Modifier.fillMaxWidth().height(112.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.Bottom
+                    ) {
+                        topThree.forEach { entry ->
+                            val barHeight = (entry.xp.toFloat() / maxXp * 72f).coerceAtLeast(7f).dp
+                            val barColor = when (entry.rank) {
+                                1 -> Color(0xFFD8B56B)
+                                2 -> Color(0xFF9EABB7)
+                                3 -> Color(0xFFB98772)
+                                else -> C_Green
+                            }
+                            Column(
+                                Modifier.weight(1f),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Bottom
+                            ) {
+                                Box(
+                                    Modifier.fillMaxWidth().height(76.dp),
+                                    contentAlignment = Alignment.BottomCenter
+                                ) {
+                                    Box(
+                                        Modifier.width(38.dp).height(barHeight)
+                                            .background(barColor, RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
+                                    )
+                                }
+                                Text("#" + entry.rank + " " + entry.login, color = C_Navy,
+                                    fontWeight = FontWeight.Bold, fontSize = 9.sp, maxLines = 1)
+                                Text(entry.xp.toString() + " XP", color = C_Muted, fontSize = 9.sp)
+                            }
+                        }
+                    }
+                }
+            }
+        }
         Spacer(Modifier.height(8.dp))
         if(loading) Box(Modifier.fillMaxWidth().weight(1f),contentAlignment=Alignment.Center){CircularProgressIndicator()}
         else if(error.isNotBlank()){Text(error,color=Color.Red,fontSize=12.sp);OutlinedButton(onClick={refresh++}){Text(cTr(language,"Навсозӣ","Обновить","Refresh"))}}
