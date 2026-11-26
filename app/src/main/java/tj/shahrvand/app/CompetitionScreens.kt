@@ -1,6 +1,7 @@
 package tj.shahrvand.app
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -28,7 +29,7 @@ private val C_Navy = Color(0xFF20384B)
 private val C_Gold = Color(0xFFB98A50)
 private val C_Green = Color(0xFF36766D)
 private val C_Muted = Color(0xFF777F7E)
-private val C_Border = Color(0xFFE4D9C8)
+private val C_Border = Color(0xFFDDE7EF)
 
 data class WeeklyTask(
     val id: String, val weekday: Int, val titleTg: String, val titleRu: String, val titleEn: String,
@@ -116,7 +117,7 @@ fun WeeklyChallengesScreen(language:String,getAccessToken:suspend()->String) {
         catch(e:Exception) { error=e.message ?: "Network error" }
         finally { loading=false }
     }
-    Column(Modifier.fillMaxSize().padding(14.dp)) {
+    Column(Modifier.fillMaxSize().background(Color(0xFFF1F6FA)).padding(14.dp)) {
         Text(cTr(language,"Вазифаҳои ҳафтаина","Задания на неделю","Weekly challenges"),color=C_Navy,fontSize=21.sp,fontWeight=FontWeight.Black)
         Text(cTr(language,"Ҳар рӯз 6 вазифа · 42 қадам дар як ҳафта","6 заданий в день · 42 шага за неделю","6 tasks per day · 42 steps per week"),color=C_Muted,fontSize=11.sp)
         Spacer(Modifier.height(10.dp))
@@ -126,7 +127,12 @@ fun WeeklyChallengesScreen(language:String,getAccessToken:suspend()->String) {
         else {
             val todays=d.tasks.filter{it.weekday==d.today.dayOfWeek.value}
             val done=todays.count{d.completed.containsKey(it.id)}
-            Card(colors=CardDefaults.cardColors(containerColor=Color.White),border=BorderStroke(1.dp,C_Border),shape=RoundedCornerShape(15.dp)) {
+            Card(
+                colors=CardDefaults.cardColors(containerColor=Color.White.copy(alpha=0.84f)),
+                border=BorderStroke(1.dp,Color.White.copy(alpha=0.96f)),
+                elevation=CardDefaults.cardElevation(defaultElevation=7.dp),
+                shape=RoundedCornerShape(21.dp)
+            ) {
                 Column(Modifier.fillMaxWidth().padding(12.dp)) {
                     Row(verticalAlignment=Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
@@ -157,8 +163,12 @@ fun WeeklyChallengesScreen(language:String,getAccessToken:suspend()->String) {
                     }
                     list.forEach { task ->
                         val completed=d.completed.containsKey(task.id)
-                        Card(colors=CardDefaults.cardColors(containerColor=if(completed) Color(0xFFF0F6F2) else Color.White),
-                            border=BorderStroke(1.dp,if(completed) Color(0xFFC9DED1) else C_Border),shape=RoundedCornerShape(12.dp)) {
+                        Card(
+                            colors=CardDefaults.cardColors(containerColor=if(completed) Color(0xFFEAF5EF) else Color.White.copy(alpha=0.84f)),
+                            border=BorderStroke(1.dp,if(completed) Color(0xFFC9DED1) else Color.White.copy(alpha=0.96f)),
+                            elevation=CardDefaults.cardElevation(defaultElevation=5.dp),
+                            shape=RoundedCornerShape(19.dp)
+                        ) {
                             Column(Modifier.fillMaxWidth().padding(10.dp)) {
                                 Row(verticalAlignment=Alignment.CenterVertically) {
                                     Text(task.icon,fontSize=21.sp); Spacer(Modifier.width(8.dp))
@@ -210,7 +220,12 @@ fun LeaderboardScreen(language:String,myAgeBand:String,getAccessToken:suspend()-
             }
         }
         Spacer(Modifier.height(10.dp))
-        Card(colors=CardDefaults.cardColors(containerColor=Color.White),border=BorderStroke(1.dp,C_Border),shape=RoundedCornerShape(14.dp)) {
+        Card(
+            colors=CardDefaults.cardColors(containerColor=Color.White.copy(alpha=0.84f)),
+            border=BorderStroke(1.dp,Color.White.copy(alpha=0.96f)),
+            elevation=CardDefaults.cardElevation(defaultElevation=7.dp),
+            shape=RoundedCornerShape(21.dp)
+        ) {
             Column(Modifier.padding(11.dp)) {
                 Text(cTr(language,"Қоидаи рейтинг","Правила рейтинга","Ranking rules"),fontWeight=FontWeight.Bold,color=C_Navy,fontSize=12.sp)
                 Text(cTr(language,"Аввал XP, баъд шумораи вазифаҳо; ҳангоми баробарӣ вақти расидан ба натиҷа. Танҳо логин намоён аст.",
@@ -233,8 +248,12 @@ fun LeaderboardScreen(language:String,myAgeBand:String,getAccessToken:suspend()-
             }
         } else LazyColumn(verticalArrangement=Arrangement.spacedBy(7.dp),contentPadding=PaddingValues(bottom=16.dp)) {
             items(entries,key={it.login}) { e ->
-                Card(colors=CardDefaults.cardColors(containerColor=if(e.isMe) Color(0xFFFFF7E9) else Color.White),
-                    border=BorderStroke(1.dp,if(e.isMe) C_Gold else C_Border),shape=RoundedCornerShape(12.dp)) {
+                Card(
+                    colors=CardDefaults.cardColors(containerColor=if(e.isMe) Color(0xFFF1E9FC) else Color.White.copy(alpha=0.84f)),
+                    border=BorderStroke(1.dp,if(e.isMe) Color(0xFFD5C1EF) else Color.White.copy(alpha=0.96f)),
+                    elevation=CardDefaults.cardElevation(defaultElevation=5.dp),
+                    shape=RoundedCornerShape(19.dp)
+                ) {
                     Row(Modifier.fillMaxWidth().padding(11.dp),verticalAlignment=Alignment.CenterVertically) {
                         Text(when(e.rank){1->"🥇";2->"🥈";3->"🥉";else->"#"+e.rank},modifier=Modifier.width(42.dp),fontWeight=FontWeight.Black,color=C_Navy)
                         Column(Modifier.weight(1f)) {
