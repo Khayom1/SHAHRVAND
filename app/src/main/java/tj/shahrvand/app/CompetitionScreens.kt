@@ -1,5 +1,8 @@
 package tj.shahrvand.app
 
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -40,7 +43,22 @@ data class WeeklyTask(
     fun description(l: String) = when(l) { "ru" -> descriptionRu; "en" -> descriptionEn; else -> descriptionTg }
 }
 data class WeeklyData(val tasks: List<WeeklyTask>, val completed: Map<String, Int>, val today: LocalDate, val weekStart: LocalDate)
-data class LeaderEntry(val rank: Int, val login: String, val xp: Int, val completed: Int, val isMe: Boolean)
+data class LeaderEntry(
+    val rank: Int,
+    val login: String,
+    val xp: Int,
+    val completed: Int,
+    val isMe: Boolean,
+    val achievementCodes: List<String> = emptyList()
+)
+
+data class AchievementSummary(
+    val verifiedTasks: Int,
+    val progressFrom: Int,
+    val nextThreshold: Int,
+    val progress: Float,
+    val unlockedCodes: List<String>
+)
 
 object SupabaseCompetitionRepository {
     private val base get() = BuildConfig.SUPABASE_URL.trimEnd('/')
@@ -93,10 +111,43 @@ object SupabaseCompetitionRepository {
         if (!o.optBoolean("ok")) throw IllegalStateException("Вазифа тасдиқ нашуд.")
         return o.optInt("xp_awarded")
     }
-    suspend fun leaderboard(token: String, band: String): List<LeaderEntry> {
-        val a=JSONArray(call("/rest/v1/rpc/shahrvand_get_leaderboard","POST",token,JSONObject().put("p_age_band",band)))
-        return buildList { for(i in 0 until a.length()) { val o=a.optJSONObject(i) ?: continue
-            add(LeaderEntry(o.optInt("rank"),o.optString("login"),o.optInt("weekly_xp"),o.optInt("tasks_completed"),o.optBoolean("is_me"))) } }
+    suspend fun leaderboard(token: String, period: String, band: String): List<LeaderEntry> {
+        val body = JSONObject().put("p_period", period).put("p_age_band", band)
+        val a = JSONArray(call("/rest/v1/rpc/shahrvand_get_leaderboard", "POST", token, body))
+        return buildList {
+            for (i in 0 until a.length()) {
+                val o = a.optJSONObject(i) ?: continue
+                val codes = o.optJSONArray("achievement_codes")
+                val badges = buildList {
+                    if (codes != null) for (j in 0 until codes.length()) {
+                        codes.optString(j).takeIf { it.isNotBlank() }?.let(::add)
+                    }
+                }
+                add(LeaderEntry(
+                    o.optInt("rank"), o.optString("login"), o.optInt("weekly_xp"),
+                    o.optInt("tasks_completed"), o.optBoolean("is_me"), badges
+                ))
+            }
+        }
+    }
+
+    suspend fun myAchievements(token: String): AchievementSummary {
+        val raw = call("/rest/v1/rpc/shahrvand_get_my_achievements", "POST", token, JSONObject())
+        val result = JSONObject(raw)
+        val array = result.optJSONArray("achievements")
+        val codes = buildList {
+            if (array != null) for (i in 0 until array.length()) {
+                val code = array.optJSONObject(i)?.optString("code").orEmpty()
+                if (code.isNotBlank()) add(code)
+            }
+        }
+        return AchievementSummary(
+            verifiedTasks = result.optInt("verified_tasks"),
+            progressFrom = result.optInt("progress_from"),
+            nextThreshold = result.optInt("next_threshold"),
+            progress = result.optDouble("progress").toFloat().coerceIn(0f, 1f),
+            unlockedCodes = codes
+        )
     }
 }
 
@@ -199,64 +250,126 @@ fun WeeklyChallengesScreen(language:String,getAccessToken:suspend()->String) {
 
 @Composable
 fun LeaderboardScreen(language:String,myAgeBand:String,getAccessToken:suspend()->String) {
-    var band by remember(myAgeBand){mutableStateOf(myAgeBand)}
-    var entries by remember{mutableStateOf(emptyList<LeaderEntry>())}
-    var loading by remember{mutableStateOf(true)}
-    var error by remember{mutableStateOf("")}
-    var refresh by remember{mutableIntStateOf(0)}
-    LaunchedEffect(band,refresh) {
-        loading=true;error=""
-        try{entries=SupabaseCompetitionRepository.leaderboard(getAccessToken(),band)}
-        catch(e:Exception){error=e.message ?: "Network error";entries=emptyList()}
-        finally{loading=false}
+    var band by remember(myAgeBand) { mutableStateOf(myAgeBand) }
+    var period by remember { mutableStateOf("week") }
+    var filterExpanded by remember { mutableStateOf(false) }
+    var entries by remember { mutableStateOf(emptyList<LeaderEntry>()) }
+    var loading by remember { mutableStateOf(true) }
+    var error by remember { mutableStateOf("") }
+    var refresh by remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(period, band, refresh) {
+        loading = true
+        error = ""
+        try {
+            entries = SupabaseCompetitionRepository.leaderboard(getAccessToken(), period, band)
+        } catch (e: Exception) {
+            error = e.message ?: "Network error"
+            entries = emptyList()
+        } finally {
+            loading = false
+        }
     }
-    Column(Modifier.fillMaxSize().padding(14.dp)) {
-        Text(cTr(language,"Рейтинги","Рейтинг","Leaderboard"),color=C_Navy,fontSize=21.sp,fontWeight=FontWeight.Black)
-        Text(cTr(language,"Натиҷаи ҳафтаина · гурӯҳҳои синнусолӣ ҷудо","Результаты недели · возрастные группы отдельно","Weekly scores · separate age groups"),color=C_Muted,fontSize=11.sp)
-        Spacer(Modifier.height(10.dp))
+
+    val periodLabel = when (period) {
+        "month" -> cTr(language, "Моҳ", "Месяц", "Month")
+        "all_time" -> cTr(language, "Умумӣ", "Всё время", "All-time")
+        else -> cTr(language, "Ҳафта", "Неделя", "Week")
+    }
+    val bandLabel = if (band == "all") {
+        cTr(language, "Ҳамаи синну сол", "Все возрасты", "All ages")
+    } else cBand(language, band)
+
+    Column(Modifier.fillMaxSize().background(Color(0xFFF1F6FA)).padding(horizontal = 14.dp, vertical = 12.dp)) {
+        Text(cTr(language,"Рейтинг","Рейтинг","Leaderboard"),color=C_Navy,fontSize=22.sp,fontWeight=FontWeight.Black)
+        Text(
+            cTr(language,"Натиҷаҳои тасдиқшудаи сервер","Подтверждённые сервером результаты","Server-verified results"),
+            color=C_Muted,fontSize=11.sp
+        )
+        Spacer(Modifier.height(12.dp))
+
         SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-            listOf("7_12","13_17","18_plus").forEachIndexed { i,b ->
-                SegmentedButton(selected=band==b,onClick={band=b},shape=SegmentedButtonDefaults.itemShape(i,3)){Text(cBand(language,b),fontSize=10.sp)}
+            listOf("week","month","all_time").forEachIndexed { i, value ->
+                val label = when(value) {
+                    "month" -> cTr(language,"Моҳ","Месяц","Month")
+                    "all_time" -> cTr(language,"Умумӣ","Всё","All-time")
+                    else -> cTr(language,"Ҳафта","Неделя","Week")
+                }
+                SegmentedButton(
+                    selected = period == value,
+                    onClick = { period = value },
+                    shape = SegmentedButtonDefaults.itemShape(i,3)
+                ) { Text(label,fontSize=11.sp,maxLines=1) }
             }
         }
-        Spacer(Modifier.height(10.dp))
-        Card(
-            colors=CardDefaults.cardColors(containerColor=Color.White.copy(alpha=0.84f)),
-            border=BorderStroke(1.dp,Color.White.copy(alpha=0.96f)),
-            elevation=CardDefaults.cardElevation(defaultElevation=7.dp),
-            shape=RoundedCornerShape(21.dp)
+
+        Row(
+            Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 7.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(Modifier.padding(11.dp)) {
-                Text(cTr(language,"Қоидаи рейтинг","Правила рейтинга","Ranking rules"),fontWeight=FontWeight.Bold,color=C_Navy,fontSize=12.sp)
-                Text(cTr(language,"Аввал XP, баъд шумораи вазифаҳо; ҳангоми баробарӣ вақти расидан ба натиҷа. Танҳо логин намоён аст.",
-                    "Сначала XP, затем число заданий; при равенстве — время достижения результата. Видно только логин.",
-                    "XP first, then completed tasks; ties use the time the score was reached. Only login is public."),
-                    color=C_Muted,fontSize=10.sp,lineHeight=15.sp,modifier=Modifier.padding(top=4.dp))
+            Text(
+                cTr(language,"ФИЛТРИ СИННУ СОЛ","ФИЛЬТР ВОЗРАСТА","AGE FILTER"),
+                color=C_Muted,fontSize=9.sp,fontWeight=FontWeight.Bold
+            )
+            Spacer(Modifier.weight(1f))
+            Box {
+                OutlinedButton(
+                    onClick = { filterExpanded = true },
+                    shape = RoundedCornerShape(13.dp),
+                    contentPadding = PaddingValues(horizontal=12.dp,vertical=7.dp)
+                ) {
+                    Text("☷  $bandLabel",fontSize=11.sp,color=C_Navy)
+                }
+                DropdownMenu(
+                    expanded = filterExpanded,
+                    onDismissRequest = { filterExpanded = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text(cTr(language,"Ҳамаи синну сол","Все возрасты","All ages")) },
+                        onClick = { band="all";filterExpanded=false }
+                    )
+                    listOf("7_12","13_17","18_plus").forEach { value ->
+                        DropdownMenuItem(
+                            text = { Text(cBand(language,value)) },
+                            onClick = { band=value;filterExpanded=false }
+                        )
+                    }
+                }
             }
         }
+
         if (entries.isNotEmpty()) {
             val topThree = entries.take(3)
             val maxXp = topThree.maxOf { it.xp }.coerceAtLeast(1)
             Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.84f)),
-                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.96f)),
-                elevation = CardDefaults.cardElevation(defaultElevation = 7.dp),
+                modifier = Modifier.fillMaxWidth().animateContentSize(),
+                colors = CardDefaults.cardColors(containerColor=Color.White.copy(alpha=0.84f)),
+                border = BorderStroke(1.dp,Color.White.copy(alpha=0.96f)),
+                elevation = CardDefaults.cardElevation(defaultElevation=7.dp),
                 shape = RoundedCornerShape(21.dp)
             ) {
-                Column(Modifier.fillMaxWidth().padding(13.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(
-                        cTr(language, "ПЕШСАФАРОНИ ҲАФТА", "ЛИДЕРЫ НЕДЕЛИ", "WEEKLY LEADERS"),
-                        color = C_Gold, fontWeight = FontWeight.ExtraBold, fontSize = 9.sp
-                    )
+                Column(Modifier.fillMaxWidth().padding(12.dp),verticalArrangement=Arrangement.spacedBy(5.dp)) {
+                    Row(verticalAlignment=Alignment.CenterVertically) {
+                        Text(
+                            cTr(language,"ПЕШСАФАРОНИ $periodLabel","ЛИДЕРЫ · $periodLabel","TOP SCORES · $periodLabel"),
+                            color=C_Gold,fontWeight=FontWeight.ExtraBold,fontSize=9.sp
+                        )
+                        Spacer(Modifier.weight(1f))
+                        Text(bandLabel,color=C_Muted,fontSize=9.sp)
+                    }
                     Row(
-                        Modifier.fillMaxWidth().height(112.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.Bottom
+                        Modifier.fillMaxWidth().height(116.dp),
+                        horizontalArrangement=Arrangement.spacedBy(8.dp),
+                        verticalAlignment=Alignment.Bottom
                     ) {
                         topThree.forEach { entry ->
-                            val barHeight = (entry.xp.toFloat() / maxXp * 72f).coerceAtLeast(7f).dp
-                            val barColor = when (entry.rank) {
+                            val targetHeight = (entry.xp.toFloat()/maxXp*72f).coerceAtLeast(7f).dp
+                            val animatedHeight by animateDpAsState(
+                                targetValue=targetHeight,
+                                animationSpec=tween(650),
+                                label="leaderboard_bar_${entry.rank}"
+                            )
+                            val barColor = when(entry.rank) {
                                 1 -> Color(0xFFD8B56B)
                                 2 -> Color(0xFF9EABB7)
                                 3 -> Color(0xFFB98772)
@@ -264,57 +377,94 @@ fun LeaderboardScreen(language:String,myAgeBand:String,getAccessToken:suspend()-
                             }
                             Column(
                                 Modifier.weight(1f),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Bottom
+                                horizontalAlignment=Alignment.CenterHorizontally,
+                                verticalArrangement=Arrangement.Bottom
                             ) {
-                                Box(
-                                    Modifier.fillMaxWidth().height(76.dp),
-                                    contentAlignment = Alignment.BottomCenter
-                                ) {
+                                Box(Modifier.fillMaxWidth().height(76.dp),contentAlignment=Alignment.BottomCenter) {
                                     Box(
-                                        Modifier.width(38.dp).height(barHeight)
-                                            .background(barColor, RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
+                                        Modifier.width(38.dp).height(animatedHeight)
+                                            .background(barColor,RoundedCornerShape(topStart=12.dp,topEnd=12.dp))
                                     )
                                 }
-                                Text("#" + entry.rank + " " + entry.login, color = C_Navy,
-                                    fontWeight = FontWeight.Bold, fontSize = 9.sp, maxLines = 1)
-                                Text(entry.xp.toString() + " XP", color = C_Muted, fontSize = 9.sp)
+                                Text("#${entry.rank} ${entry.login}",color=C_Navy,fontWeight=FontWeight.Bold,fontSize=9.sp,maxLines=1)
+                                Text("${entry.xp} XP",color=C_Muted,fontSize=9.sp)
                             }
                         }
                     }
                 }
             }
         }
-        Spacer(Modifier.height(8.dp))
-        if(loading) Box(Modifier.fillMaxWidth().weight(1f),contentAlignment=Alignment.Center){CircularProgressIndicator()}
-        else if(error.isNotBlank()){Text(error,color=Color.Red,fontSize=12.sp);OutlinedButton(onClick={refresh++}){Text(cTr(language,"Навсозӣ","Обновить","Refresh"))}}
-        else if(entries.isEmpty()) {
-            Column(Modifier.fillMaxWidth().padding(22.dp),horizontalAlignment=Alignment.CenterHorizontally) {
+
+        Spacer(Modifier.height(7.dp))
+        when {
+            loading && entries.isEmpty() -> Box(Modifier.fillMaxWidth().weight(1f),contentAlignment=Alignment.Center) {
+                CircularProgressIndicator(color=C_Gold)
+            }
+            error.isNotBlank() && entries.isEmpty() -> Column(Modifier.fillMaxWidth().weight(1f),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.Center) {
+                Text(error,color=Color.Red,fontSize=12.sp)
+                OutlinedButton(onClick={refresh++}) { Text(cTr(language,"Навсозӣ","Обновить","Refresh")) }
+            }
+            entries.isEmpty() -> Column(Modifier.fillMaxWidth().weight(1f).padding(22.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.Center) {
                 Text("🏆",fontSize=36.sp)
                 Text(cTr(language,"Ҳоло натиҷа нест","Пока нет результатов","No scores yet"),fontWeight=FontWeight.Bold,color=C_Navy)
-                Text(cTr(language,"Пас аз иҷрои вазифаҳои ҳафтаина иштирокчиён пайдо мешаванд. Маълумоти сохта вуҷуд надорад.",
-                    "Участники появятся после выполнения недельных заданий. Тестовых результатов нет.",
-                    "Participants appear after weekly tasks are completed. No sample scores are used."),
-                    color=C_Muted,fontSize=11.sp)
+                Text(
+                    cTr(language,"Дар ин давра ҳоло натиҷаи тасдиқшуда нест.","За этот период пока нет подтверждённых результатов.","No verified scores for this period yet."),
+                    color=C_Muted,fontSize=11.sp
+                )
             }
-        } else LazyColumn(verticalArrangement=Arrangement.spacedBy(7.dp),contentPadding=PaddingValues(bottom=16.dp)) {
-            items(entries,key={it.login}) { e ->
-                Card(
-                    colors=CardDefaults.cardColors(containerColor=if(e.isMe) Color(0xFFF1E9FC) else Color.White.copy(alpha=0.84f)),
-                    border=BorderStroke(1.dp,if(e.isMe) Color(0xFFD5C1EF) else Color.White.copy(alpha=0.96f)),
-                    elevation=CardDefaults.cardElevation(defaultElevation=5.dp),
-                    shape=RoundedCornerShape(19.dp)
-                ) {
-                    Row(Modifier.fillMaxWidth().padding(11.dp),verticalAlignment=Alignment.CenterVertically) {
-                        Text(when(e.rank){1->"🥇";2->"🥈";3->"🥉";else->"#"+e.rank},modifier=Modifier.width(42.dp),fontWeight=FontWeight.Black,color=C_Navy)
-                        Column(Modifier.weight(1f)) {
-                            Text(e.login+if(e.isMe)" · "+cTr(language,"ту","вы","you") else "",fontWeight=FontWeight.Bold,color=C_Navy,fontSize=13.sp)
-                            Text(e.completed.toString()+" "+cTr(language,"вазифа","заданий","tasks"),fontSize=10.sp,color=C_Muted)
+            else -> LazyColumn(
+                modifier=Modifier.fillMaxWidth().weight(1f),
+                verticalArrangement=Arrangement.spacedBy(7.dp),
+                contentPadding=PaddingValues(bottom=14.dp)
+            ) {
+                items(entries,key={it.login}) { e ->
+                    val rowColor = if(e.isMe) Color(0xFFFFF4DE) else Color.White.copy(alpha=0.84f)
+                    val rowBorder = if(e.isMe) Color(0xFFC69A56) else Color.White.copy(alpha=0.96f)
+                    Card(
+                        modifier=Modifier.fillMaxWidth().animateContentSize(),
+                        colors=CardDefaults.cardColors(containerColor=rowColor),
+                        border=BorderStroke(if(e.isMe) 1.6.dp else 1.dp,rowBorder),
+                        elevation=CardDefaults.cardElevation(defaultElevation=if(e.isMe) 7.dp else 4.dp),
+                        shape=RoundedCornerShape(19.dp)
+                    ) {
+                        Row(Modifier.fillMaxWidth().padding(12.dp),verticalAlignment=Alignment.CenterVertically) {
+                            Text(
+                                when(e.rank){1->"🥇";2->"🥈";3->"🥉";else->"#"+e.rank},
+                                modifier=Modifier.width(38.dp),fontWeight=FontWeight.Black,color=C_Navy
+                            )
+                            Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(4.dp)) {
+                                Text(
+                                    e.login+if(e.isMe) " · "+cTr(language,"ту","вы","you") else "",
+                                    fontWeight=FontWeight.Bold,color=C_Navy,fontSize=13.sp
+                                )
+                                if(e.achievementCodes.isNotEmpty()) {
+                                    Row(horizontalArrangement=Arrangement.spacedBy(5.dp)) {
+                                        e.achievementCodes.take(4).forEach { code ->
+                                            Text(
+                                                achievementSymbol(code),
+                                                fontSize=13.sp,
+                                                modifier=Modifier.background(Color(0xFFF4F1EA),RoundedCornerShape(7.dp)).padding(horizontal=4.dp,vertical=2.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                                Text(e.completed.toString()+" "+cTr(language,"вазифа","заданий","tasks"),fontSize=10.sp,color=C_Muted)
+                            }
+                            Text(e.xp.toString()+" XP",fontWeight=FontWeight.Black,color=if(e.isMe) C_Gold else C_Navy,fontSize=15.sp)
                         }
-                        Text(e.xp.toString()+" XP",fontWeight=FontWeight.Black,color=C_Gold,fontSize=15.sp)
                     }
                 }
             }
         }
     }
+}
+
+private fun achievementSymbol(code: String): String = when(code) {
+    "app_entry" -> "🌟"
+    "first_task" -> "⚡"
+    "steady_10" -> "🛡️"
+    "dedicated_25" -> "💠"
+    "expert_50" -> "🏆"
+    "legend_100" -> "👑"
+    else -> "🏅"
 }
