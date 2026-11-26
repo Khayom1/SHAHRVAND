@@ -498,7 +498,7 @@ private fun WelcomeScreen(
         Spacer(Modifier.height(12.dp))
         BrandHeader(
             tr(language, "ҲАР ҚАДАМ — ЯК ПЕШРАФТ", "КАЖДЫЙ ШАГ — ПРОГРЕСС", "EVERY STEP IS PROGRESS"),
-            tr(language, "БОЗИИ МАҲОРАТ ВА НЕКӢ", "ИГРА НАВЫКОВ И ДОБРА", "A GAME OF SKILLS AND KINDNESS")
+            tr(language, "ПЛАТФОРМАИ РУШДИ ШАҲРВАНД", "ПЛАТФОРМА РАЗВИТИЯ ГРАЖДАН", "CITIZEN DEVELOPMENT PLATFORM")
         )
         Spacer(Modifier.height(18.dp))
         Text(tr(language, "Хуш омадӣ!", "Добро пожаловать!", "Welcome!"),
@@ -1160,7 +1160,7 @@ private fun AuthScreen(
         }
         Spacer(Modifier.height(14.dp))
         BrandHeader(tr(language, "ҲАР ҚАДАМ — ЯК ПЕШРАФТ", "КАЖДЫЙ ШАГ — ПРОГРЕСС", "EVERY STEP IS PROGRESS"),
-            tr(language, "БОЗИИ МАҲОРАТ ВА НЕКӢ", "ИГРА НАВЫКОВ И ДОБРА", "A GAME OF SKILLS AND KINDNESS"))
+            tr(language, "ПЛАТФОРМАИ РУШДИ ШАҲРВАНД", "ПЛАТФОРМА РАЗВИТИЯ ГРАЖДАН", "CITIZEN DEVELOPMENT PLATFORM"))
         Spacer(Modifier.height(20.dp))
         Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(3.dp)) {
             Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(11.dp)) {
