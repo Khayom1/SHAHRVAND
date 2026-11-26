@@ -3,6 +3,7 @@ package tj.shahrvand.app
 import android.content.Context
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -62,7 +63,7 @@ private val SLEEP_NAVY = Color(0xFF183247)
 private val SLEEP_GOLD = Color(0xFFC8954A)
 private val SLEEP_GREEN = Color(0xFF2F7969)
 private val SLEEP_MUTED = Color(0xFF687987)
-private val SLEEP_BORDER = Color(0xFFE0E7EC)
+private val SLEEP_BORDER = Color(0xFFDDE7EF)
 
 private fun sleepTr(language: String, tg: String, ru: String, en: String): String =
     when (language) { "ru" -> ru; "en" -> en; else -> tg }
@@ -209,7 +210,7 @@ fun SleepTrackingScreen(
     }
 
     Column(
-        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+        modifier = Modifier.fillMaxSize().background(Color(0xFFF1F6FA)).verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
@@ -228,9 +229,10 @@ fun SleepTrackingScreen(
         }
 
         Card(
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            border = BorderStroke(1.dp, SLEEP_BORDER),
-            shape = RoundedCornerShape(18.dp)
+            colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.84f)),
+            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.96f)),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+            shape = RoundedCornerShape(22.dp)
         ) {
             Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(9.dp)) {
@@ -305,16 +307,23 @@ fun SleepTrackingScreen(
         }
 
         if (error.isNotBlank()) {
-            Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF3F0)),
-                shape = RoundedCornerShape(14.dp)) {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF3F0).copy(alpha = 0.92f)),
+                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.96f)),
+                shape = RoundedCornerShape(19.dp)
+            ) {
                 Text(error, color = MaterialTheme.colorScheme.error, fontSize = 12.sp,
                     modifier = Modifier.padding(14.dp))
             }
         }
 
         if (permissionGranted && latest != null) {
-            Card(colors = CardDefaults.cardColors(containerColor = Color.White),
-                border = BorderStroke(1.dp, SLEEP_BORDER), shape = RoundedCornerShape(18.dp)) {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.84f)),
+                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.96f)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                shape = RoundedCornerShape(22.dp)
+            ) {
                 Column(Modifier.fillMaxWidth().padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(9.dp)) {
                     Text(sleepTr(language, "САБТИ ОХИРИН", "ПОСЛЕДНЯЯ ЗАПИСЬ", "LATEST SLEEP RECORD"),
