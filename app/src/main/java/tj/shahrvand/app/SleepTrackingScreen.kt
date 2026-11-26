@@ -198,7 +198,12 @@ private object SleepHealthConnectRepository {
         // counting the same night's sleep more than once.
         return candidates.groupBy { it.wakeDate }
             .values
-            .mapNotNull { it.maxByOrNull { night -> night.minutes } }
+            .mapNotNull { sameDate ->
+                // Prefer an automatic Samsung Health record over a longer manual estimate.
+                sameDate.filterNot { it.isManual || it.sourcePackage != "com.sec.android.app.shealth" }
+                    .maxByOrNull { it.minutes }
+                    ?: sameDate.maxByOrNull { it.minutes }
+            }
             .sortedByDescending { it.wakeDate }
     }
 }
@@ -254,21 +259,43 @@ fun SleepTrackingScreen(
     val latest = nights.firstOrNull()
     val todaysNight = nights.firstOrNull { it.wakeDate == today }
     val targetMinutes = SleepRules.minimumTargetMinutes(age)
-    val qualifies = todaysNight?.let { SleepRules.qualifies(age, it.minutes) } == true
+    val durationQualifies = todaysNight?.let { SleepRules.qualifies(age, it.minutes) } == true
+    val qualifies = todaysNight?.let {
+        !it.isManual && it.sourcePackage == "com.sec.android.app.shealth" &&
+            SleepRules.qualifies(age, it.minutes)
+    } == true
 
-    LaunchedEffect(todaysNight?.wakeDate, todaysNight?.minutes, qualifies) {
+    LaunchedEffect(todaysNight?.wakeDate, todaysNight?.minutes, todaysNight?.sourcePackage, todaysNight?.isManual, qualifies) {
         rewardMessage = ""
-        if (qualifies && todaysNight != null) {
-            rewardMessage = if (onReward(
-                todaysNight.wakeDate.toString(),
-                todaysNight.start,
-                todaysNight.end,
-                todaysNight.sourcePackage,
-                todaysNight.isManual
-            )) {
-                sleepTr(language, "Офарин! +15 XP барои хоби кофӣ.", "Отлично! +15 XP за достаточный сон.", "Great! +15 XP for sufficient sleep.")
-            } else {
-                sleepTr(language, "Холи ин шаб аллакай ҳисоб шудааст.", "Очки за эту ночь уже начислены.", "This night's points have already been awarded.")
+        if (todaysNight != null && durationQualifies && !qualifies) {
+            rewardMessage = when {
+                todaysNight.isManual -> sleepTr(language,
+                    "Сабти дастӣ барои гирифтани XP қабул намешавад.",
+                    "Ручная запись не подходит для начисления XP.",
+                    "Manual sleep entries are not eligible for XP.")
+                else -> sleepTr(language,
+                    "Барои XP сабти автоматии Samsung Health лозим аст.",
+                    "Для XP нужна автоматическая запись Samsung Health.",
+                    "An automatic Samsung Health record is required for XP.")
+            }
+        } else if (qualifies && todaysNight != null) {
+            try {
+                rewardMessage = if (onReward(
+                    todaysNight.wakeDate.toString(),
+                    todaysNight.start,
+                    todaysNight.end,
+                    todaysNight.sourcePackage,
+                    todaysNight.isManual
+                )) {
+                    sleepTr(language, "Офарин! +15 XP барои хоби кофӣ.", "Отлично! +15 XP за достаточный сон.", "Great! +15 XP for sufficient sleep.")
+                } else {
+                    sleepTr(language, "Холи ин шаб аллакай ҳисоб шудааст.", "Очки за эту ночь уже начислены.", "This night's points have already been awarded.")
+                }
+            } catch (e: Exception) {
+                error = e.message ?: sleepTr(language,
+                    "Сервер XP-ро тасдиқ накард. Баъдтар навсозӣ кун.",
+                    "Сервер не подтвердил XP. Повтори позже.",
+                    "The server could not verify XP. Try refreshing later.")
             }
         }
     }
@@ -398,8 +425,8 @@ fun SleepTrackingScreen(
                         color = SLEEP_NAVY, fontSize = 30.sp, fontWeight = FontWeight.Black
                     )
                     val dateLabel = DateTimeFormatter.ofPattern("dd.MM.yyyy", Locale.getDefault()).format(latest.wakeDate)
-                    val startLabel = DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault()).format(latest.start)
-                    val endLabel = DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault()).format(latest.end)
+                    val startLabel = DateTimeFormatter.ofPattern("HH:mm").withZone(SLEEP_ZONE).format(latest.start)
+                    val endLabel = DateTimeFormatter.ofPattern("HH:mm").withZone(SLEEP_ZONE).format(latest.end)
                     Text(dateLabel + " · " + startLabel + " – " + endLabel, color = SLEEP_MUTED, fontSize = 12.sp)
                     Text(
                         sleepTr(language, "Манба: ", "Источник: ", "Source: ") +
@@ -450,9 +477,9 @@ fun SleepTrackingScreen(
 
         Text(
             sleepTr(language,
-                "Маълумоти хоб метавонад дертар ба Health Connect ҳамоҳанг шавад. Баъди кушодани Samsung Health ин саҳифаро навсозӣ кун. Холи хоб ба XP-и шахсӣ илова мешавад, вале ҳоло ба рейтинги серверӣ дохил намешавад.",
-                "Данные сна могут синхронизироваться с Health Connect с задержкой. После открытия Samsung Health обнови эту страницу. Очки сна добавляются к личному XP, но пока не входят в серверный рейтинг.",
-                "Sleep data may sync to Health Connect with a delay. After opening Samsung Health, refresh this page. Sleep points add to personal XP but are not included in the server leaderboard yet."
+                "Маълумоти хоб метавонад дертар ба Health Connect ҳамоҳанг шавад. Баъди кушодани Samsung Health ин саҳифаро навсозӣ кун. XP-и хоб ба рейтинги ҳафтаинаи серверӣ низ дохил мешавад.",
+                "Данные сна могут синхронизироваться с Health Connect с задержкой. После открытия Samsung Health обнови эту страницу. Очки за сон также входят в недельный серверный рейтинг.",
+                "Sleep data may sync to Health Connect with a delay. After opening Samsung Health, refresh this page. Sleep XP is also included in the server weekly leaderboard."
             ), color = SLEEP_MUTED, fontSize = 10.sp, lineHeight = 15.sp
         )
     }
