@@ -259,14 +259,18 @@ private fun ProfileAchievementsCard(
                     )
                     Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
                         listOf(
-                            Triple("steady_10", "🛡️", "10"),
-                            Triple("dedicated_25", "💠", "25"),
-                            Triple("expert_50", "🏆", "50"),
-                            Triple("legend_100", "👑", "100")
-                        ).forEach { (code, icon, count) ->
+                            listOf("steady_10", "🛡️", "10+", profileTr(language, "Устувор", "Постоянный", "Steady")),
+                            listOf("dedicated_25", "💠", "25+", profileTr(language, "Садоқатманд", "Преданный", "Dedicated")),
+                            listOf("expert_50", "🏆", "50+", profileTr(language, "Устод", "Эксперт", "Expert")),
+                            listOf("legend_100", "👑", "100+", profileTr(language, "Афсона", "Легенда", "Legend"))
+                        ).forEach { item ->
+                            val code = item[0]
+                            val icon = item[1]
+                            val count = item[2]
+                            val title = item[3]
                             val earned = code in unlocked
                             Surface(
-                                modifier = Modifier.weight(1f),
+                                modifier = Modifier.weight(1f).animateContentSize(),
                                 color = if (earned) Color(0xFFFFF4DE) else Color(0xFFF2F5F8),
                                 shape = RoundedCornerShape(12.dp),
                                 border = androidx.compose.foundation.BorderStroke(
@@ -275,13 +279,21 @@ private fun ProfileAchievementsCard(
                                 )
                             ) {
                                 Column(
-                                    Modifier.padding(vertical = 8.dp, horizontal = 3.dp),
+                                    Modifier.fillMaxWidth().padding(vertical = 8.dp, horizontal = 3.dp),
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                     verticalArrangement = Arrangement.spacedBy(3.dp)
                                 ) {
                                     Text(if (earned) icon else "🔒", fontSize = 17.sp)
                                     Text(count, color = if (earned) ProfileNavy else ProfileMuted,
-                                        fontSize = 10.sp, fontWeight = FontWeight.Black)
+                                        fontSize = 9.sp, fontWeight = FontWeight.Black)
+                                    Text(
+                                        title,
+                                        color = if (earned) ProfileNavy else ProfileMuted,
+                                        fontSize = 8.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        maxLines = 2,
+                                        textAlign = TextAlign.Center
+                                    )
                                 }
                             }
                         }
