@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - "release/**"
+      - "optimization/**"
       - "main"
   pull_request:
     branches:
@@ -40,23 +41,23 @@ jobs:
           grep -q 'android.permission.FOREGROUND_SERVICE_LOCATION' app/src/main/AndroidManifest.xml
           grep -q 'android:foregroundServiceType="location"' app/src/main/AndroidManifest.xml
           ! grep -E 'ACCESS_BACKGROUND_LOCATION|RECORD_AUDIO' app/src/main/AndroidManifest.xml
-      - name: Run unit tests and assemble APKs
-        run: gradle :app:testDebugUnitTest :app:assembleDebug :app:assembleRelease :app:bundleRelease
-      - name: Upload debug APK
+      - name: Run unit tests and assemble optimized ARM64 APK and Play App Bundle
+        run: gradle :app:testPlayDebugUnitTest :app:assembleDirectOptimized :app:bundlePlayRelease
+      - name: Report optimized APK size
+        run: |
+          echo "### Optimized ARM64 APK" >> "$GITHUB_STEP_SUMMARY"
+          du -h app/build/outputs/apk/direct/optimized/app-direct-optimized.apk | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "### Multi-ABI Google Play App Bundle" >> "$GITHUB_STEP_SUMMARY"
+          du -h app/build/outputs/bundle/playRelease/app-play-release.aab | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Upload optimized ARM64 installable APK
         uses: actions/upload-artifact@v7
         with:
-          name: shahrvand-v1-debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: shahrvand-v1-optimized-arm64-apk
+          path: app/build/outputs/apk/direct/optimized/app-direct-optimized.apk
           if-no-files-found: error
-      - name: Upload unsigned release AAB for Google Play
+      - name: Upload multi-ABI release AAB for Google Play
         uses: actions/upload-artifact@v7
         with:
-          name: shahrvand-v1-release-unsigned-aab
-          path: app/build/outputs/bundle/release/app-release.aab
-          if-no-files-found: error
-      - name: Upload unsigned release APK
-        uses: actions/upload-artifact@v7
-        with:
-          name: shahrvand-v1-release-unsigned
-          path: app/build/outputs/apk/release/app-release-unsigned.apk
+          name: shahrvand-v1-release-aab
+          path: app/build/outputs/bundle/playRelease/app-play-release.aab
           if-no-files-found: error

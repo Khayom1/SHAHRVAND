@@ -19,6 +19,21 @@ android {
         buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", "\"sb_publishable_EZp3LgM4zcqtFKBUkphGaQ_FmWpyOWz\"")
     }
 
+    // Keep the Google Play package multi-ABI. The direct-install variant is
+    // restricted to arm64-v8a so it does not bundle unused native architectures.
+    flavorDimensions += "distribution"
+    productFlavors {
+        create("play") {
+            dimension = "distribution"
+        }
+        create("direct") {
+            dimension = "distribution"
+            ndk {
+                abiFilters += "arm64-v8a"
+            }
+        }
+    }
+
     buildFeatures {
         compose = true
         buildConfig = true
@@ -31,6 +46,39 @@ android {
 
     kotlinOptions {
         jvmTarget = "17"
+    }
+
+    buildTypes {
+        getByName("release") {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+
+        // Installable, debug-signed ARM64 build with the same R8/resource
+        // shrinking pipeline as release. Debuggability is retained for testing.
+        create("optimized") {
+            initWith(getByName("debug"))
+            isDebuggable = true
+            isMinifyEnabled = true
+            isShrinkResources = true
+            signingConfig = signingConfigs.getByName("debug")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+            matchingFallbacks += listOf("debug")
+        }
+    }
+
+    // Keep native libraries page-aligned and directly loadable on modern Android.
+    packaging {
+        jniLibs {
+            useLegacyPackaging = false
+        }
     }
 }
 
