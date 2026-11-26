@@ -1,5 +1,9 @@
 package tj.shahrvand.app
 
+import androidx.compose.foundation.background
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
@@ -82,5 +86,23 @@ internal fun ShahrvandTheme(mode: String, content: @Composable () -> Unit) {
     )
     CompositionLocalProvider(LocalShahrvandPalette provides palette) {
         MaterialTheme(colorScheme = colors, content = content)
+    }
+}
+
+@Composable
+internal fun Modifier.shahrvandCanvas(): Modifier {
+    val palette = LocalShahrvandPalette.current
+    return if (palette.isDark) {
+        this.background(palette.background)
+    } else {
+        this.background(
+            Brush.verticalGradient(
+                colors = listOf(
+                    Color(0xFFDCEBFF),
+                    Color(0xFFFFE8CB),
+                    Color(0xFFEAF2FF)
+                )
+            )
+        )
     }
 }
