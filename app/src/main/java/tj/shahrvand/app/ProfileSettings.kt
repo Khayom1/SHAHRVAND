@@ -1,6 +1,12 @@
 package tj.shahrvand.app
 
 import android.os.Build
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -30,6 +36,7 @@ import kotlinx.coroutines.launch
 
 private val ProfileNavy = Color(0xFF20384B)
 private val ProfileGreen = Color(0xFF36766D)
+private val ProfileGold = Color(0xFFB98A50)
 private val ProfilePage = Color(0xFFF1F6FA)
 private val ProfileInk = Color(0xFF263640)
 private val ProfileMuted = Color(0xFF777F7E)
@@ -57,9 +64,23 @@ internal fun ShahrvandProfileScreen(
     login: String,
     totalXp: Int,
     totalCompleted: Int,
+    getAccessToken: suspend () -> String,
     onBack: () -> Unit,
     onSettings: () -> Unit
 ) {
+    var achievementSummary by remember(login) { mutableStateOf<AchievementSummary?>(null) }
+    var achievementLoading by remember(login) { mutableStateOf(true) }
+    LaunchedEffect(login) {
+        achievementLoading = true
+        try {
+            achievementSummary = SupabaseCompetitionRepository.myAchievements(getAccessToken())
+        } catch (_: Exception) {
+            achievementSummary = null
+        } finally {
+            achievementLoading = false
+        }
+    }
+
     Column(
         Modifier.fillMaxSize().background(ProfilePage).verticalScroll(rememberScrollState()).padding(16.dp)
     ) {
@@ -125,6 +146,8 @@ internal fun ShahrvandProfileScreen(
             )
         }
 
+        ProfileAchievementsCard(language, achievementSummary, achievementLoading)
+
         ProfileSectionTitle(profileTr(language, "Маълумоти ҳисоб", "Данные аккаунта", "Account details"))
         Card(
             Modifier.fillMaxWidth(),
@@ -161,6 +184,179 @@ internal fun ShahrvandProfileScreen(
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth().padding(top = 9.dp, bottom = 18.dp)
         )
+    }
+}
+
+@Composable
+private fun ProfileAchievementsCard(
+    language: String,
+    summary: AchievementSummary?,
+    loading: Boolean
+) {
+    val unlocked = summary?.unlockedCodes.orEmpty()
+    val target = summary?.progress ?: 0f
+    val animatedProgress by animateFloatAsState(
+        targetValue = target,
+        animationSpec = tween(durationMillis = 950),
+        label = "achievement_title_progress"
+    )
+
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(top = 16.dp).animateContentSize(),
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.86f)),
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.96f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 7.dp)
+    ) {
+        Column(
+            Modifier.fillMaxWidth().padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    profileTr(language, "НИШОНҲО ВА УНВОНҲО", "ЗНАКИ И ТИТУЛЫ", "BADGES & TITLES"),
+                    color = ProfileGold, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold
+                )
+                Text(
+                    profileTr(language, "Пешрафти ту", "Твои достижения", "Your achievements"),
+                    color = ProfileNavy, fontSize = 16.sp, fontWeight = FontWeight.Bold
+                )
+            }
+
+            when {
+                loading -> Box(Modifier.fillMaxWidth().height(54.dp), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = ProfileGold, modifier = Modifier.size(22.dp), strokeWidth = 2.dp)
+                }
+                summary == null -> Text(
+                    profileTr(language, "Маълумоти нишону унвон бор нашуд. Профилро навсозӣ кун.",
+                        "Не удалось загрузить награды. Обнови профиль.",
+                        "Could not load awards. Refresh the profile."),
+                    color = ProfileMuted, fontSize = 11.sp
+                )
+                else -> {
+                    Text(
+                        profileTr(language, "Нишонҳои асосӣ", "Основные значки", "Core badges"),
+                        color = ProfileMuted, fontSize = 10.sp, fontWeight = FontWeight.Bold
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                        AchievementPill(
+                            modifier = Modifier.weight(1f),
+                            icon = "🌟",
+                            title = profileTr(language, "Ворид шуд", "В приложении", "Joined"),
+                            unlocked = "app_entry" in unlocked
+                        )
+                        AchievementPill(
+                            modifier = Modifier.weight(1f),
+                            icon = "⚡",
+                            title = profileTr(language, "Вазифаи аввал", "Первое задание", "First task"),
+                            unlocked = "first_task" in unlocked
+                        )
+                    }
+
+                    Text(
+                        profileTr(language, "УНВОНҲОИ МАХСУС", "ОСОБЫЕ ТИТУЛЫ", "SPECIAL TITLES"),
+                        color = ProfileMuted, fontSize = 10.sp, fontWeight = FontWeight.Bold
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                        listOf(
+                            Triple("steady_10", "🛡️", "10"),
+                            Triple("dedicated_25", "💠", "25"),
+                            Triple("expert_50", "🏆", "50"),
+                            Triple("legend_100", "👑", "100")
+                        ).forEach { (code, icon, count) ->
+                            val earned = code in unlocked
+                            Surface(
+                                modifier = Modifier.weight(1f),
+                                color = if (earned) Color(0xFFFFF4DE) else Color(0xFFF2F5F8),
+                                shape = RoundedCornerShape(12.dp),
+                                border = androidx.compose.foundation.BorderStroke(
+                                    1.dp,
+                                    if (earned) Color(0xFFE1C58D) else ProfileBorder
+                                )
+                            ) {
+                                Column(
+                                    Modifier.padding(vertical = 8.dp, horizontal = 3.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(3.dp)
+                                ) {
+                                    Text(if (earned) icon else "🔒", fontSize = 17.sp)
+                                    Text(count, color = if (earned) ProfileNavy else ProfileMuted,
+                                        fontSize = 10.sp, fontWeight = FontWeight.Black)
+                                }
+                            }
+                        }
+                    }
+
+                    val nextLabel = when (summary.nextThreshold) {
+                        10 -> profileTr(language, "Устувор", "Постоянный", "Steady")
+                        25 -> profileTr(language, "Садоқатманд", "Преданный", "Dedicated")
+                        50 -> profileTr(language, "Устод", "Эксперт", "Expert")
+                        else -> profileTr(language, "Афсона", "Легенда", "Legend")
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Text(
+                                profileTr(language, "То унвони навбатӣ", "До следующего титула", "Next title"),
+                                color = ProfileNavy, fontSize = 11.sp, fontWeight = FontWeight.Bold
+                            )
+                            Text(nextLabel, color = ProfileGold, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+                        Text(
+                            "${summary.verifiedTasks}/${summary.nextThreshold}",
+                            color = ProfileNavy, fontSize = 13.sp, fontWeight = FontWeight.Black
+                        )
+                    }
+                    LinearProgressIndicator(
+                        progress = { animatedProgress },
+                        modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(10.dp)),
+                        color = ProfileGold,
+                        trackColor = ProfileBorder
+                    )
+                    Text(
+                        profileTr(
+                            language,
+                            "Унвонҳо танҳо баъди санҷиши серверӣ кушода мешаванд.",
+                            "Титулы открываются только после проверки сервером.",
+                            "Titles unlock only after server verification."
+                        ),
+                        color = ProfileMuted, fontSize = 9.sp
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AchievementPill(
+    modifier: Modifier,
+    icon: String,
+    title: String,
+    unlocked: Boolean
+) {
+    Surface(
+        modifier = modifier.animateContentSize(),
+        color = if (unlocked) Color(0xFFFFF4DE) else Color(0xFFF2F5F8),
+        shape = RoundedCornerShape(13.dp),
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            if (unlocked) Color(0xFFE1C58D) else ProfileBorder
+        )
+    ) {
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 9.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Text(if (unlocked) icon else "🔒", fontSize = 18.sp)
+            Text(
+                title,
+                color = if (unlocked) ProfileNavy else ProfileMuted,
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = 2
+            )
+        }
     }
 }
 
