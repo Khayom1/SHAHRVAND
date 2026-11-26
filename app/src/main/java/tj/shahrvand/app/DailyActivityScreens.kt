@@ -368,7 +368,7 @@ fun DailyActivitiesScreen(language: String, getAccessToken: suspend () -> String
 
     Column(
         Modifier.fillMaxSize()
-            .background(palette.background)
+            .shahrvandCanvas()
             .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalArrangement = Arrangement.spacedBy(9.dp)
     ) {
