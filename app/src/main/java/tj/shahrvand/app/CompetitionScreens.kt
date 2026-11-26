@@ -53,6 +53,7 @@ data class LeaderEntry(
 )
 
 data class AchievementSummary(
+    val totalXp: Int,
     val verifiedTasks: Int,
     val progressFrom: Int,
     val nextThreshold: Int,
@@ -142,6 +143,7 @@ object SupabaseCompetitionRepository {
             }
         }
         return AchievementSummary(
+            totalXp = result.optInt("total_xp"),
             verifiedTasks = result.optInt("verified_tasks"),
             progressFrom = result.optInt("progress_from"),
             nextThreshold = result.optInt("next_threshold"),
