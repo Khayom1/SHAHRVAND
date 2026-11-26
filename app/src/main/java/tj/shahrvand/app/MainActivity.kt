@@ -42,14 +42,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.time.LocalDate
 
-private val Navy = Color(0xFF20384B)
-private val NavyLight = Color(0xFF355D70)
-private val Gold = Color(0xFFB98A50)
-private val Green = Color(0xFF36766D)
-private val Page = Color(0xFFF4EFE5)
-private val Ink = Color(0xFF263640)
-private val Muted = Color(0xFF777F7E)
-private val BorderTone = Color(0xFFE4D9C8)
+private val Navy = Color(0xFF183247)
+private val NavyLight = Color(0xFF315A72)
+private val Gold = Color(0xFFC8954A)
+private val Green = Color(0xFF2F7969)
+private val Page = Color(0xFFF3F6F8)
+private val Ink = Color(0xFF1D2C38)
+private val Muted = Color(0xFF687987)
+private val BorderTone = Color(0xFFE0E7EC)
 private const val PREFS_NAME = "shahrvand_v1"
 private const val DAILY_TARGET = 3
 
@@ -164,7 +164,7 @@ private fun ShahrvandApp() {
     var fontScale by remember { mutableFloatStateOf(prefs.getFloat("font_scale", 1.0f).coerceIn(0.90f, 1.15f)) }
     var fontFamilyChoice by remember { mutableStateOf(prefs.getString("font_family", "system") ?: "system") }
     var financeEntries by remember { mutableStateOf(emptyList<MoneyEntry>()) }
-    var tab by remember { mutableIntStateOf(1) }
+    var tab by remember { mutableIntStateOf(0) }
     var totalXp by remember { mutableIntStateOf(prefs.getInt("total_xp", 0)) }
     var totalCompleted by remember { mutableIntStateOf(prefs.getInt("total_completed", 0)) }
     var missions by remember { mutableStateOf(builtInMissions) }
@@ -215,7 +215,7 @@ private fun ShahrvandApp() {
 
     LaunchedEffect(isAuthenticated) {
         if (isAuthenticated) {
-            tab = 1
+            tab = 0
             val token = try {
                 getValidAccessToken()
             } catch (_: Exception) {
@@ -326,10 +326,10 @@ private fun ShahrvandApp() {
                 NavigationBar(containerColor = Color.White, tonalElevation = 6.dp) {
                     val labels = listOf(
                         tr(language, "Асосӣ", "Главная", "Home"),
-                        tr(language, "Фаъолият", "Активность", "Activity"),
+                        tr(language, "Вазифаҳо", "Задания", "Challenges"),
                         tr(language, "Рейтинг", "Рейтинг", "Ranking"),
                         tr(language, "Ёддошт", "Заметки", "Notes"),
-                        tr(language, "Молия", "Финансы", "Money")
+                        tr(language, "Буҷет", "Бюджет", "Budget")
                     )
                     val icons = listOf(
                         Icons.Filled.Home, Icons.Filled.Explore, Icons.Filled.EmojiEvents,
@@ -365,6 +365,8 @@ private fun ShahrvandApp() {
                     completedToday, missions, catalogStatus, isLoadingCatalog, financeEntries,
                     onOpenMissions = { tab = 1 },
                     onOpenFinance = { tab = 4 },
+                    onOpenLeaderboard = { tab = 2 },
+                    onOpenNotes = { tab = 3 },
                     onComplete = ::finishMission,
                     onProfile = { showProfile = true }
                 )
@@ -381,6 +383,7 @@ private fun ShahrvandApp() {
                     language, nickname, ageBand ?: "7_12", totalXp, totalCompleted,
                     completedToday, missions, catalogStatus, isLoadingCatalog, financeEntries,
                     onOpenMissions = { tab = 1 }, onOpenFinance = { tab = 4 },
+                    onOpenLeaderboard = { tab = 2 }, onOpenNotes = { tab = 3 },
                     onComplete = ::finishMission, onProfile = { showProfile = true }
                 )
             }
@@ -608,70 +611,249 @@ private fun HomeScreen(
     financeEntries: List<MoneyEntry>,
     onOpenMissions: () -> Unit,
     onOpenFinance: () -> Unit,
+    onOpenLeaderboard: () -> Unit,
+    onOpenNotes: () -> Unit,
     onComplete: (Mission) -> Unit,
     onProfile: () -> Unit
 ) {
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
+    Column(
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState())
+            .padding(horizontal = 18.dp, vertical = 14.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.weight(1f)) {
-                BrandHeader(
-                    tr(language, "Ҳар қадам — як пешрафт", "Каждый шаг — прогресс", "Every step is progress"),
-                    tr(language, "САЛОМАТӢ · ДОНИШ · РУШД", "ЗДОРОВЬЕ · ЗНАНИЯ · РАЗВИТИЕ", "HEALTH · LEARNING · GROWTH")
-                )
+            Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    Modifier.size(48.dp).clip(RoundedCornerShape(15.dp)).background(Navy),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("Ш", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Black)
+                }
+                Spacer(Modifier.width(11.dp))
+                Column {
+                    Text("ШАҲРВАНД", color = Navy, fontSize = 20.sp, fontWeight = FontWeight.Black)
+                    Text(
+                        tr(language, "ПЛАТФОРМАИ РУШДИ ШАҲРВАНД", "ПЛАТФОРМА РАЗВИТИЯ ГРАЖДАН", "CITIZEN DEVELOPMENT PLATFORM"),
+                        color = Gold, fontSize = 8.sp, fontWeight = FontWeight.ExtraBold
+                    )
+                }
             }
             IconButton(onClick = onProfile) {
-                Icon(Icons.Filled.AccountCircle, contentDescription = tr(language, "Профил", "Профиль", "Profile"), tint = Navy)
+                Icon(
+                    Icons.Filled.AccountCircle,
+                    contentDescription = tr(language, "Профил", "Профиль", "Profile"),
+                    tint = Navy,
+                    modifier = Modifier.size(29.dp)
+                )
             }
         }
-        Spacer(Modifier.height(16.dp))
-        Text(tr(language, "Салом", "Привет", "Hello") + ", " +
-            nickname.ifBlank { tr(language, "Шаҳрванд", "Гражданин", "Citizen") } + "!",
-            color = Ink, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-        Text(ageBandLabel(language, ageBand), color = Muted, fontSize = 11.sp)
-        Spacer(Modifier.height(18.dp))
-        Card(colors = CardDefaults.cardColors(containerColor = Navy), shape = RoundedCornerShape(20.dp)) {
-            Column(Modifier.fillMaxWidth().padding(18.dp)) {
-                Text(tr(language, "ҲАР РӮЗ ЯК ҚАДАМ ПЕШ", "КАЖДЫЙ ДЕНЬ — ШАГ ВПЕРЁД", "ONE STEP FORWARD EVERY DAY"),
-                    color = Color(0xFFDCE6ED), fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.height(8.dp))
-                Text(tr(language, "Ҳаракат кун. Омӯз. Натиҷаи воқеӣ ҷамъ кун.",
-                    "Двигайся. Учись. Собирай реальные результаты.",
-                    "Move. Learn. Build real progress."),
-                    color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black, lineHeight = 27.sp)
-                Spacer(Modifier.height(8.dp))
-                Text(tr(language, "Масофа, машқ ва дониш бо далелҳо тасдиқ мешаванд. Холҳо танҳо баъди санҷиши сервер дода мешаванд.",
-                    "Дистанция, упражнения и обучение подтверждаются доказательствами. Очки начисляются только после проверки сервером.",
-                    "Distance, exercise, and learning are evidence-checked. XP is awarded only after server verification."),
-                    color = Color(0xFFDCE6ED), fontSize = 11.sp, lineHeight = 17.sp)
-                Spacer(Modifier.height(14.dp))
-                Button(onClick = onOpenMissions, modifier = Modifier.fillMaxWidth().height(48.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Gold), shape = RoundedCornerShape(12.dp)) {
-                    Text(tr(language, "Вазифаҳои имрӯзаро кушо", "Открыть задания на сегодня", "Open today's challenges"),
-                        color = Color.White, fontWeight = FontWeight.Bold)
+
+        Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            Text(
+                tr(language, "ХУШ ОМАДЕД", "ДОБРО ПОЖАЛОВАТЬ", "WELCOME"),
+                color = Muted, fontSize = 10.sp, fontWeight = FontWeight.Bold
+            )
+            Text(
+                tr(language, "Салом", "Привет", "Hello") + ", " +
+                    nickname.ifBlank { tr(language, "Шаҳрванд", "Гражданин", "Citizen") } + "!",
+                color = Ink, fontSize = 23.sp, fontWeight = FontWeight.ExtraBold
+            )
+            Text(ageBandLabel(language, ageBand), color = Muted, fontSize = 11.sp)
+        }
+
+        Card(
+            colors = CardDefaults.cardColors(containerColor = Navy),
+            shape = RoundedCornerShape(25.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+        ) {
+            Column(
+                Modifier.fillMaxWidth().padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(11.dp)
+            ) {
+                Text(
+                    tr(language, "ШАҲРВАНД  /  РУШДИ ШАХСӢ ВА ҶОМЕА", "SHAHRVAND  /  ЛИЧНОЕ И ОБЩЕСТВЕННОЕ РАЗВИТИЕ", "SHAHRVAND  /  PERSONAL & COMMUNITY GROWTH"),
+                    color = Color(0xFFE0C18D), fontSize = 9.sp, fontWeight = FontWeight.Bold
+                )
+                Text(
+                    tr(language, "Худро рушд деҳ.\nБа ҷомеа фоида расон.",
+                        "Развивай себя.\nДелай общество лучше.",
+                        "Grow yourself.\nMake your community better."),
+                    color = Color.White, fontSize = 25.sp, lineHeight = 31.sp,
+                    fontWeight = FontWeight.Black
+                )
+                Text(
+                    tr(language,
+                        "Платформа барои одатҳои солим, омӯзиши дониш, масъулият ва корҳои фоиданок.",
+                        "Платформа полезных привычек, обучения, личной ответственности и добрых дел.",
+                        "A platform for healthy habits, learning, personal responsibility, and useful community actions."),
+                    color = Color(0xFFDCE6ED), fontSize = 12.sp, lineHeight = 18.sp
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    listOf(
+                        tr(language, "САЛОМАТӢ", "ЗДОРОВЬЕ", "HEALTH"),
+                        tr(language, "ДОНИШ", "ЗНАНИЯ", "LEARNING"),
+                        tr(language, "ҶОМЕА", "ОБЩЕСТВО", "COMMUNITY")
+                    ).forEach { label ->
+                        Box(
+                            Modifier.clip(RoundedCornerShape(20.dp))
+                                .background(Color(0x24FFFFFF)).padding(horizontal = 9.dp, vertical = 6.dp)
+                        ) {
+                            Text(label, color = Color.White, fontSize = 8.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+                Button(
+                    onClick = onOpenMissions,
+                    modifier = Modifier.fillMaxWidth().height(49.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Gold),
+                    shape = RoundedCornerShape(14.dp)
+                ) {
+                    Text(
+                        tr(language, "Ба вазифаҳои имрӯз гузар", "Перейти к заданиям на сегодня", "Explore today's challenges"),
+                        color = Color.White, fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }
-        Spacer(Modifier.height(14.dp))
-        FinanceOverviewCard(language, financeEntries, onOpenFinance)
-        Spacer(Modifier.height(12.dp))
-        Card(colors = CardDefaults.cardColors(containerColor = Color.White),
-            border = BorderStroke(1.dp, BorderTone), shape = RoundedCornerShape(16.dp)) {
-            Column(Modifier.fillMaxWidth().padding(14.dp)) {
-                Text(tr(language, "Чӣ гуна кор мекунад?", "Как это работает?", "How it works"),
-                    color = Navy, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                Text(tr(language, "1. Вазифаро оғоз кун ва иҷозати заруриро деҳ.",
-                    "1. Начни задание и предоставь необходимое разрешение.",
-                    "1. Start a challenge and grant the required permission."),
-                    color = Muted, fontSize = 11.sp, modifier = Modifier.padding(top = 7.dp))
-                Text(tr(language, "2. Телефон далелҳоро маҳаллӣ ҷамъ мекунад; видео ба сервер намеравад.",
-                    "2. Телефон собирает доказательства локально; видео на сервер не отправляется.",
-                    "2. The phone collects evidence locally; video is never uploaded."),
-                    color = Muted, fontSize = 11.sp, modifier = Modifier.padding(top = 5.dp))
-                Text(tr(language, "3. Сервер меъёрҳоро месанҷад ва танҳо натиҷаи қабулшударо ба рейтинг илова мекунад.",
-                    "3. Сервер проверяет правила и добавляет в рейтинг только принятый результат.",
-                    "3. The server validates the rules and adds only accepted results to the leaderboard."),
-                    color = Muted, fontSize = 11.sp, modifier = Modifier.padding(top = 5.dp))
+
+        Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
+            Text(
+                tr(language, "SHAHRVAND ЧИСТ?", "ЧТО ТАКОЕ SHAHRVAND?", "WHAT IS SHAHRVAND?"),
+                color = Navy, fontSize = 12.sp, fontWeight = FontWeight.ExtraBold
+            )
+            Text(
+                tr(language,
+                    "Ин танҳо бозӣ нест. Ин муҳити рақамӣ аст, ки дар он ҳадаф мегузорӣ, амал мекунӣ, натиҷаи худро мебинӣ ва қадам ба қадам рушд мекунӣ.",
+                    "Это не просто игра. Это цифровая среда, где ты ставишь цели, действуешь, видишь свой результат и постепенно развиваешься.",
+                    "More than a game: a digital space to set goals, take action, see your results, and develop step by step."),
+                color = Muted, fontSize = 12.sp, lineHeight = 18.sp
+            )
+        }
+
+        Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
+            Text(
+                tr(language, "СЕ САМТИ АСОСӢ", "ТРИ ОСНОВНЫХ НАПРАВЛЕНИЯ", "THREE CORE PILLARS"),
+                color = Navy, fontSize = 12.sp, fontWeight = FontWeight.ExtraBold
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                HomePillarCard(
+                    Modifier.weight(1f), "🏃",
+                    tr(language, "Саломатӣ", "Здоровье", "Health"),
+                    tr(language, "Ҳаракат ва машқ", "Движение и упражнения", "Movement and exercise")
+                )
+                HomePillarCard(
+                    Modifier.weight(1f), "📚",
+                    tr(language, "Дониш", "Знания", "Learning"),
+                    tr(language, "Омӯзиш ва фикр", "Обучение и мышление", "Learning and thinking")
+                )
+                HomePillarCard(
+                    Modifier.weight(1f), "🤝",
+                    tr(language, "Масъулият", "Ответственность", "Responsibility"),
+                    tr(language, "Одати нек ва саҳм", "Полезные привычки и вклад", "Good habits and contribution")
+                )
             }
+        }
+
+        Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
+            Text(
+                tr(language, "МАРКАЗИ ШАХСИИ ТУ", "ТВОЁ ЛИЧНОЕ ПРОСТРАНСТВО", "YOUR PERSONAL SPACE"),
+                color = Navy, fontSize = 12.sp, fontWeight = FontWeight.ExtraBold
+            )
+            HomeShortcutCard(
+                icon = "🎯",
+                title = tr(language, "Вазифаҳои ҳаррӯза", "Ежедневные задания", "Daily challenges"),
+                description = tr(language, "Меъёрҳоро иҷро кун ва натиҷаи тасдиқшударо ба даст ор.", "Выполняй нормы и получай подтверждённый результат.", "Complete measurable challenges and earn verified results."),
+                onClick = onOpenMissions
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+                HomeShortcutCard(
+                    modifier = Modifier.weight(1f),
+                    icon = "🏆",
+                    title = tr(language, "Рейтинг", "Рейтинг", "Leaderboard"),
+                    description = tr(language, "Муқоисаи натиҷаҳо", "Сравнение результатов", "Compare results"),
+                    onClick = onOpenLeaderboard
+                )
+                HomeShortcutCard(
+                    modifier = Modifier.weight(1f),
+                    icon = "📝",
+                    title = tr(language, "Ёддоштҳо", "Заметки", "Notes"),
+                    description = tr(language, "Фикрҳои худро нигоҳ дор", "Сохраняй свои мысли", "Keep your thoughts"),
+                    onClick = onOpenNotes
+                )
+            }
+            HomeShortcutCard(
+                icon = "💼",
+                title = tr(language, "Буҷети шахсӣ", "Личный бюджет", "Personal budget"),
+                description = tr(language, "Даромад ва хароҷотро ба тартиб дарор.", "Учитывай доходы и расходы.", "Organise income and expenses."),
+                onClick = onOpenFinance
+            )
+        }
+
+        Text(
+            tr(language,
+                "Натиҷаҳо барои пайгирии пешрафти шахсӣ пешбинӣ шудаанд. Холҳо худ аз худ мукофоти пулӣ ё шаҳодатномаи расмӣ нестанд.",
+                "Результаты предназначены для отслеживания личного прогресса. Баллы сами по себе не являются денежной наградой или официальным сертификатом.",
+                "Results are for tracking personal progress. Points are not cash rewards or official certification."),
+            color = Muted, fontSize = 10.sp, lineHeight = 15.sp,
+            modifier = Modifier.padding(bottom = 6.dp)
+        )
+    }
+}
+
+@Composable
+private fun HomePillarCard(
+    modifier: Modifier = Modifier,
+    icon: String,
+    title: String,
+    description: String
+) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        border = BorderStroke(1.dp, BorderTone),
+        shape = RoundedCornerShape(17.dp)
+    ) {
+        Column(
+            Modifier.fillMaxWidth().padding(horizontal = 9.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(5.dp)
+        ) {
+            Text(icon, fontSize = 22.sp)
+            Text(title, color = Navy, fontWeight = FontWeight.Bold, fontSize = 11.sp, maxLines = 1)
+            Text(description, color = Muted, fontSize = 9.sp, lineHeight = 13.sp)
+        }
+    }
+}
+
+@Composable
+private fun HomeShortcutCard(
+    modifier: Modifier = Modifier.fillMaxWidth(),
+    icon: String,
+    title: String,
+    description: String,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = modifier.clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        border = BorderStroke(1.dp, BorderTone),
+        shape = RoundedCornerShape(17.dp)
+    ) {
+        Row(
+            Modifier.fillMaxWidth().padding(13.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                Modifier.size(43.dp).clip(RoundedCornerShape(13.dp)).background(Color(0xFFF0F4F6)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(icon, fontSize = 22.sp)
+            }
+            Spacer(Modifier.width(11.dp))
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Text(title, color = Navy, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                Text(description, color = Muted, fontSize = 10.sp, lineHeight = 14.sp)
+            }
+            Text("›", color = Gold, fontSize = 27.sp, fontWeight = FontWeight.Bold)
         }
     }
 }
