@@ -420,7 +420,7 @@ private fun ShahrvandApp() {
                                 language = language,
                                 age = accountAge,
                                 onReward = { date, startedAt, endedAt, sourcePackage, isManual ->
-                                    SupabaseSleepRepository.award(
+                                    val awarded = SupabaseSleepRepository.award(
                                         token = getValidAccessToken(),
                                         wakeDate = date,
                                         startedAt = startedAt,
@@ -428,6 +428,12 @@ private fun ShahrvandApp() {
                                         sourcePackage = sourcePackage,
                                         isManual = isManual
                                     )
+                                    if (awarded) {
+                                        val summary = SupabaseCompetitionRepository.myAchievements(getValidAccessToken())
+                                        totalXp = summary.totalXp
+                                        prefs.edit().putInt("total_xp", summary.totalXp).apply()
+                                    }
+                                    awarded
                                 }
                             )
                         }
