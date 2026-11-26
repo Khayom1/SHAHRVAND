@@ -1,7 +1,11 @@
 package tj.shahrvand.app
 
 import android.os.Build
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -62,7 +66,7 @@ internal fun ShahrvandProfileScreen(
     totalXp: Int,
     totalCompleted: Int,
     getAccessToken: suspend () -> String,
-    onServerXp: (Int) -> Unit,
+    onServerSummary: (AchievementSummary) -> Unit,
     onBack: () -> Unit,
     onSettings: () -> Unit
 ) {
@@ -73,7 +77,7 @@ internal fun ShahrvandProfileScreen(
         try {
             val summary = SupabaseCompetitionRepository.myAchievements(getAccessToken())
             achievementSummary = summary
-            onServerXp(summary.totalXp)
+            onServerSummary(summary)
         } catch (_: Exception) {
             achievementSummary = null
         } finally {
@@ -283,7 +287,20 @@ private fun ProfileAchievementsCard(
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                     verticalArrangement = Arrangement.spacedBy(3.dp)
                                 ) {
-                                    Text(if (earned) icon else "🔒", fontSize = 17.sp)
+                                    Box(Modifier.height(23.dp), contentAlignment = Alignment.Center) {
+                                        if (earned) {
+                                            AnimatedVisibility(
+                                                visible = true,
+                                                enter = fadeIn(tween(350)) +
+                                                    scaleIn(tween(520), initialScale = 0.35f) +
+                                                    slideInVertically(tween(420)) { -it / 2 }
+                                            ) {
+                                                Text(icon, fontSize = 19.sp)
+                                            }
+                                        } else {
+                                            Text("🔒", fontSize = 16.sp)
+                                        }
+                                    }
                                     Text(count, color = if (earned) ProfileNavy else ProfileMuted,
                                         fontSize = 9.sp, fontWeight = FontWeight.Black)
                                     Text(
@@ -360,7 +377,16 @@ private fun AchievementPill(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            Text(if (unlocked) icon else "🔒", fontSize = 18.sp)
+            Box(Modifier.size(24.dp), contentAlignment = Alignment.Center) {
+                if (unlocked) {
+                    AnimatedVisibility(
+                        visible = true,
+                        enter = fadeIn(tween(300)) + scaleIn(tween(500), initialScale = 0.3f)
+                    ) { Text(icon, fontSize = 19.sp) }
+                } else {
+                    Text("🔒", fontSize = 16.sp)
+                }
+            }
             Text(
                 title,
                 color = if (unlocked) ProfileNavy else ProfileMuted,
