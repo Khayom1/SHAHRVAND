@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.NoteAlt
 import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.Bedtime
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -279,6 +280,18 @@ private fun ShahrvandApp() {
             .apply()
     }
 
+    fun awardSleepXp(date: String, xp: Int): Boolean {
+        if (!date.matches(Regex("^\\d{4}-\\d{2}-\\d{2}$")) || xp <= 0) return false
+        val rewardKey = "sleep_xp_awarded_" + date
+        if (prefs.getBoolean(rewardKey, false)) return false
+        totalXp += xp
+        prefs.edit()
+            .putBoolean(rewardKey, true)
+            .putInt("total_xp", totalXp)
+            .apply()
+        return true
+    }
+
     if (!isAuthenticated) {
         CompositionLocalProvider(
             LocalDensity provides scaledDensity,
@@ -329,11 +342,12 @@ private fun ShahrvandApp() {
                         tr(language, "Вазифаҳо", "Задания", "Challenges"),
                         tr(language, "Рейтинг", "Рейтинг", "Ranking"),
                         tr(language, "Ёддошт", "Заметки", "Notes"),
-                        tr(language, "Буҷет", "Бюджет", "Budget")
+                        tr(language, "Буҷет", "Бюджет", "Budget"),
+                        tr(language, "Хоб", "Сон", "Sleep")
                     )
                     val icons = listOf(
                         Icons.Filled.Home, Icons.Filled.Explore, Icons.Filled.EmojiEvents,
-                        Icons.Filled.NoteAlt, Icons.Filled.AccountBalanceWallet
+                        Icons.Filled.NoteAlt, Icons.Filled.AccountBalanceWallet, Icons.Filled.Bedtime
                     )
                     labels.forEachIndexed { index, label ->
                         NavigationBarItem(
@@ -379,6 +393,7 @@ private fun ShahrvandApp() {
                     language, prefs.getString("auth_user_id", "") ?: "",
                     financeEntries, { financeEntries = it }, ::getValidAccessToken
                 )
+                5 -> SleepTrackingScreen(language, accountAge, ::awardSleepXp)
                 else -> HomeScreen(
                     language, nickname, ageBand ?: "7_12", totalXp, totalCompleted,
                     completedToday, missions, catalogStatus, isLoadingCatalog, financeEntries,
