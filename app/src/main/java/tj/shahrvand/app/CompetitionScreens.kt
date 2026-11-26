@@ -172,7 +172,7 @@ fun WeeklyChallengesScreen(language:String,getAccessToken:suspend()->String) {
         catch(e:Exception) { error=e.message ?: "Network error" }
         finally { loading=false }
     }
-    Column(Modifier.fillMaxSize().background(LocalShahrvandPalette.current.background).padding(14.dp)) {
+    Column(Modifier.fillMaxSize().shahrvandCanvas().padding(14.dp)) {
         Text(cTr(language,"Вазифаҳои ҳафтаина","Задания на неделю","Weekly challenges"),color=C_NavyText,fontSize=21.sp,fontWeight=FontWeight.Black)
         Text(cTr(language,"Ҳар рӯз 6 вазифа · 42 қадам дар як ҳафта","6 заданий в день · 42 шага за неделю","6 tasks per day · 42 steps per week"),color=C_Muted,fontSize=11.sp)
         Spacer(Modifier.height(10.dp))
@@ -185,7 +185,7 @@ fun WeeklyChallengesScreen(language:String,getAccessToken:suspend()->String) {
             Card(
                 colors=CardDefaults.cardColors(containerColor=LocalShahrvandPalette.current.surface.copy(alpha=0.98f)),
                 border=BorderStroke(1.dp,LocalShahrvandPalette.current.border),
-                elevation=CardDefaults.cardElevation(defaultElevation=7.dp),
+                elevation=CardDefaults.cardElevation(defaultElevation=1.dp),
                 shape=RoundedCornerShape(21.dp)
             ) {
                 Column(Modifier.fillMaxWidth().padding(12.dp)) {
@@ -284,7 +284,7 @@ fun LeaderboardScreen(language:String,myAgeBand:String,getAccessToken:suspend()-
         cTr(language, "Ҳамаи синну сол", "Все возрасты", "All ages")
     } else cBand(language, band)
 
-    Column(Modifier.fillMaxSize().background(LocalShahrvandPalette.current.background).padding(horizontal = 14.dp, vertical = 12.dp)) {
+    Column(Modifier.fillMaxSize().shahrvandCanvas().padding(horizontal = 14.dp, vertical = 12.dp)) {
         Text(cTr(language,"Рейтинг","Рейтинг","Leaderboard"),color=C_Navy,fontSize=22.sp,fontWeight=FontWeight.Black)
         Text(
             cTr(language,"Натиҷаҳои тасдиқшудаи сервер","Подтверждённые сервером результаты","Server-verified results"),
@@ -349,7 +349,7 @@ fun LeaderboardScreen(language:String,myAgeBand:String,getAccessToken:suspend()-
                 modifier = Modifier.fillMaxWidth().animateContentSize(),
                 colors = CardDefaults.cardColors(containerColor=LocalShahrvandPalette.current.surface.copy(alpha=0.98f)),
                 border = BorderStroke(1.dp,LocalShahrvandPalette.current.border),
-                elevation = CardDefaults.cardElevation(defaultElevation=7.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation=1.dp),
                 shape = RoundedCornerShape(21.dp)
             ) {
                 Column(Modifier.fillMaxWidth().padding(12.dp),verticalArrangement=Arrangement.spacedBy(5.dp)) {
@@ -428,7 +428,7 @@ fun LeaderboardScreen(language:String,myAgeBand:String,getAccessToken:suspend()-
                         modifier=Modifier.fillMaxWidth().animateContentSize(),
                         colors=CardDefaults.cardColors(containerColor=rowColor),
                         border=BorderStroke(if(e.isMe) 1.6.dp else 1.dp,rowBorder),
-                        elevation=CardDefaults.cardElevation(defaultElevation=if(e.isMe) 7.dp else 4.dp),
+                        elevation=CardDefaults.cardElevation(defaultElevation=if(e.isMe) 1.dp else 1.dp),
                         shape=RoundedCornerShape(19.dp)
                     ) {
                         Row(Modifier.fillMaxWidth().padding(12.dp),verticalAlignment=Alignment.CenterVertically) {
