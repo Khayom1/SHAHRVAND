@@ -401,7 +401,7 @@ fun PersonalSpaceHubScreen(
     }
 
     Column(
-        Modifier.fillMaxSize().background(SpacePage)
+        Modifier.fillMaxSize().shahrvandCanvas()
     ) {
         Column(
             Modifier.fillMaxWidth().padding(horizontal = 15.dp, vertical = 6.dp),
