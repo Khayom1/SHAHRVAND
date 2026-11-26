@@ -117,10 +117,10 @@ private object SleepHealthConnectRepository {
             } else {
                 record.stages.asSequence()
                     .filter { stage ->
-                        stage.stage == SleepSessionRecord.Stage.STAGE_TYPE_SLEEPING ||
-                            stage.stage == SleepSessionRecord.Stage.STAGE_TYPE_LIGHT ||
-                            stage.stage == SleepSessionRecord.Stage.STAGE_TYPE_DEEP ||
-                            stage.stage == SleepSessionRecord.Stage.STAGE_TYPE_REM
+                        stage.stage == SleepSessionRecord.STAGE_TYPE_SLEEPING ||
+                            stage.stage == SleepSessionRecord.STAGE_TYPE_LIGHT ||
+                            stage.stage == SleepSessionRecord.STAGE_TYPE_DEEP ||
+                            stage.stage == SleepSessionRecord.STAGE_TYPE_REM
                     }
                     .sumOf { Duration.between(it.startTime, it.endTime).toMinutes() }
             }
