@@ -30,10 +30,10 @@ import kotlinx.coroutines.launch
 
 private val ProfileNavy = Color(0xFF20384B)
 private val ProfileGreen = Color(0xFF36766D)
-private val ProfilePage = Color(0xFFF4EFE5)
+private val ProfilePage = Color(0xFFF1F6FA)
 private val ProfileInk = Color(0xFF263640)
 private val ProfileMuted = Color(0xFF777F7E)
-private val ProfileBorder = Color(0xFFE4D9C8)
+private val ProfileBorder = Color(0xFFDDE7EF)
 
 private fun profileTr(language: String, tg: String, ru: String, en: String): String =
     when (language) {
@@ -81,8 +81,10 @@ internal fun ShahrvandProfileScreen(
 
         Card(
             modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-            shape = RoundedCornerShape(22.dp),
-            colors = CardDefaults.cardColors(containerColor = ProfileNavy)
+            shape = RoundedCornerShape(27.dp),
+            colors = CardDefaults.cardColors(containerColor = ProfileNavy),
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.32f)),
+            elevation = CardDefaults.cardElevation(defaultElevation = 11.dp)
         ) {
             Column(
                 Modifier.fillMaxWidth().padding(20.dp),
@@ -126,8 +128,10 @@ internal fun ShahrvandProfileScreen(
         ProfileSectionTitle(profileTr(language, "Маълумоти ҳисоб", "Данные аккаунта", "Account details"))
         Card(
             Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White)
+            shape = RoundedCornerShape(21.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.84f)),
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.96f)),
+            elevation = CardDefaults.cardElevation(defaultElevation = 7.dp)
         ) {
             Column(Modifier.fillMaxWidth().padding(15.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 ProfileInfoRow(profileTr(language, "Ном", "Имя", "First name"), firstName.ifBlank { "—" })
@@ -164,8 +168,10 @@ internal fun ShahrvandProfileScreen(
 private fun ProfileStatCard(label: String, value: String, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier,
-        shape = RoundedCornerShape(15.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        shape = RoundedCornerShape(19.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.84f)),
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.96f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
         Column(Modifier.fillMaxWidth().padding(14.dp)) {
             Text(label, color = ProfileMuted, fontSize = 11.sp)
