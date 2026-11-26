@@ -216,7 +216,7 @@ private fun ShahrvandApp() {
     }
 
     LaunchedEffect(isAuthenticated, tab) {
-        if (isAuthenticated) {
+        if (isAuthenticated && tab != 3) {
             val token = try {
                 getValidAccessToken()
             } catch (_: Exception) {
@@ -229,14 +229,12 @@ private fun ShahrvandApp() {
                 return@LaunchedEffect
             }
 
-            if (tab != 3) {
-                val serverSummary = runCatching {
-                    SupabaseCompetitionRepository.myAchievements(token)
-                }.getOrNull()
-                if (serverSummary != null) {
-                    totalXp = serverSummary.totalXp
-                    prefs.edit().putInt("total_xp", serverSummary.totalXp).apply()
-                }
+            val serverSummary = runCatching {
+                SupabaseCompetitionRepository.myAchievements(token)
+            }.getOrNull()
+            if (serverSummary != null) {
+                totalXp = serverSummary.totalXp
+                prefs.edit().putInt("total_xp", serverSummary.totalXp).apply()
             }
 
             if (tab == 0) {
