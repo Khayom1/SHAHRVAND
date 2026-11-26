@@ -19,14 +19,18 @@ android {
         buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", "\"sb_publishable_EZp3LgM4zcqtFKBUkphGaQ_FmWpyOWz\"")
     }
 
-    // Ship one APK per CPU architecture instead of bundling four native copies
-    // into every install. Google Play generates device-specific splits from the AAB.
-    splits {
-        abi {
-            isEnable = true
-            reset()
-            include("arm64-v8a", "armeabi-v7a", "x86_64", "x86")
-            isUniversalApk = false
+    // Keep the Google Play package multi-ABI. The direct-install variant is
+    // restricted to arm64-v8a so it does not bundle unused native architectures.
+    flavorDimensions += "distribution"
+    productFlavors {
+        create("play") {
+            dimension = "distribution"
+        }
+        create("direct") {
+            dimension = "distribution"
+            ndk {
+                abiFilters += "arm64-v8a"
+            }
         }
     }
 
@@ -54,9 +58,8 @@ android {
             )
         }
 
-        // Installable, debug-signed build with the same R8/resource shrinking
-        // pipeline as release. Keeps debugging enabled without shipping four ABIs
-        // inside a single APK.
+        // Installable, debug-signed ARM64 build with the same R8/resource
+        // shrinking pipeline as release. Debuggability is retained for testing.
         create("optimized") {
             initWith(getByName("debug"))
             isDebuggable = true
