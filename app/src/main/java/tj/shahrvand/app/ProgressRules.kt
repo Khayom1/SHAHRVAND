@@ -1,7 +1,15 @@
 package tj.shahrvand.app
 
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+
 object ProgressRules {
     private const val XP_PER_LEVEL = 100
+    private val competitionZone: ZoneId = ZoneId.of("Asia/Dushanbe")
+
+    fun competitionDate(now: Instant = Instant.now()): LocalDate =
+        now.atZone(competitionZone).toLocalDate()
 
     fun levelFor(totalXp: Int): Int = (totalXp.coerceAtLeast(0) / XP_PER_LEVEL) + 1
 
