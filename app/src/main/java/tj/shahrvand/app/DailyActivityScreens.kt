@@ -21,6 +21,8 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -177,7 +179,9 @@ object DailyActivityRepository {
     }
 }
 
-private data class Interest(val code: String, val tg: String, val ru: String, val en: String)
+private data class Interest(val code: String, val tg: String, val ru: String, val en: String) {
+    fun label(language: String) = aTr(language, tg, ru, en)
+}
 private val activityInterests = listOf(
     Interest("science","Илм","Наука","Science"),
     Interest("technology","Технология","Технологии","Technology"),
@@ -281,17 +285,19 @@ fun DailyActivitiesScreen(language: String, getAccessToken: suspend () -> String
                 }
             })
         } else {
-            val done = overview!!.completed.size
+            val taskCount = overview!!.tasks.size
+            val done = overview!!.tasks.count { overview!!.completed.containsKey(it.id) }
+            val progress = if (taskCount > 0) done.toFloat() / taskCount else 0f
             Card(colors=CardDefaults.cardColors(containerColor=androidx.compose.ui.graphics.Color.White), border=BorderStroke(1.dp,A_Border), shape=RoundedCornerShape(14.dp)) {
                 Column(Modifier.fillMaxWidth().padding(12.dp)) {
                     Row(verticalAlignment=Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
                             Text(aTr(language,"Пешрафти имрӯз","Прогресс сегодня","Today's progress"), fontWeight=FontWeight.Bold, color=A_Navy)
-                            Text("$done/6 " + aTr(language,"вазифа","заданий","tasks"), color=A_Muted, fontSize=11.sp)
+                            Text("$done/$taskCount " + aTr(language,"вазифа","заданий","tasks"), color=A_Muted, fontSize=11.sp)
                         }
                         Text(overview!!.completed.values.sum().toString()+" XP", color=A_Gold, fontWeight=FontWeight.Black, fontSize=18.sp)
                     }
-                    LinearProgressIndicator(progress={done/6f}, modifier=Modifier.fillMaxWidth().padding(top=8.dp), color=A_Green)
+                    LinearProgressIndicator(progress={progress}, modifier=Modifier.fillMaxWidth().padding(top=8.dp), color=A_Green)
                 }
             }
             Spacer(Modifier.height(8.dp))
@@ -329,7 +335,7 @@ fun DailyActivitiesScreen(language: String, getAccessToken: suspend () -> String
     val task = activeTask
     val session = activeSession
     if (task != null && session != null) {
-        ActivitySessionDialog(language, task, session, selectedInterests.firstOrNull() ?: "science", getAccessToken, onFinish={ refresh++; activeTask=null; activeSession=null },
+        ActivitySessionDialog(language, task, session, selectedInterests, getAccessToken, onFinish={ refresh++; activeTask=null; activeSession=null },
             onCancel={ activeTask=null; activeSession=null; refresh++ })
     }
 }
@@ -352,7 +358,7 @@ private suspend fun readHealthSteps(context: Context, startedAt: String): Long {
 }
 
 private fun taskIcon(type: String) = when(type) {
-    "gps_walk" -> "🚶"; "gps_run" -> "🏃"; "gps_cycle" -> "🚴"; "pose_squat" -> "🏋️"; "pose_pushup" -> "💪"; else -> "📚"
+    "gps_walk" -> "🚶"; "gps_run" -> "🏃"; "pose_squat" -> "🏋️"; "pose_pushup" -> "💪"; else -> "📚"
 }
 
 @Composable
@@ -377,7 +383,7 @@ private fun InterestPicker(language: String, selected: Set<String>, onToggle: (S
 
 @Composable
 private fun ActivitySessionDialog(language: String, task: ActivityTask, session: ActivitySession,
-                                  interestCode: String, getAccessToken: suspend ()->String, onFinish: ()->Unit, onCancel: ()->Unit) {
+                                  interestCodes: Set<String>, getAccessToken: suspend ()->String, onFinish: ()->Unit, onCancel: ()->Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var elapsed by remember(session.id) { mutableLongStateOf(0L) }
@@ -471,7 +477,7 @@ private fun ActivitySessionDialog(language: String, task: ActivityTask, session:
                         "Only full, correct repetitions count. Camera processing stays on-device; video is not saved or uploaded."),fontSize=11.sp,color=A_Muted)
                     Text(aTr(language,"Вақт: $elapsed / ${task.limitSec} сония","Время: $elapsed / ${task.limitSec} секунд","Time: $elapsed / ${task.limitSec} seconds"),fontWeight=FontWeight.Bold,color=A_Green)
                 } else {
-                    LearningPanel(language, interestCode, foregroundMs/1000L, quizStarted, {quizStarted=true}, quizAnswers, {i,v->quizAnswers=quizAnswers+(i to v)})
+                    LearningPanel(language, interestCodes, foregroundMs/1000L, quizStarted, {quizStarted=true}, quizAnswers, {i,v->quizAnswers=quizAnswers+(i to v)})
                 }
                 if(status.isNotBlank()) Text(status,color=MaterialTheme.colorScheme.error,fontSize=11.sp)
             }
@@ -492,7 +498,7 @@ private fun ActivitySessionDialog(language: String, task: ActivityTask, session:
                         } else {
                             evidence.put("foreground_ms",foregroundMs).put("quiz_total",5)
                                 .put("quiz_correct",quizAnswers.count{(index,answer)->answer==quizCorrectAnswers[index]})
-                                .put("interest_code",interestCode)
+                                .put("interest_codes",JSONArray().apply { interestCodes.sorted().forEach { put(it) } })
                         }
                         val result=DailyActivityRepository.finish(getAccessToken(),session,evidence)
                         if(result.optBoolean("ok")) { status=aTr(language,"Сервер тасдиқ кард!","Сервер подтвердил!","Verified by server!"); delay(650); onFinish() }
@@ -538,12 +544,15 @@ private fun lessonFor(code:String,lang:String):String {
 }
 
 @Composable
-private fun LearningPanel(language:String, interestCode:String, elapsed:Long, quizStarted:Boolean,
+private fun LearningPanel(language:String, interestCodes:Set<String>, elapsed:Long, quizStarted:Boolean,
                           onQuiz:()->Unit, answers:Map<Int,Int>, onAnswer:(Int,Int)->Unit) {
-    val interest = interestCode
-    Column(Modifier.fillMaxWidth().heightIn(max=430.dp),verticalArrangement=Arrangement.spacedBy(8.dp)) {
-        Text(aTr(language,"Дарси шахсӣ","Персональный урок","Personal lesson"),color=A_Navy,fontWeight=FontWeight.Bold)
-        Text(lessonFor(interest,language),fontSize=12.sp,lineHeight=18.sp,color=A_Muted)
+    val topics = activityInterests.filter { it.code in interestCodes }
+    Column(Modifier.fillMaxWidth().heightIn(max=430.dp).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(8.dp)) {
+        Text(aTr(language,"Дарсҳо аз рӯи 5 шавқи интихобшуда","Уроки по 5 выбранным интересам","Lessons based on your 5 selected interests"),color=A_Navy,fontWeight=FontWeight.Bold)
+        topics.forEach { topic ->
+            Text(topic.label(language),color=A_Gold,fontWeight=FontWeight.Bold,fontSize=12.sp)
+            Text(lessonFor(topic.code,language),fontSize=12.sp,lineHeight=18.sp,color=A_Muted)
+        }
         Text("%02d:%02d / 20:00".format(elapsed/60,elapsed%60),fontSize=21.sp,color=A_Green,fontWeight=FontWeight.Black)
         if(elapsed>=1200 && !quizStarted) Button(onClick=onQuiz) { Text(aTr(language,"Ба санҷиш гузаштан","Перейти к тесту","Start quiz")) }
         if(quizStarted) {
