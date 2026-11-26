@@ -229,7 +229,11 @@ private fun ShahrvandApp() {
                 isAuthenticated = false
                 return@LaunchedEffect
             }
-            runCatching { SupabaseCompetitionRepository.myAchievements(token) }
+            val serverSummary = runCatching { SupabaseCompetitionRepository.myAchievements(token) }.getOrNull()
+            if (serverSummary != null) {
+                totalXp = serverSummary.totalXp
+                prefs.edit().putInt("total_xp", serverSummary.totalXp).apply()
+            }
             runCatching { PersonalSpaceRepository.fetchMoneyEntries(token) }
                 .onSuccess { financeEntries = it }
         }
@@ -272,11 +276,11 @@ private fun ShahrvandApp() {
     fun finishMission(mission: Mission) {
         if (!ProgressRules.canCompleteToday(mission.id, completedToday.toSet())) return
         completedToday.add(mission.id)
-        totalXp += mission.xp
+        // Home missions are personal checklists, not score-awarding tasks.
+        // XP is loaded only from Supabase's verified score records.
         totalCompleted += 1
         prefs.edit()
             .putStringSet("completed_today", completedToday.toSet())
-            .putInt("total_xp", totalXp)
             .putInt("total_completed", totalCompleted)
             .putString("progress_day", today)
             .apply()
@@ -1050,7 +1054,7 @@ private fun MissionCard(language: String, mission: Mission, completed: Boolean, 
                     Text(mission.title(language), color = Navy, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                     Text(categoryTitle(language, mission.category), color = Gold, fontSize = 10.sp)
                 }
-                Text("+" + mission.xp + " XP", color = Green, fontWeight = FontWeight.ExtraBold, fontSize = 12.sp)
+                Text(tr(language, "Бе хол", "Без очков", "No XP"), color = Muted, fontWeight = FontWeight.Bold, fontSize = 10.sp)
             }
             Text(mission.description(language), color = Muted, fontSize = 11.sp, lineHeight = 16.sp,
                 modifier = Modifier.padding(top = 8.dp, bottom = 8.dp))
