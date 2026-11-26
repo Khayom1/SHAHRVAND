@@ -467,6 +467,64 @@ fun SleepTrackingScreen(
             }
         }
 
+        if (latest != null && latest.minutes < targetMinutes) {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = LocalShahrvandPalette.current.goldSurface),
+                border = BorderStroke(1.dp, SLEEP_BORDER),
+                shape = RoundedCornerShape(20.dp)
+            ) {
+                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        sleepTr(language, "ЧӢ КОР КУНӢ, ТО ХОБ БЕҲТАР ШАВАД", "КАК УЛУЧШИТЬ СОН", "HOW TO IMPROVE YOUR SLEEP"),
+                        color = SLEEP_NAVY_TEXT, fontWeight = FontWeight.ExtraBold, fontSize = 12.sp
+                    )
+                    Text(
+                        sleepTr(language,
+                            "Хоби сабтшуда аз ҳадафи синну соли ту камтар аст. Ин тавсияҳо одатҳои дастгиришудаи илмӣ мебошанд:",
+                            "Записанный сон короче возрастной нормы. Вот научно обоснованные привычки:",
+                            "Your recorded sleep is below the age-based target. These are evidence-based habits:"
+                        ), color = SLEEP_NAVY_TEXT, fontSize = 12.sp, lineHeight = 18.sp
+                    )
+                    val tips = when (language) {
+                        "ru" -> listOf(
+                            "Ложись и вставай примерно в одно время, включая выходные.",
+                            "Не пей чай с кофеином, кофе и энергетики во второй половине дня.",
+                            "Не ешь тяжёлую пищу непосредственно перед сном; выбирай обычный сбалансированный ужин за 2–3 часа.",
+                            "За 30–60 минут до сна убери телефон и приглуши свет.",
+                            "Днём гуляй или занимайся физической активностью; интенсивную тренировку закончи заранее."
+                        )
+                        "en" -> listOf(
+                            "Keep a consistent bedtime and wake time, including weekends.",
+                            "Avoid caffeinated tea, coffee and energy drinks in the afternoon and evening.",
+                            "Avoid heavy meals right before bed; have a balanced, familiar dinner 2–3 hours earlier.",
+                            "Put the phone away and dim lights 30–60 minutes before bedtime.",
+                            "Get daylight and physical activity during the day; finish intense exercise well before bed."
+                        )
+                        else -> listOf(
+                            "Ҳар рӯз, ҳатто рӯзҳои истироҳат, тақрибан дар як вақт хоб раву бедор шав.",
+                            "Нимаи дуюми рӯз чойи сиёҳи сахт, қаҳва ва энергетик нанӯш.",
+                            "Пеш аз хоб хӯроки вазнин нахӯр; 2–3 соат пештар шоми муътадилу гуногун истеъмол кун.",
+                            "30–60 дақиқа пеш аз хоб телефонро канор гузор ва чароғро кам кун.",
+                            "Рӯзона каме дар рӯшноии рӯз сайр ё машқ кун; машқи шадидро хеле дер анҷом надеҳ."
+                        )
+                    }
+                    tips.forEach { tip ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Top) {
+                            Text("•", color = SLEEP_GOLD, fontWeight = FontWeight.Black)
+                            Text(tip, color = SLEEP_NAVY_TEXT, fontSize = 11.sp, lineHeight = 16.sp)
+                        }
+                    }
+                    Text(
+                        sleepTr(language,
+                            "Ғизои махсусе нест, ки камхобиро ҷуброн кунад. Агар мушкили хоб чанд ҳафта давом кунад ё рӯзона сахт хоболуд бошӣ, ба духтур муроҷиат кун.",
+                            "Нет продукта, который компенсирует недостаток сна. Если проблемы длятся несколько недель или есть сильная дневная сонливость, обратись к врачу.",
+                            "No food can compensate for insufficient sleep. If sleep problems persist for weeks or you have severe daytime sleepiness, consult a clinician."
+                        ), color = SLEEP_MUTED, fontSize = 10.sp, lineHeight = 15.sp
+                    )
+                }
+            }
+        }
+
         Text(
             sleepTr(language,
                 "Маълумоти хоб метавонад дертар ба Health Connect ҳамоҳанг шавад. Баъди кушодани Samsung Health ин саҳифаро навсозӣ кун. XP-и хоб ба рейтинги ҳафтаинаи серверӣ низ дохил мешавад.",
