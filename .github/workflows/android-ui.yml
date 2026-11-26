@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - "release/**"
+      - "optimization/**"
       - "main"
   pull_request:
     branches:
@@ -40,13 +41,25 @@ jobs:
           grep -q 'android.permission.FOREGROUND_SERVICE_LOCATION' app/src/main/AndroidManifest.xml
           grep -q 'android:foregroundServiceType="location"' app/src/main/AndroidManifest.xml
           ! grep -E 'ACCESS_BACKGROUND_LOCATION|RECORD_AUDIO' app/src/main/AndroidManifest.xml
-      - name: Run unit tests and assemble APKs
-        run: gradle :app:testDebugUnitTest :app:assembleDebug :app:assembleRelease :app:bundleRelease
-      - name: Upload debug APK
+      - name: Run unit tests and assemble optimized APKs
+        run: gradle :app:testDebugUnitTest :app:assembleDebug :app:assembleOptimized :app:assembleRelease :app:bundleRelease
+      - name: Report APK sizes
+        run: |
+          echo "### Optimized APK sizes" >> "$GITHUB_STEP_SUMMARY"
+          for apk in app/build/outputs/apk/optimized/*.apk; do
+            [ -f "$apk" ] && du -h "$apk" | tee -a "$GITHUB_STEP_SUMMARY"
+          done
+      - name: Upload optimized installable APKs
         uses: actions/upload-artifact@v7
         with:
-          name: shahrvand-v1-debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: shahrvand-v1-optimized-apks
+          path: app/build/outputs/apk/optimized/*.apk
+          if-no-files-found: error
+      - name: Upload debug APKs (all ABIs)
+        uses: actions/upload-artifact@v7
+        with:
+          name: shahrvand-v1-debug-apks
+          path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
       - name: Upload unsigned release AAB for Google Play
         uses: actions/upload-artifact@v7
@@ -54,9 +67,9 @@ jobs:
           name: shahrvand-v1-release-unsigned-aab
           path: app/build/outputs/bundle/release/app-release.aab
           if-no-files-found: error
-      - name: Upload unsigned release APK
+      - name: Upload unsigned release APKs
         uses: actions/upload-artifact@v7
         with:
-          name: shahrvand-v1-release-unsigned
-          path: app/build/outputs/apk/release/app-release-unsigned.apk
+          name: shahrvand-v1-release-unsigned-apks
+          path: app/build/outputs/apk/release/*.apk
           if-no-files-found: error
