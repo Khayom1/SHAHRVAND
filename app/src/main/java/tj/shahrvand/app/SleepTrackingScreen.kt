@@ -58,6 +58,11 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.json.JSONObject
+import java.net.HttpURLConnection
+import java.net.URL
 
 private val SLEEP_NAVY = Color(0xFF183247)
 private val SLEEP_GOLD = Color(0xFFC8954A)
@@ -77,6 +82,56 @@ private data class SleepNight(
     val hasStages: Boolean,
     val isManual: Boolean
 )
+
+
+private object SupabaseSleepRepository {
+    private val base get() = BuildConfig.SUPABASE_URL.trimEnd('/')
+    private val key get() = BuildConfig.SUPABASE_PUBLISHABLE_KEY
+
+    suspend fun award(
+        token: String,
+        wakeDate: String,
+        startedAt: Instant,
+        endedAt: Instant,
+        sourcePackage: String,
+        isManual: Boolean
+    ): Boolean = withContext(Dispatchers.IO) {
+        var connection: HttpURLConnection? = null
+        try {
+            val body = JSONObject()
+                .put("p_wake_date", wakeDate)
+                .put("p_started_at", startedAt.toString())
+                .put("p_ended_at", endedAt.toString())
+                .put("p_source_package", sourcePackage)
+                .put("p_is_manual", isManual)
+            connection = (URL("$base/rest/v1/rpc/shahrvand_award_sleep_xp").openConnection() as HttpURLConnection).apply {
+                requestMethod = "POST"
+                connectTimeout = 12000
+                readTimeout = 15000
+                setRequestProperty("apikey", key)
+                setRequestProperty("Authorization", "Bearer $token")
+                setRequestProperty("Accept", "application/json")
+                setRequestProperty("Content-Type", "application/json")
+                doOutput = true
+            }
+            connection.outputStream.bufferedWriter(Charsets.UTF_8).use { it.write(body.toString()) }
+            val code = connection.responseCode
+            val stream = if (code in 200..299) connection.inputStream else connection.errorStream
+            val raw = stream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }.orEmpty()
+            if (code !in 200..299) {
+                val message = runCatching { JSONObject(raw).optString("message") }.getOrNull().orEmpty()
+                throw IllegalStateException(message.ifBlank { "HTTP $code" })
+            }
+            val result = JSONObject(raw)
+            result.optBoolean("ok") &&
+                result.optBoolean("qualified") &&
+                !result.optBoolean("already_awarded") &&
+                result.optInt("xp_awarded") == SleepRules.REWARD_XP
+        } finally {
+            connection?.disconnect()
+        }
+    }
+}
 
 private object SleepHealthConnectRepository {
     val permissions = setOf(
@@ -149,7 +204,7 @@ private object SleepHealthConnectRepository {
 fun SleepTrackingScreen(
     language: String,
     age: Int,
-    onReward: (date: String, xp: Int) -> Boolean
+    onReward: suspend (date: String, startedAt: Instant, endedAt: Instant, sourcePackage: String, isManual: Boolean) -> Boolean
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -201,7 +256,13 @@ fun SleepTrackingScreen(
     LaunchedEffect(todaysNight?.wakeDate, todaysNight?.minutes, qualifies) {
         rewardMessage = ""
         if (qualifies && todaysNight != null) {
-            rewardMessage = if (onReward(todaysNight.wakeDate.toString(), SleepRules.REWARD_XP)) {
+            rewardMessage = if (onReward(
+                todaysNight.wakeDate.toString(),
+                todaysNight.start,
+                todaysNight.end,
+                todaysNight.sourcePackage,
+                todaysNight.isManual
+            )) {
                 sleepTr(language, "Офарин! +15 XP барои хоби кофӣ.", "Отлично! +15 XP за достаточный сон.", "Great! +15 XP for sufficient sleep.")
             } else {
                 sleepTr(language, "Холи ин шаб аллакай ҳисоб шудааст.", "Очки за эту ночь уже начислены.", "This night's points have already been awarded.")
