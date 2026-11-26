@@ -89,7 +89,7 @@ internal fun ShahrvandProfileScreen(
     }
 
     Column(
-        Modifier.fillMaxSize().background(ProfilePage).verticalScroll(rememberScrollState()).padding(16.dp)
+        Modifier.fillMaxSize().shahrvandCanvas().verticalScroll(rememberScrollState()).padding(16.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onBack) {
