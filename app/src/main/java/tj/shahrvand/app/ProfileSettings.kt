@@ -65,6 +65,7 @@ internal fun ShahrvandProfileScreen(
     totalXp: Int,
     totalCompleted: Int,
     getAccessToken: suspend () -> String,
+    onServerXp: (Int) -> Unit,
     onBack: () -> Unit,
     onSettings: () -> Unit
 ) {
@@ -73,7 +74,9 @@ internal fun ShahrvandProfileScreen(
     LaunchedEffect(login) {
         achievementLoading = true
         try {
-            achievementSummary = SupabaseCompetitionRepository.myAchievements(getAccessToken())
+            val summary = SupabaseCompetitionRepository.myAchievements(getAccessToken())
+            achievementSummary = summary
+            onServerXp(summary.totalXp)
         } catch (_: Exception) {
             achievementSummary = null
         } finally {
