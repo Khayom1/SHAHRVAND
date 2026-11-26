@@ -258,9 +258,47 @@ fun DailyActivitiesScreen(language: String, getAccessToken: suspend () -> String
         finally { loading = false }
     }
 
-    Column(Modifier.fillMaxSize().padding(14.dp)) {
-        Text(aTr(language,"Вазифаҳои ҳаррӯза","Ежедневные задания","Daily challenges"), color=A_Navy, fontSize=21.sp, fontWeight=FontWeight.Black)
-        Text(aTr(language,"Ҳама як меъёр · далелҳо дар телефон ҷамъ мешаванд","Одинаковые нормы для всех · доказательства собираются на телефоне","Same targets for everyone · evidence is collected on-device"), color=A_Muted, fontSize=11.sp)
+    Column(Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 14.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
+            Text(
+                aTr(language, "ФАЪОЛИЯТИ ҲАРРӮЗА", "ЕЖЕДНЕВНАЯ АКТИВНОСТЬ", "DAILY ACTIVITY"),
+                color=A_Gold, fontSize=9.sp, fontWeight=FontWeight.ExtraBold
+            )
+            Text(
+                aTr(language, "Қадамҳои воқеӣ. Натиҷаи санҷидашуда.", "Реальные действия. Проверяемый результат.", "Real actions. Measurable results."),
+                color=A_Navy, fontSize=22.sp, lineHeight=27.sp, fontWeight=FontWeight.Black
+            )
+            Text(
+                aTr(language,
+                    "Ҳаракат кун, омӯз ва машқро анҷом деҳ. Система пешрафтро аз рӯи меъёрҳои муайян месанҷад.",
+                    "Двигайся, учись и тренируйся. Система проверяет результат по установленным критериям.",
+                    "Move, learn, and train. The system checks progress against defined criteria."),
+                color=A_Muted, fontSize=12.sp, lineHeight=17.sp
+            )
+        }
+        Card(
+            modifier=Modifier.fillMaxWidth(),
+            colors=CardDefaults.cardColors(containerColor=A_Navy),
+            shape=RoundedCornerShape(20.dp)
+        ) {
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal=15.dp, vertical=13.dp),
+                verticalAlignment=Alignment.CenterVertically
+            ) {
+                Column(Modifier.weight(1f), verticalArrangement=Arrangement.spacedBy(3.dp)) {
+                    Text(
+                        aTr(language, "МЕЪЁРИ ЯГОНА БАРОИ ҲАМА", "ЕДИНЫЕ КРИТЕРИИ ДЛЯ ВСЕХ", "ONE STANDARD FOR EVERYONE"),
+                        color=androidx.compose.ui.graphics.Color(0xFFE5C995),
+                        fontSize=8.sp, fontWeight=FontWeight.Bold
+                    )
+                    Text(
+                        aTr(language, "Натиҷа баъди санҷиши серверӣ ба ҳисоб гирифта мешавад.", "Результат засчитывается после серверной проверки.", "Results count after server verification."),
+                        color=androidx.compose.ui.graphics.Color.White, fontSize=11.sp, lineHeight=16.sp
+                    )
+                }
+                Text("✓", color=androidx.compose.ui.graphics.Color(0xFFE5C995), fontSize=28.sp, fontWeight=FontWeight.Black)
+            }
+        }
         if (HealthConnectClient.getSdkStatus(context) == HealthConnectClient.SDK_AVAILABLE && !healthConnected) {
             TextButton(onClick={healthPermissionLauncher.launch(healthPermissions)}) {
                 Text(aTr(language,"Пайваст кардани Samsung Health / Health Connect","Подключить Samsung Health / Health Connect","Connect Samsung Health / Health Connect"))
@@ -288,12 +326,12 @@ fun DailyActivitiesScreen(language: String, getAccessToken: suspend () -> String
             val taskCount = overview!!.tasks.size
             val done = overview!!.tasks.count { overview!!.completed.containsKey(it.id) }
             val progress = if (taskCount > 0) done.toFloat() / taskCount else 0f
-            Card(colors=CardDefaults.cardColors(containerColor=androidx.compose.ui.graphics.Color.White), border=BorderStroke(1.dp,A_Border), shape=RoundedCornerShape(14.dp)) {
-                Column(Modifier.fillMaxWidth().padding(12.dp)) {
+            Card(colors=CardDefaults.cardColors(containerColor=androidx.compose.ui.graphics.Color.White), border=BorderStroke(1.dp,A_Border), shape=RoundedCornerShape(18.dp)) {
+                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement=Arrangement.spacedBy(4.dp)) {
                     Row(verticalAlignment=Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
-                            Text(aTr(language,"Пешрафти имрӯз","Прогресс сегодня","Today's progress"), fontWeight=FontWeight.Bold, color=A_Navy)
-                            Text("$done/$taskCount " + aTr(language,"вазифа","заданий","tasks"), color=A_Muted, fontSize=11.sp)
+                            Text(aTr(language,"ПЕШРАФТИ ИМРӮЗ","ПРОГРЕСС ЗА СЕГОДНЯ","TODAY'S PROGRESS"), fontWeight=FontWeight.ExtraBold, color=A_Navy, fontSize=10.sp)
+                            Text("$done/$taskCount " + aTr(language,"вазифа иҷро шуд","заданий выполнено","challenges completed"), color=A_Muted, fontSize=12.sp)
                         }
                         Text(overview!!.completed.values.sum().toString()+" XP", color=A_Gold, fontWeight=FontWeight.Black, fontSize=18.sp)
                     }
@@ -301,28 +339,38 @@ fun DailyActivitiesScreen(language: String, getAccessToken: suspend () -> String
                 }
             }
             Spacer(Modifier.height(8.dp))
-            LazyColumn(verticalArrangement=Arrangement.spacedBy(8.dp), contentPadding=PaddingValues(bottom=20.dp)) {
+            Text(
+                aTr(language, "ИНТИХОБИ ВАЗИФА", "ВЫБЕРИ ЗАДАНИЕ", "CHOOSE A CHALLENGE"),
+                color=A_Navy, fontSize=11.sp, fontWeight=FontWeight.ExtraBold,
+                modifier=Modifier.padding(top=5.dp, bottom=1.dp)
+            )
+            LazyColumn(verticalArrangement=Arrangement.spacedBy(10.dp), contentPadding=PaddingValues(bottom=24.dp)) {
                 items(overview!!.tasks, key={it.id}) { task ->
                     val completed = overview!!.completed[task.id]
-                    Card(colors=CardDefaults.cardColors(containerColor=if(completed!=null) androidx.compose.ui.graphics.Color(0xFFF0F6F2) else androidx.compose.ui.graphics.Color.White),
-                        border=BorderStroke(1.dp, if(completed!=null) androidx.compose.ui.graphics.Color(0xFFC9DED1) else A_Border), shape=RoundedCornerShape(13.dp)) {
-                        Column(Modifier.fillMaxWidth().padding(11.dp)) {
+                    Card(colors=CardDefaults.cardColors(containerColor=if(completed!=null) androidx.compose.ui.graphics.Color(0xFFF0F7F3) else androidx.compose.ui.graphics.Color.White),
+                        border=BorderStroke(1.dp, if(completed!=null) androidx.compose.ui.graphics.Color(0xFFC9DED1) else A_Border), shape=RoundedCornerShape(18.dp)) {
+                        Column(Modifier.fillMaxWidth().padding(15.dp), verticalArrangement=Arrangement.spacedBy(2.dp)) {
                             Row(verticalAlignment=Alignment.CenterVertically) {
-                                Text(taskIcon(task.type), fontSize=22.sp)
-                                Spacer(Modifier.width(9.dp))
+                                Box(
+                                    Modifier.size(45.dp).clip(RoundedCornerShape(14.dp))
+                                        .background(if(completed!=null) androidx.compose.ui.graphics.Color(0xFFE2F0E7) else androidx.compose.ui.graphics.Color(0xFFF0F4F6)),
+                                    contentAlignment=Alignment.Center
+                                ) { Text(taskIcon(task.type), fontSize=23.sp) }
+                                Spacer(Modifier.width(11.dp))
                                 Text(task.title(language), color=A_Navy, fontWeight=FontWeight.Bold, fontSize=13.sp, modifier=Modifier.weight(1f))
                                 Text("+"+task.xp+" XP", color=A_Gold, fontWeight=FontWeight.Bold, fontSize=11.sp)
                             }
-                            Text(task.description(language), color=A_Muted, fontSize=11.sp, lineHeight=16.sp, modifier=Modifier.padding(top=4.dp))
-                            if (completed != null) Text("✓ "+aTr(language,"Иҷро шуд","Выполнено","Completed")+" · +$completed XP", color=A_Green, fontWeight=FontWeight.Bold, fontSize=11.sp, modifier=Modifier.padding(top=7.dp))
+                            Text(task.description(language), color=A_Muted, fontSize=12.sp, lineHeight=17.sp, modifier=Modifier.padding(top=8.dp))
+                            if (completed != null) Text("✓ "+aTr(language,"Иҷро шуд","Выполнено","Completed")+" · +$completed XP", color=A_Green, fontWeight=FontWeight.Bold, fontSize=12.sp, modifier=Modifier.padding(top=8.dp))
                             else Button(onClick={
                                 val permissions = if(task.type.startsWith("gps_")) arrayOf(Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION,Manifest.permission.ACTIVITY_RECOGNITION)
                                     else if(task.type.startsWith("pose_")) arrayOf(Manifest.permission.CAMERA) else emptyArray()
                                 val missing = permissions.filter { ContextCompat.checkSelfPermission(context,it) != PackageManager.PERMISSION_GRANTED }
                                 if(missing.isEmpty()) scope.launch { begin(task) }
                                 else { pendingTask=task; permissionLauncher.launch(missing.toTypedArray()) }
-                            }, enabled=!busy && activeTask==null, modifier=Modifier.padding(top=7.dp).height(38.dp)) {
-                                Text(aTr(language,"Оғоз","Начать","Start"), fontSize=12.sp)
+                            }, enabled=!busy && activeTask==null, modifier=Modifier.padding(top=9.dp).fillMaxWidth().height(44.dp),
+                                shape=RoundedCornerShape(13.dp)) {
+                                Text(aTr(language,"Оғози вазифа","Начать задание","Start challenge"), fontSize=12.sp, fontWeight=FontWeight.Bold)
                             }
                         }
                     }
