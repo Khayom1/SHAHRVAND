@@ -69,11 +69,11 @@ import kotlin.math.min
 import kotlin.math.roundToInt
 
 private const val ACTIVITY_ZONE = "Asia/Dushanbe"
-private val A_Navy = androidx.compose.ui.graphics.Color(0xFF20384B)
-private val A_Gold = androidx.compose.ui.graphics.Color(0xFFB98A50)
-private val A_Green = androidx.compose.ui.graphics.Color(0xFF36766D)
-private val A_Muted = androidx.compose.ui.graphics.Color(0xFF777F7E)
-private val A_Border = androidx.compose.ui.graphics.Color(0xFFE4D9C8)
+private val A_Navy = androidx.compose.ui.graphics.Color(0xFF183247)
+private val A_Gold = androidx.compose.ui.graphics.Color(0xFFC8954A)
+private val A_Green = androidx.compose.ui.graphics.Color(0xFF2F7969)
+private val A_Muted = androidx.compose.ui.graphics.Color(0xFF687987)
+private val A_Border = androidx.compose.ui.graphics.Color(0xFFE0E7EC)
 
 private fun aTr(l: String, tg: String, ru: String, en: String) = when (l) { "ru" -> ru; "en" -> en; else -> tg }
 
