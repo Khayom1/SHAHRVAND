@@ -229,6 +229,7 @@ private fun ShahrvandApp() {
                 isAuthenticated = false
                 return@LaunchedEffect
             }
+            runCatching { SupabaseCompetitionRepository.myAchievements(token) }
             runCatching { PersonalSpaceRepository.fetchMoneyEntries(token) }
                 .onSuccess { financeEntries = it }
         }
@@ -450,6 +451,7 @@ private fun ShahrvandApp() {
                     login = accountLogin,
                     totalXp = totalXp,
                     totalCompleted = totalCompleted,
+                    getAccessToken = ::getValidAccessToken,
                     onBack = {
                         tab = 0
                         homeDestination = "dashboard"
