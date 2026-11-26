@@ -78,7 +78,7 @@ private val A_Navy = androidx.compose.ui.graphics.Color(0xFF183247)
 private val A_Gold = androidx.compose.ui.graphics.Color(0xFFC8954A)
 private val A_Green = androidx.compose.ui.graphics.Color(0xFF2F7969)
 private val A_Muted = androidx.compose.ui.graphics.Color(0xFF687987)
-private val A_Border = androidx.compose.ui.graphics.Color(0xFFE0E7EC)
+private val A_Border = androidx.compose.ui.graphics.Color(0xFFDDE7EF)
 
 private fun aTr(l: String, tg: String, ru: String, en: String) = when (l) { "ru" -> ru; "en" -> en; else -> tg }
 
@@ -299,7 +299,7 @@ fun DailyActivitiesScreen(language: String, getAccessToken: suspend () -> String
         finally { loading = false }
     }
 
-    Column(Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 14.dp)) {
+    Column(Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Color(0xFFF1F6FA)).padding(horizontal = 16.dp, vertical = 14.dp)) {
         Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
             Text(
                 aTr(language, "ФАЪОЛИЯТИ ҲАРРӮЗА", "ЕЖЕДНЕВНАЯ АКТИВНОСТЬ", "DAILY ACTIVITY"),
@@ -390,7 +390,12 @@ fun DailyActivitiesScreen(language: String, getAccessToken: suspend () -> String
             val taskCount = overview!!.tasks.size
             val done = overview!!.tasks.count { overview!!.completed.containsKey(it.id) }
             val progress = if (taskCount > 0) done.toFloat() / taskCount else 0f
-            Card(colors=CardDefaults.cardColors(containerColor=androidx.compose.ui.graphics.Color.White), border=BorderStroke(1.dp,A_Border), shape=RoundedCornerShape(18.dp)) {
+            Card(
+                colors=CardDefaults.cardColors(containerColor=androidx.compose.ui.graphics.Color.White.copy(alpha=0.84f)),
+                border=BorderStroke(1.dp,androidx.compose.ui.graphics.Color.White.copy(alpha=0.96f)),
+                elevation=CardDefaults.cardElevation(defaultElevation=7.dp),
+                shape=RoundedCornerShape(22.dp)
+            ) {
                 Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement=Arrangement.spacedBy(4.dp)) {
                     Row(verticalAlignment=Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
@@ -411,8 +416,12 @@ fun DailyActivitiesScreen(language: String, getAccessToken: suspend () -> String
             LazyColumn(verticalArrangement=Arrangement.spacedBy(10.dp), contentPadding=PaddingValues(bottom=24.dp)) {
                 items(overview!!.tasks, key={it.id}) { task ->
                     val completed = overview!!.completed[task.id]
-                    Card(colors=CardDefaults.cardColors(containerColor=if(completed!=null) androidx.compose.ui.graphics.Color(0xFFF0F7F3) else androidx.compose.ui.graphics.Color.White),
-                        border=BorderStroke(1.dp, if(completed!=null) androidx.compose.ui.graphics.Color(0xFFC9DED1) else A_Border), shape=RoundedCornerShape(18.dp)) {
+                    Card(
+                        colors=CardDefaults.cardColors(containerColor=if(completed!=null) androidx.compose.ui.graphics.Color(0xFFEAF5EF) else androidx.compose.ui.graphics.Color.White.copy(alpha=0.84f)),
+                        border=BorderStroke(1.dp, if(completed!=null) androidx.compose.ui.graphics.Color(0xFFC9DED1) else androidx.compose.ui.graphics.Color.White.copy(alpha=0.96f)),
+                        elevation=CardDefaults.cardElevation(defaultElevation=6.dp),
+                        shape=RoundedCornerShape(21.dp)
+                    ) {
                         Column(Modifier.fillMaxWidth().padding(15.dp), verticalArrangement=Arrangement.spacedBy(2.dp)) {
                             Row(verticalAlignment=Alignment.CenterVertically) {
                                 Box(
@@ -540,9 +549,10 @@ private fun InterestPicker(language: String, selected: Set<String>, onToggle: (S
         }
         Card(
             modifier=Modifier.weight(1f).fillMaxWidth(),
-            colors=CardDefaults.cardColors(containerColor=androidx.compose.ui.graphics.Color.White),
-            border=BorderStroke(1.dp,A_Border),
-            shape=RoundedCornerShape(18.dp)
+            colors=CardDefaults.cardColors(containerColor=androidx.compose.ui.graphics.Color.White.copy(alpha=0.84f)),
+            border=BorderStroke(1.dp,androidx.compose.ui.graphics.Color.White.copy(alpha=0.96f)),
+            elevation=CardDefaults.cardElevation(defaultElevation=7.dp),
+            shape=RoundedCornerShape(22.dp)
         ) {
             if (filtered.isEmpty()) {
                 Box(Modifier.fillMaxSize(), contentAlignment=Alignment.Center) {
