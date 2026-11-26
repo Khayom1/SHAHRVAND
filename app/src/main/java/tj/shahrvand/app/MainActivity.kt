@@ -215,9 +215,8 @@ private fun ShahrvandApp() {
         return accessToken
     }
 
-    LaunchedEffect(isAuthenticated) {
+    LaunchedEffect(isAuthenticated, tab) {
         if (isAuthenticated) {
-            tab = 0
             val token = try {
                 getValidAccessToken()
             } catch (_: Exception) {
@@ -229,18 +228,20 @@ private fun ShahrvandApp() {
                 isAuthenticated = false
                 return@LaunchedEffect
             }
-            runCatching { PersonalSpaceRepository.fetchMoneyEntries(token) }
-                .onSuccess { financeEntries = it }
-        }
-    }
 
-    LaunchedEffect(tab, isAuthenticated) {
-        if (isAuthenticated && tab != 3) {
-            val token = runCatching { getValidAccessToken() }.getOrNull() ?: return@LaunchedEffect
-            val serverSummary = runCatching { SupabaseCompetitionRepository.myAchievements(token) }.getOrNull()
-            if (serverSummary != null) {
-                totalXp = serverSummary.totalXp
-                prefs.edit().putInt("total_xp", serverSummary.totalXp).apply()
+            if (tab != 3) {
+                val serverSummary = runCatching {
+                    SupabaseCompetitionRepository.myAchievements(token)
+                }.getOrNull()
+                if (serverSummary != null) {
+                    totalXp = serverSummary.totalXp
+                    prefs.edit().putInt("total_xp", serverSummary.totalXp).apply()
+                }
+            }
+
+            if (tab == 0) {
+                runCatching { PersonalSpaceRepository.fetchMoneyEntries(token) }
+                    .onSuccess { financeEntries = it }
             }
         }
     }
