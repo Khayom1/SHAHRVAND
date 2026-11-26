@@ -1,5 +1,7 @@
 package tj.shahrvand.app
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -302,6 +304,23 @@ fun FinanceOverviewCard(
     val expense = entries.filter { it.entryType == "expense" && it.occurredOn.startsWith(month) }.sumOf { it.amount }
     val balance = income - expense
     val maxValue = maxOf(income, expense, 1.0)
+    val animatedIncome by animateFloatAsState(
+        targetValue = income.toFloat(), animationSpec = tween(850), label = "finance_income_value"
+    )
+    val animatedExpense by animateFloatAsState(
+        targetValue = expense.toFloat(), animationSpec = tween(850), label = "finance_expense_value"
+    )
+    val animatedBalance by animateFloatAsState(
+        targetValue = balance.toFloat(), animationSpec = tween(850), label = "finance_balance_value"
+    )
+    val animatedIncomeBar by animateFloatAsState(
+        targetValue = (income / maxValue).toFloat().coerceIn(0f, 1f),
+        animationSpec = tween(950), label = "finance_income_bar"
+    )
+    val animatedExpenseBar by animateFloatAsState(
+        targetValue = (expense / maxValue).toFloat().coerceIn(0f, 1f),
+        animationSpec = tween(950), label = "finance_expense_bar"
+    )
     Card(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onOpen),
         colors = CardDefaults.cardColors(containerColor = LocalShahrvandPalette.current.surface),
@@ -323,15 +342,15 @@ fun FinanceOverviewCard(
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Column(Modifier.weight(1f)) {
                     Text(spaceTr(language, "Даромад", "Доходы", "Income"), color = SpaceGreen, fontSize = 10.sp)
-                    Text(formatSomoni(income) + " с.", color = SpaceNavy, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
+                    Text(formatSomoni(animatedIncome.toDouble()) + " с.", color = SpaceNavy, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
                 }
                 Column(Modifier.weight(1f)) {
                     Text(spaceTr(language, "Хароҷот", "Расходы", "Expenses"), color = SpaceRed, fontSize = 10.sp)
-                    Text(formatSomoni(expense) + " с.", color = SpaceNavy, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
+                    Text(formatSomoni(animatedExpense.toDouble()) + " с.", color = SpaceNavy, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
                 }
                 Column(Modifier.weight(1f)) {
                     Text(spaceTr(language, "Бақия", "Баланс", "Balance"), color = SpaceGold, fontSize = 10.sp)
-                    Text(formatSomoni(balance) + " с.", color = if (balance >= 0) SpaceGreen else SpaceRed,
+                    Text(formatSomoni(animatedBalance.toDouble()) + " с.", color = if (balance >= 0) SpaceGreen else SpaceRed,
                         fontSize = 15.sp, fontWeight = FontWeight.ExtraBold)
                 }
             }
@@ -342,8 +361,8 @@ fun FinanceOverviewCard(
                 val barWidth = size.width * 0.22f
                 val baseY = size.height - 4f
                 val maxHeight = size.height - 12f
-                val incomeHeight = (income / maxValue).toFloat() * maxHeight
-                val expenseHeight = (expense / maxValue).toFloat() * maxHeight
+                val incomeHeight = animatedIncomeBar * maxHeight
+                val expenseHeight = animatedExpenseBar * maxHeight
                 drawRoundRect(
                     color = chartIncomeColor,
                     topLeft = Offset(size.width * 0.24f, baseY - incomeHeight),
@@ -688,17 +707,31 @@ fun PersonalFinanceScreen(
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Column(Modifier.weight(1f)) {
                         Text(spaceTr(language, "Даромад", "Доходы", "Income"), color = Color(0xFFB7E1D2), fontSize = 10.sp)
-                        Text(formatSomoni(income) + " с.", color = Color.White, fontWeight = FontWeight.Bold)
+                        Text(formatSomoni(animatedIncome.toDouble()) + " с.", color = Color.White, fontWeight = FontWeight.Bold)
                     }
                     Column(Modifier.weight(1f)) {
                         Text(spaceTr(language, "Хароҷот", "Расходы", "Expenses"), color = Color(0xFFFFC7BC), fontSize = 10.sp)
-                        Text(formatSomoni(expense) + " с.", color = Color.White, fontWeight = FontWeight.Bold)
+                        Text(formatSomoni(animatedExpense.toDouble()) + " с.", color = Color.White, fontWeight = FontWeight.Bold)
                     }
                 }
                 Spacer(Modifier.height(7.dp))
                 val total = maxOf(income, expense, 1.0)
+                val animatedIncome by animateFloatAsState(
+                    targetValue = income.toFloat(), animationSpec = tween(850), label = "finance_total_income"
+                )
+                val animatedExpense by animateFloatAsState(
+                    targetValue = expense.toFloat(), animationSpec = tween(850), label = "finance_total_expense"
+                )
+                val animatedIncomeShare by animateFloatAsState(
+                    targetValue = (income / total).toFloat().coerceIn(0f, 1f),
+                    animationSpec = tween(950), label = "finance_income_share"
+                )
+                val animatedExpenseShare by animateFloatAsState(
+                    targetValue = (expense / total).toFloat().coerceIn(0f, 1f),
+                    animationSpec = tween(950), label = "finance_expense_share"
+                )
                 LinearProgressIndicator(
-                    progress = { (income / total).toFloat().coerceIn(0f, 1f) },
+                    progress = { animatedIncomeShare },
                     modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(10.dp)),
                     color = SpaceGreen, trackColor = SpaceRed
                 )
@@ -707,8 +740,8 @@ fun PersonalFinanceScreen(
                     val baseY = size.height - 4f
                     val maxBar = size.height - 12f
                     val barWidth = size.width * 0.19f
-                    val incomeHeight = (income / total).toFloat().coerceIn(0f, 1f) * maxBar
-                    val expenseHeight = (expense / total).toFloat().coerceIn(0f, 1f) * maxBar
+                    val incomeHeight = animatedIncomeShare * maxBar
+                    val expenseHeight = animatedExpenseShare * maxBar
                     val incomeX = size.width * 0.24f
                     val expenseX = size.width * 0.58f
                     drawRoundRect(
