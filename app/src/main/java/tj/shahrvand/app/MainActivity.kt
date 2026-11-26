@@ -281,18 +281,6 @@ private fun ShahrvandApp() {
             .apply()
     }
 
-    fun awardSleepXp(date: String, xp: Int): Boolean {
-        if (!date.matches(Regex("^\\d{4}-\\d{2}-\\d{2}$")) || xp <= 0) return false
-        val rewardKey = "sleep_xp_awarded_" + date
-        if (prefs.getBoolean(rewardKey, false)) return false
-        totalXp += xp
-        prefs.edit()
-            .putBoolean(rewardKey, true)
-            .putInt("total_xp", totalXp)
-            .apply()
-        return true
-    }
-
     if (!isAuthenticated) {
         CompositionLocalProvider(
             LocalDensity provides scaledDensity,
@@ -418,7 +406,20 @@ private fun ShahrvandApp() {
                             )
                         }
                         Box(Modifier.weight(1f)) {
-                            SleepTrackingScreen(language, accountAge, ::awardSleepXp)
+                            SleepTrackingScreen(
+                                language = language,
+                                age = accountAge,
+                                onReward = { date, startedAt, endedAt, sourcePackage, isManual ->
+                                    SupabaseSleepRepository.award(
+                                        token = getValidAccessToken(),
+                                        wakeDate = date,
+                                        startedAt = startedAt,
+                                        endedAt = endedAt,
+                                        sourcePackage = sourcePackage,
+                                        isManual = isManual
+                                    )
+                                }
+                            )
                         }
                     }
                     else -> HomeScreen(
