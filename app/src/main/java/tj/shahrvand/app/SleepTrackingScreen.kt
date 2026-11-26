@@ -71,6 +71,8 @@ private val SLEEP_GREEN: Color @Composable get() = LocalShahrvandPalette.current
 private val SLEEP_MUTED: Color @Composable get() = LocalShahrvandPalette.current.muted
 private val SLEEP_BORDER: Color @Composable get() = LocalShahrvandPalette.current.border
 
+private val SLEEP_ZONE: ZoneId = ZoneId.of("Asia/Dushanbe")
+
 private fun sleepTr(language: String, tg: String, ru: String, en: String): String =
     when (language) { "ru" -> ru; "en" -> en; else -> tg }
 
@@ -156,7 +158,7 @@ private object SleepHealthConnectRepository {
 
         val now = Instant.now()
         val from = now.minus(Duration.ofDays(10))
-        val zone = ZoneId.systemDefault()
+        val zone = SLEEP_ZONE
         val response = client.readRecords(
             ReadRecordsRequest(
                 recordType = SleepSessionRecord::class,
@@ -248,7 +250,7 @@ fun SleepTrackingScreen(
         }
     }
 
-    val today = remember { LocalDate.now(ZoneId.systemDefault()) }
+    val today = remember { LocalDate.now(SLEEP_ZONE) }
     val latest = nights.firstOrNull()
     val todaysNight = nights.firstOrNull { it.wakeDate == today }
     val targetMinutes = SleepRules.minimumTargetMinutes(age)
