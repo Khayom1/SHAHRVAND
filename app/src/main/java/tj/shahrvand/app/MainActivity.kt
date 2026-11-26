@@ -1193,6 +1193,25 @@ private fun ProgressScreen(language: String, xp: Int, completed: Int, doneToday:
 }
 
 @Composable
+private fun SummaryCard(title: String, value: String, modifier: Modifier = Modifier) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        border = BorderStroke(1.dp, BorderTone),
+        shape = RoundedCornerShape(14.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            Modifier.fillMaxWidth().padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(title, color = Muted, fontSize = 10.sp, fontWeight = FontWeight.Medium)
+            Text(value, color = Navy, fontSize = 19.sp, fontWeight = FontWeight.Black)
+        }
+    }
+}
+
+@Composable
 private fun FutureScreen(language: String, ageBand: String, catalogStatus: String) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
         BrandHeader(tr(language, "Мақсади бузург", "Большая цель", "The bigger vision"),
