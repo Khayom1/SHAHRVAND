@@ -407,16 +407,16 @@ fun DailyActivitiesScreen(language: String, getAccessToken: suspend () -> String
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 7.dp)
                 ) {
                     Text(
-                        aTr(language, "Пайваст кардани Samsung Health", "Подключить Samsung Health",
-                            "Connect Samsung Health"),
+                        aTr(language, "Пайваст кардани Health Connect", "Подключить Health Connect",
+                            "Connect Health Connect"),
                         fontSize = 11.sp
                     )
                 }
             } else {
                 Text(
-                    aTr(language, "Samsung Health пайваст аст · қадамҳо низ санҷида мешаванд.",
-                        "Samsung Health подключён · шаги также проверяются.",
-                        "Samsung Health connected · steps are also checked."),
+                    aTr(language, "Health Connect пайваст аст · қадамҳо низ санҷида мешаванд.",
+                        "Health Connect подключён · шаги также проверяются.",
+                        "Health Connect connected · steps are also checked."),
                     color = palette.green, fontSize = 10.sp
                 )
             }
