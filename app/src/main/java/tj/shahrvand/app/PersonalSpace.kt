@@ -679,6 +679,24 @@ fun PersonalFinanceScreen(
     val income = monthly.filter { it.entryType == "income" }.sumOf { it.amount }
     val expense = monthly.filter { it.entryType == "expense" }.sumOf { it.amount }
     val balance = income - expense
+    val total = maxOf(income, expense, 1.0)
+    val animatedIncome by animateFloatAsState(
+        targetValue = income.toFloat(), animationSpec = tween(850), label = "finance_total_income"
+    )
+    val animatedExpense by animateFloatAsState(
+        targetValue = expense.toFloat(), animationSpec = tween(850), label = "finance_total_expense"
+    )
+    val animatedBalance by animateFloatAsState(
+        targetValue = balance.toFloat(), animationSpec = tween(850), label = "finance_total_balance"
+    )
+    val animatedIncomeShare by animateFloatAsState(
+        targetValue = (income / total).toFloat().coerceIn(0f, 1f),
+        animationSpec = tween(950), label = "finance_income_share"
+    )
+    val animatedExpenseShare by animateFloatAsState(
+        targetValue = (expense / total).toFloat().coerceIn(0f, 1f),
+        animationSpec = tween(950), label = "finance_expense_share"
+    )
     val visibleEntries = entries.filter { filter == "all" || it.entryType == filter }
 
     Column(Modifier.fillMaxSize().background(SpacePage).padding(horizontal = 16.dp, vertical = 12.dp)) {
@@ -703,7 +721,7 @@ fun PersonalFinanceScreen(
             Column(Modifier.fillMaxWidth().padding(14.dp)) {
                 Text(spaceTr(language, "ҶАМЪБАСТИ МОҲ", "ИТОГО ЗА МЕСЯЦ", "MONTHLY TOTAL"),
                     color = Color(0xFFDCE6ED), fontSize = 10.sp)
-                Text(spaceTr(language, "Бақия", "Баланс", "Balance") + ": " + formatSomoni(balance) + " с.",
+                Text(spaceTr(language, "Бақия", "Баланс", "Balance") + ": " + formatSomoni(animatedBalance.toDouble()) + " с.",
                     color = Color.White, fontSize = 25.sp, fontWeight = FontWeight.Black)
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Column(Modifier.weight(1f)) {
@@ -716,21 +734,6 @@ fun PersonalFinanceScreen(
                     }
                 }
                 Spacer(Modifier.height(7.dp))
-                val total = maxOf(income, expense, 1.0)
-                val animatedIncome by animateFloatAsState(
-                    targetValue = income.toFloat(), animationSpec = tween(850), label = "finance_total_income"
-                )
-                val animatedExpense by animateFloatAsState(
-                    targetValue = expense.toFloat(), animationSpec = tween(850), label = "finance_total_expense"
-                )
-                val animatedIncomeShare by animateFloatAsState(
-                    targetValue = (income / total).toFloat().coerceIn(0f, 1f),
-                    animationSpec = tween(950), label = "finance_income_share"
-                )
-                val animatedExpenseShare by animateFloatAsState(
-                    targetValue = (expense / total).toFloat().coerceIn(0f, 1f),
-                    animationSpec = tween(950), label = "finance_expense_share"
-                )
                 LinearProgressIndicator(
                     progress = { animatedIncomeShare },
                     modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(10.dp)),
