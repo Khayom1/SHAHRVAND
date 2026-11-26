@@ -414,9 +414,9 @@ fun DailyActivitiesScreen(language: String, getAccessToken: suspend () -> String
                 }
             } else {
                 Text(
-                    aTr(language, "Health Connect пайваст аст · қадамҳо низ санҷида мешаванд.",
-                        "Health Connect подключён · шаги также проверяются.",
-                        "Health Connect connected · steps are also checked."),
+                    aTr(language, "Health Connect пайваст аст · қадамҳо танҳо ҳамчун маълумоти иловагӣ нишон дода мешаванд.",
+                        "Health Connect подключён · шаги отображаются только как дополнительная информация.",
+                        "Health Connect connected · step count is shown for information only."),
                     color = palette.green, fontSize = 10.sp
                 )
             }
