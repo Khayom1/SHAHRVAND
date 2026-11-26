@@ -1,36 +1,82 @@
 # SHAHRVAND
 
-**SHAHRVAND 1.0.0** is a privacy-first personal-growth game built around short missions in learning, kindness, nature, focus, and everyday responsibility.
+**SHAHRVAND** — платформаи рақамӣ барои рушди шахсӣ ва ҷомеа. Барномаи Android корбарро ба иҷрои вазифаҳои ҳаррӯза, омӯзиш, фаъолияти ҷисмонӣ, масъулият ва пешрафти шахсӣ ҷалб мекунад.
 
-- Android / Jetpack Compose · min API 26 · target SDK 36
-- Tajik, Russian, and English interface
-- Onboarding uses an optional nickname and age band; no email, phone, password, or real name is required
-- Ages 7–17: local-only mode, no application server requests
-- Ages 18+: read-only public mission catalogue from Supabase; no profile or progress upload
-- No GPS, camera, microphone, photo/video uploads, chat, ads, analytics, or public rankings in V1
+> Ҳадаф: одатҳои хубро ба амалҳои хурди ҳаррӯза табдил додан ва пешрафтро пайгирӣ кардан.
 
-## Build
+## Ҳоло дар барнома
 
-Use JDK 17, Android SDK platform 36, and Gradle 8.13:
+- **Саҳифаи асосӣ:** шарҳи платформа ва роҳҳои асосии истифода.
+- **Вазифаҳо ва фаъолиятҳои ҳаррӯза:** вазифаҳои ҳаракат, омӯзиш ва машқҳои ҷисмонӣ бо нишон додани шартҳо ва пешрафт.
+- **Пешрафти шахсӣ:** сабти натиҷаҳо ва нишондиҳандаҳои пешрафт.
+- **Рейтинг ва мусобиқа:** бахши мусобиқаи ҳафтаина ва ҷадвали иштирокчиён.
+- **Фазои шахсӣ:** бахшҳои ёддоштҳо ва буҷети шахсӣ.
+- **Профил ва танзимот:** идоракунии маълумоти профил ва танзимоти барнома.
+- **Ҳисоб ва маълумот:** пайвастшавӣ ба хизматрасониҳои Supabase барои вазифаҳо ва хусусиятҳои серверӣ.
+- **Интерфейси навшуда:** тарҳи торики кабуди баҳрӣ бо рангҳои тиллоӣ ва фирӯзагӣ, нишонаи нави барнома ва навигатсияи равшантар.
+
+Функсияҳое, ки ҳанӯз пурра ба кор дароварда ё дар муҳити воқеӣ санҷида нашудаанд, набояд ҳамчун имконияти кафолатнок ҳисобида шаванд. Дастрасии баъзе бахшҳо аз пайвасти интернет ва танзими сервер вобаста аст.
+
+## Технологияҳо
+
+- Android — Kotlin ва Jetpack Compose
+- Material 3 барои интерфейс
+- Supabase барои қисми серверӣ ва маълумоти барнома
+- Gradle, Android Gradle Plugin ва GitHub Actions барои сохтмон ва санҷиш
+
+## Талаботи техникӣ
+
+| Параметр | Арзиш |
+|---|---|
+| Application ID | `tj.shahrvand.app` |
+| Min SDK | 26 (Android 8.0) |
+| Compile SDK | 36 |
+| Target SDK | 36 |
+| Java | 17 |
+| Kotlin | 2.2.21 |
+| Android Gradle Plugin | 8.13.2 |
+
+## Сохтан ва санҷидан
+
+Талабот: JDK 17, Android SDK Platform 36 ва Gradle 8.13.
 
 ```bash
-gradle :app:testDebugUnitTest :app:assembleDebug :app:assembleRelease
+gradle :app:testDebugUnitTest
+gradle :app:assembleDebug
+gradle :app:assembleRelease
+gradle :app:bundleRelease
 ```
 
-The CI release artifact is unsigned. A private owner-controlled release keystore is required before public distribution.
+Натиҷаҳои асосӣ:
 
-## Documentation
+- Debug APK: `app/build/outputs/apk/debug/app-debug.apk`
+- Release APK: `app/build/outputs/apk/release/app-release-unsigned.apk`
+- Android App Bundle: `app/build/outputs/bundle/release/app-release.aab`
 
-- [V1 release definition](docs/V1_RELEASE.md)
-- [Technical status](docs/TECHNICAL_STATUS.md)
-- [Architecture](docs/ARCHITECTURE.md)
-- [Build and deployment](docs/BUILD_AND_DEPLOYMENT.md)
-- [Privacy policy (TG/RU/EN)](site/privacy/index.html)
+GitHub Actions санҷишҳои автоматӣ ва сохтани APK/AAB-ро иҷро мекунад. Артефактҳои release аз CI имзонашудаанд; барои паҳнкунии расмӣ калиди хусусии имзои соҳиби лоиҳа лозим аст. Сабзи CI худ аз худ санҷиши пурраи дастгоҳ ё омодагии Google Play-ро тасдиқ намекунад.
 
-## Supabase
+## Supabase ва амнияти маълумот
 
-SHAHRVAND uses only `public.shahrvand_missions`, a public content table with RLS and SELECT-only Data API access. No user profile, age band, XP, mission completion, or authentication record is stored in Supabase. The connected Supabase project is shared with other Khayom1 apps; SHAHRVAND changes are isolated to this prefixed table.
+Барнома аз Supabase барои хусусиятҳои серверии SHAHRVAND истифода мебарад. Схемаҳо ва сиёсати дастрасӣ дар ҷузвдони `supabase/migrations/` ва функсияҳо дар `supabase/functions/` нигоҳ дошта мешаванд. Калидҳои махфии серверӣ набояд ба APK, README ё Git ворид карда шаванд. Танҳо калиди оммавии publishable/anon, агар барои муштарӣ зарур бошад, истифода мешавад; амалиётҳои ҳассос бояд дар тарафи сервер бо санҷиши иҷозат иҷро шаванд.
 
-## Roadmap
+## Сохтори репозиторий
 
-Verified submissions, trusted moderation, cross-device profiles, and a public leaderboard are future plans, not active V1 features.
+- `app/` — барномаи Android.
+- `supabase/migrations/` — тағйироти сохтори пойгоҳи додаҳо.
+- `supabase/functions/` — функсияҳои серверӣ.
+- `docs/` — ҳуҷҷатҳои техникӣ ва меъморӣ.
+- `site/` — саҳифаи веб ва сиёсати махфият.
+- `.github/workflows/` — сохтмон ва санҷишҳои автоматӣ.
+
+## Ҳуҷҷатҳо
+
+- [Меъмории барнома](docs/ARCHITECTURE.md)
+- [Вазъи техникӣ](docs/TECHNICAL_STATUS.md)
+- [Таърифи версияи V1](docs/V1_RELEASE.md)
+- [Сохтан ва ҷойгиркунӣ](docs/BUILD_AND_DEPLOYMENT.md)
+- [Сиёсати махфият](docs/PRIVACY_POLICY.md)
+- [Саҳифаи махфият](site/privacy/index.html)
+
+## Вазъи лоиҳа
+
+SHAHRVAND дар марҳилаи рушд қарор дорад. Барои барориши оммавӣ санҷиши дастгоҳҳои воқеӣ, баррасии амнияти Supabase, санҷиши сиёсати махфият ва имзои APK/AAB заруранд. Имкониятҳои оянда танҳо баъди татбиқ ва санҷиш ба рӯйхати функсияҳои фаъол илова карда мешаванд.
