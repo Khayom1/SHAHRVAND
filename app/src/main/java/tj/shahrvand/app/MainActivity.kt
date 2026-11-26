@@ -172,7 +172,8 @@ private fun ShahrvandApp() {
     var catalogStatus by remember { mutableStateOf("") }
     var isLoadingCatalog by remember { mutableStateOf(false) }
     var settingsOpen by remember { mutableStateOf(false) }
-    var showProfile by remember { mutableStateOf(false) }
+    var homeDestination by remember { mutableStateOf("dashboard") }
+    var personalSection by remember { mutableStateOf("notes") }
 
     val baseDensity = LocalDensity.current
     val scaledDensity = remember(baseDensity, fontScale) {
@@ -335,34 +336,110 @@ private fun ShahrvandApp() {
     Scaffold(
         containerColor = Page,
         bottomBar = {
-            if (!showProfile) {
-                NavigationBar(containerColor = Color.White, tonalElevation = 6.dp) {
+            Surface(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 7.dp),
+                shape = RoundedCornerShape(24.dp),
+                color = Color.White.copy(alpha = 0.78f),
+                contentColor = Ink,
+                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.95f)),
+                shadowElevation = 13.dp
+            ) {
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = 5.dp, vertical = 6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(2.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     val labels = listOf(
                         tr(language, "Асосӣ", "Главная", "Home"),
-                        tr(language, "Вазифаҳо", "Задания", "Challenges"),
+                        tr(language, "Вазифаҳо", "Задания", "Tasks"),
                         tr(language, "Рейтинг", "Рейтинг", "Ranking"),
-                        tr(language, "Ёддошт", "Заметки", "Notes"),
-                        tr(language, "Буҷет", "Бюджет", "Budget"),
-                        tr(language, "Хоб", "Сон", "Sleep")
+                        tr(language, "Профил", "Профиль", "Profile")
                     )
                     val icons = listOf(
-                        Icons.Filled.Home, Icons.Filled.Explore, Icons.Filled.EmojiEvents,
-                        Icons.Filled.NoteAlt, Icons.Filled.AccountBalanceWallet, Icons.Filled.Bedtime
+                        Icons.Filled.Home, Icons.Filled.Explore,
+                        Icons.Filled.EmojiEvents, Icons.Filled.AccountCircle
                     )
                     labels.forEachIndexed { index, label ->
-                        NavigationBarItem(
-                            selected = tab == index, onClick = { tab = index },
-                            icon = { Icon(icons[index], contentDescription = label) },
-                            label = { Text(label, fontSize = 10.sp) }
-                        )
+                        val selected = tab == index
+                        Column(
+                            Modifier.weight(1f)
+                                .clip(RoundedCornerShape(17.dp))
+                                .background(if (selected) Color(0xFFEDE5F8) else Color.Transparent)
+                                .clickable {
+                                    tab = index
+                                    if (index != 0) homeDestination = "dashboard"
+                                }
+                                .padding(horizontal = 2.dp, vertical = 6.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(3.dp)
+                        ) {
+                            Icon(
+                                icons[index],
+                                contentDescription = label,
+                                tint = if (selected) Navy else Muted,
+                                modifier = Modifier.size(21.dp)
+                            )
+                            Text(
+                                label,
+                                color = if (selected) Gold else Muted,
+                                fontSize = 9.sp,
+                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                                maxLines = 1
+                            )
+                        }
                     }
                 }
             }
         }
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
-            if (showProfile) {
-                ShahrvandProfileScreen(
+            when (tab) {
+                0 -> when (homeDestination) {
+                    "personal" -> PersonalSpaceHubScreen(
+                        language = language,
+                        userId = prefs.getString("auth_user_id", "") ?: "",
+                        initialSection = personalSection,
+                        entries = financeEntries,
+                        onEntriesChanged = { financeEntries = it },
+                        getAccessToken = ::getValidAccessToken,
+                        onBack = { homeDestination = "dashboard" }
+                    )
+                    "sleep" -> Column(Modifier.fillMaxSize()) {
+                        Row(
+                            Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 5.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            TextButton(onClick = { homeDestination = "dashboard" }) {
+                                Text("‹ " + tr(language, "Асосӣ", "Главная", "Home"))
+                            }
+                            Text(
+                                tr(language, "Хоб ва барқароршавӣ", "Сон и восстановление", "Sleep and recovery"),
+                                color = Navy, fontSize = 17.sp, fontWeight = FontWeight.Bold
+                            )
+                        }
+                        SleepTrackingScreen(language, accountAge, ::awardSleepXp)
+                    }
+                    else -> HomeScreen(
+                        language, nickname, ageBand ?: "7_12", totalXp, totalCompleted,
+                        completedToday, missions, catalogStatus, isLoadingCatalog, financeEntries,
+                        onOpenMissions = { tab = 1 },
+                        onOpenFinance = {
+                            personalSection = "budget"
+                            homeDestination = "personal"
+                        },
+                        onOpenLeaderboard = { tab = 2 },
+                        onOpenNotes = {
+                            personalSection = "notes"
+                            homeDestination = "personal"
+                        },
+                        onOpenSleep = { homeDestination = "sleep" },
+                        onComplete = ::finishMission,
+                        onProfile = { tab = 3 }
+                    )
+                }
+                1 -> DailyActivitiesScreen(language, ::getValidAccessToken)
+                2 -> LeaderboardScreen(language, ageBand ?: "18_plus", ::getValidAccessToken)
+                3 -> ShahrvandProfileScreen(
                     language = language,
                     firstName = accountFirstName,
                     lastName = accountLastName,
@@ -370,36 +447,28 @@ private fun ShahrvandApp() {
                     login = accountLogin,
                     totalXp = totalXp,
                     totalCompleted = totalCompleted,
-                    onBack = { showProfile = false },
+                    onBack = {
+                        tab = 0
+                        homeDestination = "dashboard"
+                    },
                     onSettings = { settingsOpen = true }
                 )
-            } else when (tab) {
-                0 -> HomeScreen(
-                    language, nickname, ageBand ?: "7_12", totalXp, totalCompleted,
-                    completedToday, missions, catalogStatus, isLoadingCatalog, financeEntries,
-                    onOpenMissions = { tab = 1 },
-                    onOpenFinance = { tab = 4 },
-                    onOpenLeaderboard = { tab = 2 },
-                    onOpenNotes = { tab = 3 },
-                    onComplete = ::finishMission,
-                    onProfile = { showProfile = true }
-                )
-                1 -> DailyActivitiesScreen(language, ::getValidAccessToken)
-                2 -> LeaderboardScreen(language, ageBand ?: "18_plus", ::getValidAccessToken)
-                3 -> PersonalNotesScreen(
-                    language, prefs.getString("auth_user_id", "") ?: "", ::getValidAccessToken
-                )
-                4 -> PersonalFinanceScreen(
-                    language, prefs.getString("auth_user_id", "") ?: "",
-                    financeEntries, { financeEntries = it }, ::getValidAccessToken
-                )
-                5 -> SleepTrackingScreen(language, accountAge, ::awardSleepXp)
                 else -> HomeScreen(
                     language, nickname, ageBand ?: "7_12", totalXp, totalCompleted,
                     completedToday, missions, catalogStatus, isLoadingCatalog, financeEntries,
-                    onOpenMissions = { tab = 1 }, onOpenFinance = { tab = 4 },
-                    onOpenLeaderboard = { tab = 2 }, onOpenNotes = { tab = 3 },
-                    onComplete = ::finishMission, onProfile = { showProfile = true }
+                    onOpenMissions = { tab = 1 },
+                    onOpenFinance = {
+                        personalSection = "budget"
+                        homeDestination = "personal"
+                    },
+                    onOpenLeaderboard = { tab = 2 },
+                    onOpenNotes = {
+                        personalSection = "notes"
+                        homeDestination = "personal"
+                    },
+                    onOpenSleep = { homeDestination = "sleep" },
+                    onComplete = ::finishMission,
+                    onProfile = { tab = 3 }
                 )
             }
         }
@@ -471,7 +540,7 @@ private fun ShahrvandApp() {
                 totalXp = 0
                 totalCompleted = 0
                 completedToday.clear()
-                showProfile = false
+                homeDestination = "dashboard"
                 settingsOpen = false
                 tab = 0
             },
@@ -628,6 +697,7 @@ private fun HomeScreen(
     onOpenFinance: () -> Unit,
     onOpenLeaderboard: () -> Unit,
     onOpenNotes: () -> Unit,
+    onOpenSleep: () -> Unit,
     onComplete: (Mission) -> Unit,
     onProfile: () -> Unit
 ) {
@@ -790,17 +860,17 @@ private fun HomeScreen(
                 )
                 HomeShortcutCard(
                     modifier = Modifier.weight(1f),
-                    icon = "📝",
-                    title = tr(language, "Ёддоштҳо", "Заметки", "Notes"),
-                    description = tr(language, "Фикрҳои худро нигоҳ дор", "Сохраняй свои мысли", "Keep your thoughts"),
+                    icon = "🗂️",
+                    title = tr(language, "Ёддоштҳо ва буҷет", "Заметки и бюджет", "Notes and budget"),
+                    description = tr(language, "Нақшаҳо, даромад ва хароҷот", "Планы, доходы и расходы", "Plans, income and expenses"),
                     onClick = onOpenNotes
                 )
             }
             HomeShortcutCard(
-                icon = "💼",
-                title = tr(language, "Буҷети шахсӣ", "Личный бюджет", "Personal budget"),
-                description = tr(language, "Даромад ва хароҷотро ба тартиб дарор.", "Учитывай доходы и расходы.", "Organise income and expenses."),
-                onClick = onOpenFinance
+                icon = "🌙",
+                title = tr(language, "Хоб ва барқароршавӣ", "Сон и восстановление", "Sleep and recovery"),
+                description = tr(language, "Натиҷаҳои хобро аз Health Connect бин.", "Смотри данные сна из Health Connect.", "Review sleep data from Health Connect."),
+                onClick = onOpenSleep
             )
         }
 
