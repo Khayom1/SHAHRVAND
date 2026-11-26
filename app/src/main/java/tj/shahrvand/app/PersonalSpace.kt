@@ -715,7 +715,7 @@ fun PersonalFinanceScreen(
         Card(
             colors = CardDefaults.cardColors(containerColor = SpaceNavy),
             border = BorderStroke(1.dp, Color.White.copy(alpha = 0.30f)),
-            elevation = CardDefaults.cardElevation(defaultElevation = 9.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
             shape = RoundedCornerShape(24.dp)
         ) {
             Column(Modifier.fillMaxWidth().padding(14.dp)) {
