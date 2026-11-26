@@ -65,6 +65,7 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 private val SLEEP_NAVY: Color @Composable get() = LocalShahrvandPalette.current.navy
+private val SLEEP_NAVY_TEXT: Color @Composable get() = LocalShahrvandPalette.current.navyText
 private val SLEEP_GOLD: Color @Composable get() = LocalShahrvandPalette.current.gold
 private val SLEEP_GREEN: Color @Composable get() = LocalShahrvandPalette.current.green
 private val SLEEP_MUTED: Color @Composable get() = LocalShahrvandPalette.current.muted
@@ -278,7 +279,7 @@ fun SleepTrackingScreen(
             Text(sleepTr(language, "ОДАТИ ХОБ", "ПРИВЫЧКА СНА", "SLEEP HABIT"),
                 color = SLEEP_GOLD, fontSize = 10.sp, fontWeight = FontWeight.ExtraBold)
             Text(sleepTr(language, "Хоби кофӣ — пешрафти ҳаррӯза.", "Достаточный сон — ежедневный прогресс.", "Enough sleep is daily progress."),
-                color = SLEEP_NAVY, fontSize = 22.sp, fontWeight = FontWeight.Black)
+                color = SLEEP_NAVY_TEXT, fontSize = 22.sp, fontWeight = FontWeight.Black)
             Text(
                 sleepTr(
                     language,
@@ -370,7 +371,7 @@ fun SleepTrackingScreen(
         if (error.isNotBlank()) {
             Card(
                 colors = CardDefaults.cardColors(containerColor = LocalShahrvandPalette.current.dangerSurface),
-                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.96f)),
+                border = BorderStroke(1.dp, LocalShahrvandPalette.current.border),
                 shape = RoundedCornerShape(19.dp)
             ) {
                 Text(error, color = MaterialTheme.colorScheme.error, fontSize = 12.sp,
@@ -380,7 +381,7 @@ fun SleepTrackingScreen(
 
         if (permissionGranted && latest != null) {
             Card(
-                colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.84f)),
+                colors = CardDefaults.cardColors(containerColor = LocalShahrvandPalette.current.surface.copy(alpha = 0.98f)),
                 border = BorderStroke(1.dp, Color.White.copy(alpha = 0.96f)),
                 elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
                 shape = RoundedCornerShape(22.dp)

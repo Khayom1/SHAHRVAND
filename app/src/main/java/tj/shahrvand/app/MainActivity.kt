@@ -52,6 +52,7 @@ import androidx.compose.ui.unit.sp
 import java.time.LocalDate
 
 private val Navy: Color @Composable get() = LocalShahrvandPalette.current.navy
+private val NavyText: Color @Composable get() = LocalShahrvandPalette.current.navyText
 private val NavyLight: Color @Composable get() = LocalShahrvandPalette.current.navyLight
 private val Gold: Color @Composable get() = LocalShahrvandPalette.current.gold
 private val Green: Color @Composable get() = LocalShahrvandPalette.current.green
@@ -396,7 +397,7 @@ private fun ShahrvandApp() {
                             Icon(
                                 icons[index],
                                 contentDescription = label,
-                                tint = if (selected) Navy else Muted,
+                                tint = if (selected) NavyText else Muted,
                                 modifier = Modifier.size(21.dp)
                             )
                             Text(
@@ -434,7 +435,7 @@ private fun ShahrvandApp() {
                             }
                             Text(
                                 tr(language, "Хоб ва барқароршавӣ", "Сон и восстановление", "Sleep and recovery"),
-                                color = Navy, fontSize = 17.sp, fontWeight = FontWeight.Bold
+                                color = NavyText, fontSize = 17.sp, fontWeight = FontWeight.Bold
                             )
                         }
                         Box(Modifier.weight(1f)) {
@@ -967,7 +968,7 @@ private fun HomeMetricCard(
 private fun HomeBadgeCard(icon: String, title: String) {
     Card(
         modifier = Modifier.fillMaxWidth().animateContentSize(),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = LocalShahrvandPalette.current.surface),
         border = BorderStroke(1.dp, LocalShahrvandPalette.current.border),
         shape = RoundedCornerShape(15.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -1198,7 +1199,7 @@ private fun FutureScreen(language: String, ageBand: String, catalogStatus: Strin
                 "Local mode. Data from users under 18 is not sent to a server."),
             color = Muted, fontSize = 10.sp, lineHeight = 15.sp)
         Spacer(Modifier.height(10.dp))
-        Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(14.dp)) {
+        Card(colors = CardDefaults.cardColors(containerColor = LocalShahrvandPalette.current.surface), shape = RoundedCornerShape(14.dp)) {
             Column(Modifier.padding(13.dp)) {
                 Text(tr(language, "Қоидаҳои версияи 1", "Правила версии 1", "Version 1 principles"),
                     color = Navy, fontWeight = FontWeight.Bold)
@@ -1338,7 +1339,7 @@ private fun AuthScreen(
         BrandHeader(tr(language, "ҲАР ҚАДАМ — ЯК ПЕШРАФТ", "КАЖДЫЙ ШАГ — ПРОГРЕСС", "EVERY STEP IS PROGRESS"),
             tr(language, "ПЛАТФОРМАИ РУШДИ ШАҲРВАНД", "ПЛАТФОРМА РАЗВИТИЯ ГРАЖДАН", "CITIZEN DEVELOPMENT PLATFORM"))
         Spacer(Modifier.height(20.dp))
-        Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(3.dp)) {
+        Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = LocalShahrvandPalette.current.surface), elevation = CardDefaults.cardElevation(3.dp)) {
             Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(11.dp)) {
                 Text(tr(language, "Ҳисоби ШАҲРВАНД", "Аккаунт SHAHRVAND", "SHAHRVAND account"), color = Navy, fontSize = 22.sp, fontWeight = FontWeight.Black)
                 Text(tr(language, "Барои нигоҳ доштани профил ва ворид шудан аз дастгоҳҳои дигар.", "Создай аккаунт, чтобы сохранить профиль и входить с других устройств.", "Create an account to keep your profile and sign in on other devices."), color = Muted, fontSize = 12.sp, lineHeight = 18.sp)

@@ -76,6 +76,7 @@ import kotlin.math.roundToInt
 
 private const val ACTIVITY_ZONE = "Asia/Dushanbe"
 private val A_Navy: Color @Composable get() = LocalShahrvandPalette.current.navy
+private val A_NavyText: Color @Composable get() = LocalShahrvandPalette.current.navyText
 private val A_Gold: Color @Composable get() = LocalShahrvandPalette.current.gold
 private val A_Green: Color @Composable get() = LocalShahrvandPalette.current.green
 private val A_Muted: Color @Composable get() = LocalShahrvandPalette.current.muted
@@ -343,7 +344,7 @@ fun DailyActivitiesScreen(language: String, getAccessToken: suspend () -> String
             )
             Text(
                 aTr(language, "Қадамҳои воқеӣ. Натиҷаи санҷидашуда.", "Реальные действия. Проверяемый результат.", "Real actions. Measurable results."),
-                color=A_Navy, fontSize=22.sp, lineHeight=27.sp, fontWeight=FontWeight.Black
+                color=A_NavyText, fontSize=22.sp, lineHeight=27.sp, fontWeight=FontWeight.Black
             )
             Text(
                 aTr(language,
@@ -752,7 +753,7 @@ private fun ActivitySessionDialog(
 
     AlertDialog(
         onDismissRequest = {},
-        title = { Text(task.title(language), color=A_Navy, fontWeight=FontWeight.Bold) },
+        title = { Text(task.title(language), color=A_NavyText, fontWeight=FontWeight.Bold) },
         text = {
             Column(Modifier.fillMaxWidth().heightIn(max=540.dp), verticalArrangement=Arrangement.spacedBy(9.dp)) {
                 if (gps) {
@@ -881,7 +882,7 @@ private fun LearningPanel(language:String, interestCodes:Set<String>, elapsed:Lo
                           onQuiz:()->Unit, answers:Map<Int,Int>, onAnswer:(Int,Int)->Unit) {
     val topics = activityInterests.filter { it.code in interestCodes }
     Column(Modifier.fillMaxWidth().heightIn(max=430.dp).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(8.dp)) {
-        Text(aTr(language,"Дарсҳо аз рӯи мавзӯъҳои интихобшуда","Уроки по выбранным темам","Lessons based on your selected topics"),color=A_Navy,fontWeight=FontWeight.Bold)
+        Text(aTr(language,"Дарсҳо аз рӯи мавзӯъҳои интихобшуда","Уроки по выбранным темам","Lessons based on your selected topics"),color=A_NavyText,fontWeight=FontWeight.Bold)
         topics.forEach { topic ->
             Text(topic.label(language),color=A_Gold,fontWeight=FontWeight.Bold,fontSize=12.sp)
             Text(lessonFor(topic.code,language),fontSize=12.sp,lineHeight=18.sp,color=A_Muted)

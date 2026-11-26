@@ -29,6 +29,7 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 private val C_Navy: Color @Composable get() = LocalShahrvandPalette.current.navy
+private val C_NavyText: Color @Composable get() = LocalShahrvandPalette.current.navyText
 private val C_Gold: Color @Composable get() = LocalShahrvandPalette.current.gold
 private val C_Green: Color @Composable get() = LocalShahrvandPalette.current.green
 private val C_Muted: Color @Composable get() = LocalShahrvandPalette.current.muted
@@ -172,7 +173,7 @@ fun WeeklyChallengesScreen(language:String,getAccessToken:suspend()->String) {
         finally { loading=false }
     }
     Column(Modifier.fillMaxSize().background(LocalShahrvandPalette.current.background).padding(14.dp)) {
-        Text(cTr(language,"Вазифаҳои ҳафтаина","Задания на неделю","Weekly challenges"),color=C_Navy,fontSize=21.sp,fontWeight=FontWeight.Black)
+        Text(cTr(language,"Вазифаҳои ҳафтаина","Задания на неделю","Weekly challenges"),color=C_NavyText,fontSize=21.sp,fontWeight=FontWeight.Black)
         Text(cTr(language,"Ҳар рӯз 6 вазифа · 42 қадам дар як ҳафта","6 заданий в день · 42 шага за неделю","6 tasks per day · 42 steps per week"),color=C_Muted,fontSize=11.sp)
         Spacer(Modifier.height(10.dp))
         val d=data
@@ -190,7 +191,7 @@ fun WeeklyChallengesScreen(language:String,getAccessToken:suspend()->String) {
                 Column(Modifier.fillMaxWidth().padding(12.dp)) {
                     Row(verticalAlignment=Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
-                            Text(cTr(language,"Пешрафти имрӯз","Прогресс сегодня","Today's progress"),fontWeight=FontWeight.Bold,color=C_Navy)
+                            Text(cTr(language,"Пешрафти имрӯз","Прогресс сегодня","Today's progress"),fontWeight=FontWeight.Bold,color=C_NavyText)
                             Text(d.today.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))+" · "+done+"/6",fontSize=11.sp,color=C_Muted)
                         }
                         Text(d.completed.values.sum().toString()+" XP",fontWeight=FontWeight.Black,color=C_Gold,fontSize=19.sp)
@@ -219,7 +220,7 @@ fun WeeklyChallengesScreen(language:String,getAccessToken:suspend()->String) {
                         val completed=d.completed.containsKey(task.id)
                         Card(
                             colors=CardDefaults.cardColors(containerColor=if(completed) LocalShahrvandPalette.current.successSurface else LocalShahrvandPalette.current.surface.copy(alpha=0.98f)),
-                            border=BorderStroke(1.dp,if(completed) LocalShahrvandPalette.current.successBorder else Color.White.copy(alpha=0.96f)),
+                            border=BorderStroke(1.dp,if(completed) LocalShahrvandPalette.current.successBorder else LocalShahrvandPalette.current.border),
                             elevation=CardDefaults.cardElevation(defaultElevation=5.dp),
                             shape=RoundedCornerShape(19.dp)
                         ) {
@@ -283,7 +284,7 @@ fun LeaderboardScreen(language:String,myAgeBand:String,getAccessToken:suspend()-
         cTr(language, "Ҳамаи синну сол", "Все возрасты", "All ages")
     } else cBand(language, band)
 
-    Column(Modifier.fillMaxSize().background(Color(0xFFF1F6FA)).padding(horizontal = 14.dp, vertical = 12.dp)) {
+    Column(Modifier.fillMaxSize().background(LocalShahrvandPalette.current.background).padding(horizontal = 14.dp, vertical = 12.dp)) {
         Text(cTr(language,"Рейтинг","Рейтинг","Leaderboard"),color=C_Navy,fontSize=22.sp,fontWeight=FontWeight.Black)
         Text(
             cTr(language,"Натиҷаҳои тасдиқшудаи сервер","Подтверждённые сервером результаты","Server-verified results"),
@@ -346,8 +347,8 @@ fun LeaderboardScreen(language:String,myAgeBand:String,getAccessToken:suspend()-
             val maxXp = topThree.maxOf { it.xp }.coerceAtLeast(1)
             Card(
                 modifier = Modifier.fillMaxWidth().animateContentSize(),
-                colors = CardDefaults.cardColors(containerColor=Color.White.copy(alpha=0.84f)),
-                border = BorderStroke(1.dp,Color.White.copy(alpha=0.96f)),
+                colors = CardDefaults.cardColors(containerColor=LocalShahrvandPalette.current.surface.copy(alpha=0.98f)),
+                border = BorderStroke(1.dp,LocalShahrvandPalette.current.border),
                 elevation = CardDefaults.cardElevation(defaultElevation=7.dp),
                 shape = RoundedCornerShape(21.dp)
             ) {
@@ -421,7 +422,7 @@ fun LeaderboardScreen(language:String,myAgeBand:String,getAccessToken:suspend()-
                 contentPadding=PaddingValues(bottom=14.dp)
             ) {
                 items(entries,key={it.login}) { e ->
-                    val rowColor = if(e.isMe) LocalShahrvandPalette.current.goldSurface else Color.White.copy(alpha=0.84f)
+                    val rowColor = if(e.isMe) LocalShahrvandPalette.current.goldSurface else LocalShahrvandPalette.current.surface.copy(alpha=0.98f)
                     val rowBorder = if(e.isMe) LocalShahrvandPalette.current.gold else Color.White.copy(alpha=0.96f)
                     Card(
                         modifier=Modifier.fillMaxWidth().animateContentSize(),

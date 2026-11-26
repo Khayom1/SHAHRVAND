@@ -37,6 +37,7 @@ import androidx.compose.ui.window.DialogProperties
 import kotlinx.coroutines.launch
 
 private val ProfileNavy: Color @Composable get() = LocalShahrvandPalette.current.navy
+private val ProfileNavyText: Color @Composable get() = LocalShahrvandPalette.current.navyText
 private val ProfileGreen: Color @Composable get() = LocalShahrvandPalette.current.green
 private val ProfileGold: Color @Composable get() = LocalShahrvandPalette.current.gold
 private val ProfilePage: Color @Composable get() = LocalShahrvandPalette.current.background
@@ -91,12 +92,12 @@ internal fun ShahrvandProfileScreen(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onBack) {
-                Icon(Icons.Filled.ArrowBack, contentDescription = profileTr(language, "Бозгашт", "Назад", "Back"), tint = ProfileNavy)
+                Icon(Icons.Filled.ArrowBack, contentDescription = profileTr(language, "Бозгашт", "Назад", "Back"), tint = ProfileNavyText)
             }
             Text(
                 profileTr(language, "Профили ман", "Мой профиль", "My profile"),
                 modifier = Modifier.weight(1f),
-                color = ProfileNavy,
+                color = ProfileNavyText,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -210,7 +211,7 @@ private fun ProfileAchievementsCard(
         modifier = Modifier.fillMaxWidth().padding(top = 16.dp).animateContentSize(),
         shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(containerColor = LocalShahrvandPalette.current.surface.copy(alpha = 0.98f)),
-        border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.96f)),
+        border = androidx.compose.foundation.BorderStroke(1.dp, LocalShahrvandPalette.current.border),
         elevation = CardDefaults.cardElevation(defaultElevation = 7.dp)
     ) {
         Column(
@@ -410,7 +411,7 @@ private fun ProfileStatCard(label: String, value: String, modifier: Modifier = M
     Card(
         modifier = modifier,
         shape = RoundedCornerShape(19.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.84f)),
+        colors = CardDefaults.cardColors(containerColor = LocalShahrvandPalette.current.surface.copy(alpha = 0.98f)),
         border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.96f)),
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {

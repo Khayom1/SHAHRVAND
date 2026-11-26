@@ -39,6 +39,7 @@ import java.time.LocalDate
 import java.util.Locale
 
 private val SpaceNavy: Color @Composable get() = LocalShahrvandPalette.current.navy
+private val SpaceNavyText: Color @Composable get() = LocalShahrvandPalette.current.navyText
 private val SpaceGold: Color @Composable get() = LocalShahrvandPalette.current.gold
 private val SpaceGreen: Color @Composable get() = LocalShahrvandPalette.current.green
 private val SpaceRed: Color @Composable get() = LocalShahrvandPalette.current.danger
@@ -332,7 +333,7 @@ fun FinanceOverviewCard(
                 Text("💰", fontSize = 22.sp)
                 Spacer(Modifier.width(8.dp))
                 Text(spaceTr(language, "Молияи ман", "Мои финансы", "My finances"),
-                    color = SpaceNavy, fontWeight = FontWeight.Bold, fontSize = 16.sp, modifier = Modifier.weight(1f))
+                    color = SpaceNavyText, fontWeight = FontWeight.Bold, fontSize = 16.sp, modifier = Modifier.weight(1f))
                 Text(spaceTr(language, "Тафсилот →", "Подробнее →", "Details →"),
                     color = SpaceGold, fontSize = 11.sp, fontWeight = FontWeight.Bold)
             }
@@ -342,7 +343,7 @@ fun FinanceOverviewCard(
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Column(Modifier.weight(1f)) {
                     Text(spaceTr(language, "Даромад", "Доходы", "Income"), color = SpaceGreen, fontSize = 10.sp)
-                    Text(formatSomoni(animatedIncome.toDouble()) + " с.", color = SpaceNavy, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
+                    Text(formatSomoni(animatedIncome.toDouble()) + " с.", color = SpaceNavyText, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
                 }
                 Column(Modifier.weight(1f)) {
                     Text(spaceTr(language, "Хароҷот", "Расходы", "Expenses"), color = SpaceRed, fontSize = 10.sp)
@@ -504,19 +505,19 @@ fun PersonalNotesScreen(
         }
         if (loading) {
             Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = SpaceNavy)
+                CircularProgressIndicator(color = SpaceNavyText)
             }
         } else if (notes.isEmpty()) {
             Card(
                 colors = CardDefaults.cardColors(containerColor = LocalShahrvandPalette.current.surface.copy(alpha = 0.98f)),
-                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.96f)),
+                border = BorderStroke(1.dp, LocalShahrvandPalette.current.border),
                 elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
                 shape = RoundedCornerShape(22.dp)
             ) {
                 Column(Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("📝", fontSize = 38.sp)
                     Text(spaceTr(language, "Ҳоло ёддошт нест", "Пока нет заметок", "No notes yet"),
-                        color = SpaceNavy, fontWeight = FontWeight.Bold)
+                        color = SpaceNavyText, fontWeight = FontWeight.Bold)
                     Text(spaceTr(language, "Нақшаи фардо, ҳисоботи рӯз ё рӯйдоди муҳимро илова кун.",
                         "Добавь план на завтра, дневной отчёт или важное событие.",
                         "Add tomorrow's plan, a daily report, or an important event."),
@@ -783,7 +784,7 @@ fun PersonalFinanceScreen(
             }
         } else if (visibleEntries.isEmpty()) {
             Card(
-                colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.84f)),
+                colors = CardDefaults.cardColors(containerColor = LocalShahrvandPalette.current.surface.copy(alpha = 0.98f)),
                 border = BorderStroke(1.dp, Color.White.copy(alpha = 0.96f)),
                 elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
                 shape = RoundedCornerShape(21.dp)
@@ -802,7 +803,7 @@ fun PersonalFinanceScreen(
             LazyColumn(verticalArrangement = Arrangement.spacedBy(7.dp), contentPadding = PaddingValues(bottom = 16.dp)) {
                 items(visibleEntries, key = { it.id }) { entry ->
                     Card(
-                        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.86f)),
+                        colors = CardDefaults.cardColors(containerColor = LocalShahrvandPalette.current.surface.copy(alpha = 0.98f)),
                         border = BorderStroke(1.dp, Color.White.copy(alpha = 0.96f)),
                         elevation = CardDefaults.cardElevation(defaultElevation = 5.dp),
                         shape = RoundedCornerShape(19.dp)
