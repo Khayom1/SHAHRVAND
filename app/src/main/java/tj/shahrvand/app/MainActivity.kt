@@ -38,7 +38,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.font.FontFamily
@@ -359,7 +358,7 @@ private fun ShahrvandApp() {
         LocalTextStyle provides LocalTextStyle.current.copy(fontFamily = appFontFamily)
     ) {
     Scaffold(
-        modifier = Modifier.fillMaxSize().background(Brush.verticalGradient(colors = if (currentThemeIsDark) listOf(Page, Page) else listOf(Color(0xFFDCEBFF), Color(0xFFFFE8CB), Color(0xFFEAF2FF)))),
+        modifier = Modifier.fillMaxSize().shahrvandCanvas(),
         containerColor = Color.Transparent,
         bottomBar = {
             val labels = listOf(
@@ -644,7 +643,7 @@ private fun WelcomeScreen(
 ) {
     var selectedBand by remember { mutableStateOf("7_12") }
     Column(
-        Modifier.fillMaxSize().background(Page).verticalScroll(rememberScrollState()).padding(20.dp),
+        Modifier.fillMaxSize().shahrvandCanvas().verticalScroll(rememberScrollState()).padding(20.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
@@ -1384,7 +1383,7 @@ private fun AuthScreen(
     var loading by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
-    Column(Modifier.fillMaxSize().background(Page).verticalScroll(rememberScrollState()).padding(horizontal = 22.dp, vertical = 18.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(Modifier.fillMaxSize().shahrvandCanvas().verticalScroll(rememberScrollState()).padding(horizontal = 22.dp, vertical = 18.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
             listOf("tg", "ru", "en").forEach { code ->
                 FilterChip(selected = language == code, onClick = { onLanguage(code) }, label = { Text(code.uppercase()) })
