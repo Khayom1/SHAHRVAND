@@ -285,9 +285,9 @@ fun SleepTrackingScreen(
             Text(
                 sleepTr(
                     language,
-                    "SHAHRVAND сабти хобро аз Health Connect мехонад. Барои ин иҷозати ту лозим аст; маълумоти хоб ба сервер фиристода намешавад.",
-                    "SHAHRVAND читает записи сна через Health Connect. Для этого нужно твоё разрешение; данные сна не отправляются на сервер.",
-                    "SHAHRVAND reads sleep records through Health Connect. Your permission is required; sleep data is not uploaded to the server."
+                    "SHAHRVAND сабти хобро аз Health Connect мехонад. Барои ҳисоб кардани XP сана, вақти оғозу анҷом ва манбаи сабт ба сервер фиристода мешаванд; худи сабти Health Connect нусхабардорӣ намешавад.",
+                    "SHAHRVAND читает записи сна через Health Connect. Для начисления XP на сервер отправляются дата, время начала и окончания, а также источник записи; сама запись Health Connect не копируется.",
+                    "SHAHRVAND reads sleep records through Health Connect. To award XP, the date, start and end times, and record source are sent to the server; the Health Connect record itself is not copied."
                 ), color = SLEEP_MUTED, fontSize = 12.sp, lineHeight = 18.sp
             )
         }
