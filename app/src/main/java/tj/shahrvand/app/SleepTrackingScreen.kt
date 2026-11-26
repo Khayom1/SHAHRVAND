@@ -293,7 +293,7 @@ fun SleepTrackingScreen(
     }
 
     Column(
-        modifier = Modifier.fillMaxSize().background(LocalShahrvandPalette.current.background).verticalScroll(rememberScrollState()).padding(16.dp),
+        modifier = Modifier.fillMaxSize().shahrvandCanvas().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
