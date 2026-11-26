@@ -24,6 +24,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -287,19 +288,20 @@ private fun ProfileAchievementsCard(
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                     verticalArrangement = Arrangement.spacedBy(3.dp)
                                 ) {
+                                    val iconScale by animateFloatAsState(
+                                        targetValue = if (earned) 1f else 0.78f,
+                                        animationSpec = tween(520),
+                                        label = "title_badge_scale"
+                                    )
                                     Box(Modifier.height(23.dp), contentAlignment = Alignment.Center) {
-                                        if (earned) {
-                                            AnimatedVisibility(
-                                                visible = true,
-                                                enter = fadeIn(tween(350)) +
-                                                    scaleIn(tween(520), initialScale = 0.35f) +
-                                                    slideInVertically(tween(420)) { -it / 2 }
-                                            ) {
-                                                Text(icon, fontSize = 19.sp)
+                                        Text(
+                                            if (earned) icon else "🔒",
+                                            fontSize = 19.sp,
+                                            modifier = Modifier.graphicsLayer {
+                                                scaleX = iconScale
+                                                scaleY = iconScale
                                             }
-                                        } else {
-                                            Text("🔒", fontSize = 16.sp)
-                                        }
+                                        )
                                     }
                                     Text(count, color = if (earned) ProfileNavy else ProfileMuted,
                                         fontSize = 9.sp, fontWeight = FontWeight.Black)
@@ -377,15 +379,20 @@ private fun AchievementPill(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
+            val iconScale by animateFloatAsState(
+                targetValue = if (unlocked) 1f else 0.78f,
+                animationSpec = tween(500),
+                label = "achievement_badge_scale"
+            )
             Box(Modifier.size(24.dp), contentAlignment = Alignment.Center) {
-                if (unlocked) {
-                    AnimatedVisibility(
-                        visible = true,
-                        enter = fadeIn(tween(300)) + scaleIn(tween(500), initialScale = 0.3f)
-                    ) { Text(icon, fontSize = 19.sp) }
-                } else {
-                    Text("🔒", fontSize = 16.sp)
-                }
+                Text(
+                    if (unlocked) icon else "🔒",
+                    fontSize = 19.sp,
+                    modifier = Modifier.graphicsLayer {
+                        scaleX = iconScale
+                        scaleY = iconScale
+                    }
+                )
             }
             Text(
                 title,
