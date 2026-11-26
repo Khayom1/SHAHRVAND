@@ -6,6 +6,7 @@ on:
     branches:
       - "release/**"
       - "optimization/**"
+      - "feature/**"
       - "main"
   pull_request:
     branches:
@@ -38,15 +39,18 @@ jobs:
           grep -q 'android.permission.ACCESS_FINE_LOCATION' app/src/main/AndroidManifest.xml
           grep -q 'android.permission.CAMERA' app/src/main/AndroidManifest.xml
           grep -q 'android.permission.health.READ_STEPS' app/src/main/AndroidManifest.xml
+          grep -q 'android.permission.health.READ_SLEEP' app/src/main/AndroidManifest.xml
           grep -q 'android.permission.FOREGROUND_SERVICE_LOCATION' app/src/main/AndroidManifest.xml
           grep -q 'android:foregroundServiceType="location"' app/src/main/AndroidManifest.xml
           ! grep -E 'ACCESS_BACKGROUND_LOCATION|RECORD_AUDIO' app/src/main/AndroidManifest.xml
       - name: Run unit tests and assemble optimized ARM64 APK and Play App Bundle
-        run: gradle :app:testPlayDebugUnitTest :app:assembleDirectOptimized :app:bundlePlayRelease
+        run: gradle :app:testPlayDebugUnitTest :app:assembleDirectOptimized :app:assembleUniversalOptimized :app:bundlePlayRelease
       - name: Report optimized APK size
         run: |
           echo "### Optimized ARM64 APK" >> "$GITHUB_STEP_SUMMARY"
           du -h app/build/outputs/apk/direct/optimized/app-direct-optimized.apk | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "### Universal APK for direct distribution" >> "$GITHUB_STEP_SUMMARY"
+          du -h app/build/outputs/apk/universal/optimized/app-universal-optimized.apk | tee -a "$GITHUB_STEP_SUMMARY"
           echo "### Multi-ABI Google Play App Bundle" >> "$GITHUB_STEP_SUMMARY"
           du -h app/build/outputs/bundle/playRelease/app-play-release.aab | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Upload optimized ARM64 installable APK
@@ -54,6 +58,12 @@ jobs:
         with:
           name: shahrvand-v1-optimized-arm64-apk
           path: app/build/outputs/apk/direct/optimized/app-direct-optimized.apk
+          if-no-files-found: error
+      - name: Upload universal installable APK for all Android ABIs
+        uses: actions/upload-artifact@v7
+        with:
+          name: shahrvand-v1-universal-optimized-apk
+          path: app/build/outputs/apk/universal/optimized/app-universal-optimized.apk
           if-no-files-found: error
       - name: Upload multi-ABI release AAB for Google Play
         uses: actions/upload-artifact@v7

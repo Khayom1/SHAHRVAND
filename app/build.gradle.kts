@@ -32,6 +32,9 @@ android {
                 abiFilters += "arm64-v8a"
             }
         }
+        create("universal") {
+            dimension = "distribution"
+        }
     }
 
     buildFeatures {
