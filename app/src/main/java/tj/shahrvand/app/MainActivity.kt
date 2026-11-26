@@ -183,7 +183,7 @@ private fun ShahrvandApp() {
         else -> FontFamily.Default
     }
 
-    val today = remember { LocalDate.now().toString() }
+    val today = remember { ProgressRules.competitionDate().toString() }
     val storedDay = remember { prefs.getString("progress_day", "") ?: "" }
     if (storedDay != today) {
         prefs.edit().putString("progress_day", today)
