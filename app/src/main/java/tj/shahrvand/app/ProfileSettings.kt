@@ -38,6 +38,7 @@ import kotlinx.coroutines.launch
 
 private val ProfileNavy: Color @Composable get() = LocalShahrvandPalette.current.navy
 private val ProfileNavyText: Color @Composable get() = LocalShahrvandPalette.current.navyText
+private val ProfilePrimaryText: Color @Composable get() = LocalShahrvandPalette.current.navyText
 private val ProfileGreen: Color @Composable get() = LocalShahrvandPalette.current.green
 private val ProfileGold: Color @Composable get() = LocalShahrvandPalette.current.gold
 private val ProfilePage: Color @Composable get() = LocalShahrvandPalette.current.background
@@ -225,7 +226,7 @@ private fun ProfileAchievementsCard(
                 )
                 Text(
                     profileTr(language, "Пешрафти ту", "Твои достижения", "Your achievements"),
-                    color = ProfileNavy, fontSize = 16.sp, fontWeight = FontWeight.Bold
+                    color = ProfilePrimaryText, fontSize = 16.sp, fontWeight = FontWeight.Bold
                 )
             }
 
@@ -304,7 +305,7 @@ private fun ProfileAchievementsCard(
                                             }
                                         )
                                     }
-                                    Text(count, color = if (earned) ProfileNavy else ProfileMuted,
+                                    Text(count, color = if (earned) ProfilePrimaryText else ProfileMuted,
                                         fontSize = 9.sp, fontWeight = FontWeight.Black)
                                     Text(
                                         title,
@@ -329,13 +330,13 @@ private fun ProfileAchievementsCard(
                         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                             Text(
                                 profileTr(language, "То унвони навбатӣ", "До следующего титула", "Next title"),
-                                color = ProfileNavy, fontSize = 11.sp, fontWeight = FontWeight.Bold
+                                color = ProfilePrimaryText, fontSize = 11.sp, fontWeight = FontWeight.Bold
                             )
                             Text(nextLabel, color = ProfileGold, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
                         Text(
                             "${summary.verifiedTasks}/${summary.nextThreshold}",
-                            color = ProfileNavy, fontSize = 13.sp, fontWeight = FontWeight.Black
+                            color = ProfilePrimaryText, fontSize = 13.sp, fontWeight = FontWeight.Black
                         )
                     }
                     LinearProgressIndicator(
@@ -368,11 +369,11 @@ private fun AchievementPill(
 ) {
     Surface(
         modifier = modifier.animateContentSize(),
-        color = if (unlocked) Color(0xFFFFF4DE) else Color(0xFFF2F5F8),
+        color = if (unlocked) LocalShahrvandPalette.current.goldSurface else LocalShahrvandPalette.current.surfaceVariant,
         shape = RoundedCornerShape(13.dp),
         border = androidx.compose.foundation.BorderStroke(
             1.dp,
-            if (unlocked) Color(0xFFE1C58D) else ProfileBorder
+            if (unlocked) LocalShahrvandPalette.current.gold else ProfileBorder
         )
     ) {
         Row(
@@ -397,7 +398,7 @@ private fun AchievementPill(
             }
             Text(
                 title,
-                color = if (unlocked) ProfileNavy else ProfileMuted,
+                color = if (unlocked) ProfilePrimaryText else ProfileMuted,
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,
                 maxLines = 2
@@ -412,19 +413,19 @@ private fun ProfileStatCard(label: String, value: String, modifier: Modifier = M
         modifier = modifier,
         shape = RoundedCornerShape(19.dp),
         colors = CardDefaults.cardColors(containerColor = LocalShahrvandPalette.current.surface.copy(alpha = 0.98f)),
-        border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.96f)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+        border = androidx.compose.foundation.BorderStroke(1.dp, LocalShahrvandPalette.current.border),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(Modifier.fillMaxWidth().padding(14.dp)) {
             Text(label, color = ProfileMuted, fontSize = 11.sp)
-            Text(value, color = ProfileNavy, fontSize = 23.sp, fontWeight = FontWeight.Black)
+            Text(value, color = ProfilePrimaryText, fontSize = 23.sp, fontWeight = FontWeight.Black)
         }
     }
 }
 
 @Composable
 private fun ProfileSectionTitle(title: String) {
-    Text(title, color = ProfileNavy, fontSize = 14.sp, fontWeight = FontWeight.Bold,
+    Text(title, color = ProfilePrimaryText, fontSize = 14.sp, fontWeight = FontWeight.Bold,
         modifier = Modifier.padding(top = 18.dp, bottom = 8.dp))
 }
 
@@ -477,13 +478,17 @@ internal fun ShahrvandSettingsDialog(
     var message by remember { mutableStateOf("") }
     var messageIsError by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    var settingsSection by remember { mutableStateOf("account") }
+    val settingsScrollState = rememberScrollState()
+    LaunchedEffect(settingsSection) { settingsScrollState.scrollTo(0) }
 
     Dialog(
         onDismissRequest = onClose,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
         Surface(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 13.dp).heightIn(min = 300.dp, max = 720.dp),
+            modifier = Modifier.fillMaxWidth().fillMaxHeight(0.90f)
+                .padding(horizontal = 13.dp).heightIn(min = 300.dp, max = 740.dp),
             shape = RoundedCornerShape(22.dp),
             color = LocalShahrvandPalette.current.surface,
             shadowElevation = 12.dp
@@ -501,11 +506,26 @@ internal fun ShahrvandSettingsDialog(
                     }
                 }
                 HorizontalDivider(color = ProfileBorder, modifier = Modifier.padding(top = 8.dp, bottom = 4.dp))
+                SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+                    val sections = listOf(
+                        "account" to profileTr(language, "Ҳисоб", "Аккаунт", "Account"),
+                        "appearance" to profileTr(language, "Намуд", "Вид", "Look"),
+                        "security" to profileTr(language, "Амният", "Защита", "Security")
+                    )
+                    sections.forEachIndexed { index, (key, label) ->
+                        SegmentedButton(
+                            selected = settingsSection == key,
+                            onClick = { settingsSection = key },
+                            shape = SegmentedButtonDefaults.itemShape(index, sections.size)
+                        ) { Text(label, fontSize = 10.sp, maxLines = 1) }
+                    }
+                }
 
                 Column(
-                    Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()),
+                    Modifier.weight(1f).fillMaxWidth().verticalScroll(settingsScrollState),
                     verticalArrangement = Arrangement.spacedBy(7.dp)
                 ) {
+                    if (settingsSection == "account") {
                     ProfileSectionTitle(profileTr(language, "Ҳисоб ва профил", "Аккаунт и профиль", "Account and profile"))
                     OutlinedTextField(
                         value = editedFirstName,
@@ -663,7 +683,9 @@ internal fun ShahrvandSettingsDialog(
                         Text(message, color = if (messageIsError) MaterialTheme.colorScheme.error else ProfileGreen,
                             fontSize = 11.sp, lineHeight = 16.sp)
                     }
+                    }
 
+                    if (settingsSection == "appearance") {
                     ProfileSectionTitle(profileTr(language, "Забон", "Язык", "Language"))
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         listOf("tg", "ru", "en").forEach { code ->
@@ -738,7 +760,9 @@ internal fun ShahrvandSettingsDialog(
                             }
                         )
                     }
+                    }
 
+                    if (settingsSection == "security") {
                     ProfileSectionTitle(profileTr(language, "Амният ва махфият", "Безопасность и конфиденциальность", "Security and privacy"))
                     ProfileSecurityLine(profileTr(language, "Парол дар танзимоти одии телефон нигоҳ дошта намешавад; санҷиш тавассути Supabase Auth аст.",
                         "Пароль не хранится в обычных настройках телефона; проверка выполняется через Supabase Auth.",
@@ -783,6 +807,7 @@ internal fun ShahrvandSettingsDialog(
                         Text(profileTr(language, "Баромадан аз ҳисоб", "Выйти из аккаунта", "Sign out"))
                     }
                     Spacer(Modifier.height(16.dp))
+                    }
                 }
             }
         }
