@@ -278,6 +278,7 @@ internal fun isValidInterestSelection(codes: Set<String>): Boolean =
 fun DailyActivitiesScreen(language: String, getAccessToken: suspend () -> String) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val palette = LocalShahrvandPalette.current
     var overview by remember { mutableStateOf<ActivityOverview?>(null) }
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf("") }
@@ -297,13 +298,18 @@ fun DailyActivitiesScreen(language: String, getAccessToken: suspend () -> String
             activeTask = task
             activeSession = session
             error = ""
-        } catch (e: Exception) { error = activityError(language, e.message ?: "Session error") }
-        finally { busy = false }
+        } catch (e: Exception) {
+            error = activityError(language, e.message ?: "Session error")
+        } finally {
+            busy = false
+        }
     }
 
     val healthPermissions = remember { setOf(HealthPermission.getReadPermission(StepsRecord::class)) }
     var healthConnected by remember { mutableStateOf(false) }
-    val healthPermissionLauncher = rememberLauncherForActivityResult(PermissionController.createRequestPermissionResultContract()) { granted ->
+    val healthPermissionLauncher = rememberLauncherForActivityResult(
+        PermissionController.createRequestPermissionResultContract()
+    ) { granted ->
         healthConnected = healthPermissions.all { it in granted }
     }
     LaunchedEffect(Unit) {
@@ -314,15 +320,35 @@ fun DailyActivitiesScreen(language: String, getAccessToken: suspend () -> String
             }
         }
     }
-    val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { grants ->
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { grants ->
         val task = pendingTask
         pendingTask = null
         if (task != null) {
-            val required = if (task.type.startsWith("gps_")) listOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACTIVITY_RECOGNITION)
-                else listOf(Manifest.permission.CAMERA)
-            if (required.all { grants[it] == true || ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED }) {
+            val required = if (task.type.startsWith("gps_")) {
+                listOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                    Manifest.permission.ACTIVITY_RECOGNITION
+                )
+            } else {
+                listOf(Manifest.permission.CAMERA)
+            }
+            if (required.all {
+                grants[it] == true ||
+                    ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
+            }) {
                 scope.launch { begin(task) }
-            } else error = aTr(language, "Иҷозати зарурӣ дода нашуд.", "Не предоставлено необходимое разрешение.", "Required permission was not granted.")
+            } else {
+                error = aTr(
+                    language,
+                    "Иҷозати зарурӣ дода нашуд. Барои оғоз иҷозатро фаъол кун.",
+                    "Не выдано нужное разрешение. Разреши доступ для запуска.",
+                    "A required permission was not granted. Allow it to start the task."
+                )
+            }
         }
     }
 
@@ -332,171 +358,297 @@ fun DailyActivitiesScreen(language: String, getAccessToken: suspend () -> String
         try {
             overview = DailyActivityRepository.load(getAccessToken())
             selectedInterests = overview?.interests.orEmpty()
-        } catch (e: Exception) { error = activityError(language, e.message ?: "Network error") }
-        finally { loading = false }
+        } catch (e: Exception) {
+            error = activityError(language, e.message ?: "Network error")
+        } finally {
+            loading = false
+        }
     }
 
-    Column(Modifier.fillMaxSize().background(LocalShahrvandPalette.current.background).padding(horizontal = 16.dp, vertical = 14.dp)) {
-        Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
-            Text(
-                aTr(language, "ФАЪОЛИЯТИ ҲАРРӮЗА", "ЕЖЕДНЕВНАЯ АКТИВНОСТЬ", "DAILY ACTIVITY"),
-                color=A_Gold, fontSize=9.sp, fontWeight=FontWeight.ExtraBold
-            )
-            Text(
-                aTr(language, "Қадамҳои воқеӣ. Натиҷаи санҷидашуда.", "Реальные действия. Проверяемый результат.", "Real actions. Measurable results."),
-                color=A_NavyText, fontSize=22.sp, lineHeight=27.sp, fontWeight=FontWeight.Black
-            )
-            Text(
-                aTr(language,
-                    "Ҳаракат кун, омӯз ва машқро анҷом деҳ. Система пешрафтро аз рӯи меъёрҳои муайян месанҷад.",
-                    "Двигайся, учись и тренируйся. Система проверяет результат по установленным критериям.",
-                    "Move, learn, and train. The system checks progress against defined criteria."),
-                color=A_Muted, fontSize=12.sp, lineHeight=17.sp
-            )
+    Column(
+        Modifier.fillMaxSize()
+            .background(palette.background)
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(9.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    aTr(language, "ШАҲРВАНД · ФАЪОЛИЯТ", "ШАҲРВАНД · АКТИВНОСТЬ", "SHAHRVAND · ACTIVITY"),
+                    color = palette.gold, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = 0.6.sp
+                )
+                Text(
+                    aTr(language, "Вазифаҳо", "Задания", "Tasks"),
+                    color = palette.ink, fontSize = 22.sp, fontWeight = FontWeight.Bold
+                )
+                Text(
+                    aTr(language, "Интихоб кун, оғоз намо ва натиҷаро тасдиқ кун.",
+                        "Выбери задание, начни и подтверди результат.",
+                        "Choose a task, start it, and submit the result."),
+                    color = palette.muted, fontSize = 10.sp
+                )
+            }
+            TextButton(onClick = { refresh++ }, enabled = !loading) {
+                Text(
+                    aTr(language, "Навсозӣ", "Обновить", "Refresh"),
+                    color = palette.navyLight, fontSize = 11.sp
+                )
+            }
         }
-        Card(
-            modifier=Modifier.fillMaxWidth(),
-            colors=CardDefaults.cardColors(containerColor=A_Navy),
-            shape=RoundedCornerShape(20.dp)
-        ) {
-            Row(
-                Modifier.fillMaxWidth().padding(horizontal=15.dp, vertical=13.dp),
-                verticalAlignment=Alignment.CenterVertically
-            ) {
-                Column(Modifier.weight(1f), verticalArrangement=Arrangement.spacedBy(3.dp)) {
+
+        if (HealthConnectClient.getSdkStatus(context) == HealthConnectClient.SDK_AVAILABLE) {
+            if (!healthConnected) {
+                OutlinedButton(
+                    onClick = { healthPermissionLauncher.launch(healthPermissions) },
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 40.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 7.dp)
+                ) {
                     Text(
-                        aTr(language, "МЕЪЁРИ ЯГОНА БАРОИ ҲАМА", "ЕДИНЫЕ КРИТЕРИИ ДЛЯ ВСЕХ", "ONE STANDARD FOR EVERYONE"),
-                        color=androidx.compose.ui.graphics.Color(0xFFE5C995),
-                        fontSize=8.sp, fontWeight=FontWeight.Bold
-                    )
-                    Text(
-                        aTr(language, "Натиҷа баъди санҷиши серверӣ ба ҳисоб гирифта мешавад.", "Результат засчитывается после серверной проверки.", "Results count after server verification."),
-                        color=androidx.compose.ui.graphics.Color.White, fontSize=11.sp, lineHeight=16.sp
+                        aTr(language, "Пайваст кардани Samsung Health", "Подключить Samsung Health",
+                            "Connect Samsung Health"),
+                        fontSize = 11.sp
                     )
                 }
-                Text("✓", color=androidx.compose.ui.graphics.Color(0xFFE5C995), fontSize=28.sp, fontWeight=FontWeight.Black)
+            } else {
+                Text(
+                    aTr(language, "Samsung Health пайваст аст · қадамҳо низ санҷида мешаванд.",
+                        "Samsung Health подключён · шаги также проверяются.",
+                        "Samsung Health connected · steps are also checked."),
+                    color = palette.green, fontSize = 10.sp
+                )
             }
         }
-        if (HealthConnectClient.getSdkStatus(context) == HealthConnectClient.SDK_AVAILABLE && !healthConnected) {
-            TextButton(onClick={healthPermissionLauncher.launch(healthPermissions)}) {
-                Text(aTr(language,"Пайваст кардани Samsung Health / Health Connect","Подключить Samsung Health / Health Connect","Connect Samsung Health / Health Connect"))
+
+        when {
+            loading && overview == null -> {
+                Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = palette.gold)
+                }
             }
-        } else if (healthConnected) {
-            Text(aTr(language,"Қадамҳо аз Health Connect низ санҷида мешаванд.","Шаги также сверяются с Health Connect.","Steps are also cross-checked with Health Connect."),color=A_Green,fontSize=10.sp)
-        }
-        Spacer(Modifier.height(10.dp))
-        if (loading && overview == null) Box(Modifier.fillMaxSize(), contentAlignment=Alignment.Center) { CircularProgressIndicator() }
-        else if (overview == null) {
-            Text(error, color=MaterialTheme.colorScheme.error)
-            OutlinedButton(onClick={refresh++}) { Text(aTr(language,"Аз нав кӯшиш кун","Повторить","Retry")) }
-        } else if (overview!!.interests.isEmpty() || editingInterests) {
-            InterestPicker(language, selectedInterests, onToggle={ code ->
-                selectedInterests = when {
-                    code in selectedInterests -> selectedInterests - code
-                    selectedInterests.size < 5 -> selectedInterests + code
-                    else -> {
-                        error = aTr(language, "Маҳдудият — 5 мавзӯъ. Барои иваз кардан якеашро хориҷ кун.",
-                            "Можно выбрать только 5 тем. Чтобы заменить тему, сначала убери одну.",
-                            "The limit is 5 topics. Remove one before choosing another.")
-                        selectedInterests
+            overview == null -> {
+                Column(
+                    Modifier.fillMaxWidth().weight(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        error.ifBlank { aTr(language, "Маълумот бор нашуд.", "Не удалось загрузить данные.", "Could not load data.") },
+                        color = palette.danger, fontSize = 12.sp, textAlign = TextAlign.Center
+                    )
+                    OutlinedButton(onClick = { refresh++ }) {
+                        Text(aTr(language, "Аз нав кӯшиш кун", "Повторить", "Try again"))
                     }
                 }
-            }, saving=savingInterests, error=error, onSave={
-                scope.launch {
-                    savingInterests=true
-                    try {
-                        DailyActivityRepository.saveInterests(getAccessToken(), selectedInterests)
-                        editingInterests=false
-                        refresh++
-                    } catch(e:Exception){error=activityError(language,e.message ?: "Save failed")}
-                    finally{savingInterests=false}
-                }
-            })
-        } else {
-            Row(
-                Modifier.fillMaxWidth().padding(horizontal=2.dp, vertical=2.dp),
-                verticalAlignment=Alignment.CenterVertically
-            ) {
-                Column(Modifier.weight(1f), verticalArrangement=Arrangement.spacedBy(2.dp)) {
-                    Text(
-                        aTr(language,"Мавзӯъҳои интихобшуда","Выбранные темы","Selected topics"),
-                        color=A_Navy, fontSize=12.sp, fontWeight=FontWeight.Bold
-                    )
-                    Text(
-                        overview!!.interests.size.toString() + aTr(
-                            language," мавзӯъ барои омӯзиши шахсӣ"," тем для персонального обучения"," topics for personalised learning"
-                        ),
-                        color=A_Muted, fontSize=10.sp
-                    )
-                }
-                TextButton(onClick={ editingInterests=true }) {
-                    Text(aTr(language,"Тағйир додан","Изменить","Edit topics"))
-                }
             }
-            val taskCount = overview!!.tasks.size
-            val done = overview!!.tasks.count { overview!!.completed.containsKey(it.id) }
-            val progress = if (taskCount > 0) done.toFloat() / taskCount else 0f
-            Card(
-                colors=CardDefaults.cardColors(containerColor=LocalShahrvandPalette.current.surface.copy(alpha=0.98f)),
-                border=BorderStroke(1.dp,LocalShahrvandPalette.current.border),
-                elevation=CardDefaults.cardElevation(defaultElevation=7.dp),
-                shape=RoundedCornerShape(22.dp)
-            ) {
-                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement=Arrangement.spacedBy(4.dp)) {
-                    Row(verticalAlignment=Alignment.CenterVertically) {
-                        Column(Modifier.weight(1f)) {
-                            Text(aTr(language,"ПЕШРАФТИ ИМРӮЗ","ПРОГРЕСС ЗА СЕГОДНЯ","TODAY'S PROGRESS"), fontWeight=FontWeight.ExtraBold, color=A_Navy, fontSize=10.sp)
-                            Text("$done/$taskCount " + aTr(language,"вазифа иҷро шуд","заданий выполнено","challenges completed"), color=A_Muted, fontSize=12.sp)
+            overview!!.interests.isEmpty() || editingInterests -> {
+                Box(Modifier.fillMaxWidth().weight(1f)) {
+                    InterestPicker(
+                        language = language,
+                        selected = selectedInterests,
+                        onToggle = { code ->
+                            selectedInterests = when {
+                                code in selectedInterests -> selectedInterests - code
+                                selectedInterests.size < 5 -> selectedInterests + code
+                                else -> {
+                                    error = aTr(
+                                        language,
+                                        "Маҳдудият — 5 мавзӯъ. Барои иваз кардан якеашро хориҷ кун.",
+                                        "Можно выбрать только 5 тем. Чтобы заменить тему, сначала убери одну.",
+                                        "The limit is 5 topics. Remove one before choosing another."
+                                    )
+                                    selectedInterests
+                                }
+                            }
+                        },
+                        saving = savingInterests,
+                        error = error,
+                        onSave = {
+                            scope.launch {
+                                savingInterests = true
+                                error = ""
+                                try {
+                                    DailyActivityRepository.saveInterests(getAccessToken(), selectedInterests)
+                                    editingInterests = false
+                                    refresh++
+                                } catch (e: Exception) {
+                                    error = activityError(language, e.message ?: "Save failed")
+                                } finally {
+                                    savingInterests = false
+                                }
+                            }
                         }
-                        Text(overview!!.completed.values.sum().toString()+" XP", color=A_Gold, fontWeight=FontWeight.Black, fontSize=18.sp)
-                    }
-                    LinearProgressIndicator(progress={progress}, modifier=Modifier.fillMaxWidth().padding(top=8.dp), color=A_Green)
+                    )
                 }
             }
-            Spacer(Modifier.height(8.dp))
-            Text(
-                aTr(language, "ИНТИХОБИ ВАЗИФА", "ВЫБЕРИ ЗАДАНИЕ", "CHOOSE A CHALLENGE"),
-                color=A_Navy, fontSize=11.sp, fontWeight=FontWeight.ExtraBold,
-                modifier=Modifier.padding(top=5.dp, bottom=1.dp)
-            )
-            LazyColumn(verticalArrangement=Arrangement.spacedBy(10.dp), contentPadding=PaddingValues(bottom=24.dp)) {
-                items(overview!!.tasks, key={it.id}) { task ->
-                    val completed = overview!!.completed[task.id]
-                    Card(
-                        colors=CardDefaults.cardColors(containerColor=if(completed!=null) LocalShahrvandPalette.current.successSurface else LocalShahrvandPalette.current.surface.copy(alpha=0.98f)),
-                        border=BorderStroke(1.dp, if(completed!=null) LocalShahrvandPalette.current.successBorder else LocalShahrvandPalette.current.border),
-                        elevation=CardDefaults.cardElevation(defaultElevation=6.dp),
-                        shape=RoundedCornerShape(21.dp)
+            else -> {
+                val data = overview!!
+                val taskCount = data.tasks.size
+                val done = data.tasks.count { data.completed.containsKey(it.id) }
+                val progress = if (taskCount > 0) done.toFloat() / taskCount.toFloat() else 0f
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = palette.surface),
+                    border = BorderStroke(1.dp, palette.border),
+                    shape = RoundedCornerShape(18.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                ) {
+                    Column(
+                        Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 11.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Column(Modifier.fillMaxWidth().padding(15.dp), verticalArrangement=Arrangement.spacedBy(2.dp)) {
-                            Row(verticalAlignment=Alignment.CenterVertically) {
-                                Box(
-                                    Modifier.size(45.dp).clip(RoundedCornerShape(14.dp))
-                                        .background(if(completed!=null) LocalShahrvandPalette.current.successSurface else LocalShahrvandPalette.current.surfaceVariant),
-                                    contentAlignment=Alignment.Center
-                                ) { Text(taskIcon(task.type), fontSize=23.sp) }
-                                Spacer(Modifier.width(11.dp))
-                                Text(task.title(language), color=A_Navy, fontWeight=FontWeight.Bold, fontSize=13.sp, modifier=Modifier.weight(1f))
-                                Text("+"+task.xp+" XP", color=A_Gold, fontWeight=FontWeight.Bold, fontSize=11.sp)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                Text(
+                                    aTr(language, "ПЕШРАФТИ ИМРӮЗ", "ПРОГРЕСС СЕГОДНЯ", "TODAY"),
+                                    color = palette.muted, fontSize = 9.sp, fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    "$done/$taskCount " + aTr(language, "вазифа", "заданий", "tasks"),
+                                    color = palette.ink, fontSize = 15.sp, fontWeight = FontWeight.Bold
+                                )
                             }
-                            Text(task.description(language), color=A_Muted, fontSize=12.sp, lineHeight=17.sp, modifier=Modifier.padding(top=8.dp))
-                            if (completed != null) Text("✓ "+aTr(language,"Иҷро шуд","Выполнено","Completed")+" · +$completed XP", color=A_Green, fontWeight=FontWeight.Bold, fontSize=12.sp, modifier=Modifier.padding(top=8.dp))
-                            else Button(onClick={
-                                val permissions = if(task.type.startsWith("gps_")) arrayOf(Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION,Manifest.permission.ACTIVITY_RECOGNITION)
-                                    else if(task.type.startsWith("pose_")) arrayOf(Manifest.permission.CAMERA) else emptyArray()
-                                val missing = permissions.filter { ContextCompat.checkSelfPermission(context,it) != PackageManager.PERMISSION_GRANTED }
-                                if(missing.isEmpty()) scope.launch { begin(task) }
-                                else { pendingTask=task; permissionLauncher.launch(missing.toTypedArray()) }
-                            }, enabled=!busy && activeTask==null, modifier=Modifier.padding(top=9.dp).fillMaxWidth().height(44.dp),
-                                shape=RoundedCornerShape(13.dp)) {
-                                Text(aTr(language,"Оғози вазифа","Начать задание","Start challenge"), fontSize=12.sp, fontWeight=FontWeight.Bold)
+                            Text(
+                                data.completed.values.sum().toString() + " XP",
+                                color = palette.gold, fontSize = 18.sp, fontWeight = FontWeight.Black
+                            )
+                        }
+                        LinearProgressIndicator(
+                            progress = { progress },
+                            modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(8.dp)),
+                            color = palette.green, trackColor = palette.surfaceVariant
+                        )
+                    }
+                }
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                        Text(
+                            aTr(language, "Мавзӯъҳои омӯзиш", "Темы обучения", "Learning topics"),
+                            color = palette.ink, fontSize = 12.sp, fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            aTr(language, "${data.interests.size} мавзӯи интихобшуда",
+                                "${data.interests.size} выбрано", "${data.interests.size} selected"),
+                            color = palette.muted, fontSize = 10.sp
+                        )
+                    }
+                    TextButton(onClick = { editingInterests = true }) {
+                        Text(aTr(language, "Тағйир", "Изменить", "Edit"), fontSize = 11.sp)
+                    }
+                }
+
+                if (error.isNotBlank()) {
+                    Surface(
+                        color = palette.dangerSurface,
+                        shape = RoundedCornerShape(11.dp),
+                        border = BorderStroke(1.dp, palette.danger.copy(alpha = 0.35f))
+                    ) {
+                        Text(error, Modifier.fillMaxWidth().padding(10.dp),
+                            color = palette.danger, fontSize = 10.sp, lineHeight = 14.sp)
+                    }
+                }
+
+                Text(
+                    aTr(language, "ВАЗИФАҲОИ ДАСТРАС", "ДОСТУПНЫЕ ЗАДАНИЯ", "AVAILABLE TASKS"),
+                    color = palette.muted, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = 0.7.sp
+                )
+
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth().weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(bottom = 14.dp)
+                ) {
+                    items(data.tasks, key = { it.id }) { task ->
+                        val completedXp = data.completed[task.id]
+                        Card(
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (completedXp != null) palette.successSurface else palette.surface
+                            ),
+                            border = BorderStroke(
+                                1.dp,
+                                if (completedXp != null) palette.successBorder else palette.border
+                            ),
+                            shape = RoundedCornerShape(17.dp),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                        ) {
+                            Column(
+                                Modifier.fillMaxWidth().padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Box(
+                                        Modifier.size(38.dp).clip(RoundedCornerShape(12.dp))
+                                            .background(palette.surfaceVariant),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(taskIcon(task.type), fontSize = 21.sp)
+                                    }
+                                    Spacer(Modifier.width(10.dp))
+                                    Text(
+                                        task.title(language),
+                                        color = palette.navyText,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 13.sp,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    Text("+" + task.xp + " XP", color = palette.gold,
+                                        fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                                }
+                                Text(
+                                    task.description(language),
+                                    color = palette.muted, fontSize = 11.sp, lineHeight = 15.sp,
+                                    maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                )
+                                if (completedXp != null) {
+                                    Text(
+                                        "✓ " + aTr(language, "Иҷро шуд", "Выполнено", "Completed") +
+                                            " · +$completedXp XP",
+                                        color = palette.green, fontWeight = FontWeight.Bold, fontSize = 11.sp
+                                    )
+                                } else {
+                                    Button(
+                                        onClick = {
+                                            val permissions = when {
+                                                task.type.startsWith("gps_") -> arrayOf(
+                                                    Manifest.permission.ACCESS_FINE_LOCATION,
+                                                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                                                    Manifest.permission.ACTIVITY_RECOGNITION
+                                                )
+                                                task.type.startsWith("pose_") -> arrayOf(Manifest.permission.CAMERA)
+                                                else -> emptyArray()
+                                            }
+                                            val missing = permissions.filter {
+                                                ContextCompat.checkSelfPermission(context, it) != PackageManager.PERMISSION_GRANTED
+                                            }
+                                            if (missing.isEmpty()) scope.launch { begin(task) }
+                                            else {
+                                                pendingTask = task
+                                                permissionLauncher.launch(missing.toTypedArray())
+                                            }
+                                        },
+                                        enabled = !busy && activeTask == null,
+                                        modifier = Modifier.fillMaxWidth().heightIn(min = 41.dp),
+                                        shape = RoundedCornerShape(11.dp),
+                                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                                    ) {
+                                        if (busy && activeTask == null) {
+                                            CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
+                                        } else {
+                                            Text(aTr(language, "Оғози вазифа", "Начать задание", "Start task"),
+                                                fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
                 }
             }
         }
-        if (error.isNotBlank() && overview != null) Text(error, color=MaterialTheme.colorScheme.error, fontSize=11.sp)
     }
 
     val task = activeTask
