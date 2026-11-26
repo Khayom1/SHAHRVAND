@@ -502,21 +502,19 @@ private fun ShahrvandApp() {
                     onSettings = { settingsOpen = true }
                 )
                 else -> HomeScreen(
-                    language, nickname, ageBand ?: "7_12", totalXp, totalCompleted,
-                    completedToday, missions, catalogStatus, isLoadingCatalog, financeEntries,
+                    language = language,
+                    nickname = nickname,
+                    ageBand = ageBand ?: "7_12",
+                    summary = achievementSummary,
+                    summaryLoading = achievementSummaryLoading,
                     onOpenMissions = { tab = 1 },
-                    onOpenFinance = {
-                        personalSection = "budget"
-                        homeDestination = "personal"
-                    },
                     onOpenLeaderboard = { tab = 2 },
                     onOpenNotes = {
                         personalSection = "notes"
                         homeDestination = "personal"
                     },
                     onOpenSleep = { homeDestination = "sleep" },
-                    onComplete = ::finishMission,
-                    onProfile = { tab = 3 }
+                    onOpenProfile = { tab = 3 }
                 )
             }
         }
