@@ -336,6 +336,8 @@ fun FinanceOverviewCard(
                 }
             }
             Spacer(Modifier.height(8.dp))
+            val chartIncomeColor = SpaceGreen
+            val chartExpenseColor = SpaceRed
             Canvas(Modifier.fillMaxWidth().height(78.dp)) {
                 val barWidth = size.width * 0.22f
                 val baseY = size.height - 4f
@@ -343,13 +345,13 @@ fun FinanceOverviewCard(
                 val incomeHeight = (income / maxValue).toFloat() * maxHeight
                 val expenseHeight = (expense / maxValue).toFloat() * maxHeight
                 drawRoundRect(
-                    color = SpaceGreen,
+                    color = chartIncomeColor,
                     topLeft = Offset(size.width * 0.24f, baseY - incomeHeight),
                     size = Size(barWidth, incomeHeight.coerceAtLeast(3f)),
                     cornerRadius = CornerRadius(12f, 12f)
                 )
                 drawRoundRect(
-                    color = SpaceRed,
+                    color = chartExpenseColor,
                     topLeft = Offset(size.width * 0.61f, baseY - expenseHeight),
                     size = Size(barWidth, expenseHeight.coerceAtLeast(3f)),
                     cornerRadius = CornerRadius(12f, 12f)

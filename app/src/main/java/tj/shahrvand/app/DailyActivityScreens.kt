@@ -506,7 +506,6 @@ fun DailyActivitiesScreen(language: String, getAccessToken: suspend () -> String
             onFinish = { refresh++; activeTask = null; activeSession = null },
             onRejected = { reason ->
                 error = activityError(language, reason)
-                refresh++
                 activeTask = null
                 activeSession = null
             },
@@ -824,10 +823,16 @@ private fun ActivitySessionDialog(
         dismissButton = {
             TextButton(onClick={
                 scope.launch {
-                    submitting=true
-                    try { DailyActivityRepository.cancel(getAccessToken(),session) }
-                    catch(e:Exception) { status=e.message ?: "Cancel failed" }
-                    onCancel()
+                    submitting = true
+                    status = ""
+                    try {
+                        DailyActivityRepository.cancel(getAccessToken(), session)
+                        onCancel()
+                    } catch (e: Exception) {
+                        status = activityError(language, e.message ?: "Cancel failed")
+                    } finally {
+                        submitting = false
+                    }
                 }
             },enabled=!submitting) { Text(aTr(language,"Бекор кардан","Отмена","Cancel")) }
         }
