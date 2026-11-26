@@ -239,6 +239,17 @@ private fun ShahrvandApp() {
         }
     }
 
+    LaunchedEffect(tab, isAuthenticated) {
+        if (isAuthenticated) {
+            val token = runCatching { getValidAccessToken() }.getOrNull() ?: return@LaunchedEffect
+            val serverSummary = runCatching { SupabaseCompetitionRepository.myAchievements(token) }.getOrNull()
+            if (serverSummary != null) {
+                totalXp = serverSummary.totalXp
+                prefs.edit().putInt("total_xp", serverSummary.totalXp).apply()
+            }
+        }
+    }
+
     LaunchedEffect(ageBand) {
         if (ageBand == "18_plus") {
             isLoadingCatalog = true
