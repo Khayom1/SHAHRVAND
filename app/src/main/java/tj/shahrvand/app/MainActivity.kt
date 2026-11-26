@@ -417,7 +417,9 @@ private fun ShahrvandApp() {
                                 color = Navy, fontSize = 17.sp, fontWeight = FontWeight.Bold
                             )
                         }
-                        SleepTrackingScreen(language, accountAge, ::awardSleepXp)
+                        Box(Modifier.weight(1f)) {
+                            SleepTrackingScreen(language, accountAge, ::awardSleepXp)
+                        }
                     }
                     else -> HomeScreen(
                         language, nickname, ageBand ?: "7_12", totalXp, totalCompleted,
@@ -746,6 +748,8 @@ private fun HomeScreen(
             Text(ageBandLabel(language, ageBand), color = Muted, fontSize = 11.sp)
         }
 
+        HomeDailyProgressCard(language, completedToday.size, totalXp)
+
         Card(
             colors = CardDefaults.cardColors(containerColor = Navy),
             shape = RoundedCornerShape(25.dp),
@@ -882,6 +886,48 @@ private fun HomeScreen(
             color = Muted, fontSize = 10.sp, lineHeight = 15.sp,
             modifier = Modifier.padding(bottom = 6.dp)
         )
+    }
+}
+
+@Composable
+private fun HomeDailyProgressCard(language: String, completedToday: Int, totalXp: Int) {
+    val progress = (completedToday.toFloat() / DAILY_TARGET).coerceIn(0f, 1f)
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.84f)),
+        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.96f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 7.dp),
+        shape = RoundedCornerShape(22.dp)
+    ) {
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 13.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Text(
+                    tr(language, "ПЕШРАФТИ ИМРӮЗ", "ПРОГРЕСС СЕГОДНЯ", "TODAY'S PROGRESS"),
+                    color = Gold, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold
+                )
+                Text(
+                    "$completedToday / $DAILY_TARGET " + tr(language, "қадами рӯз", "шага за день", "daily steps"),
+                    color = Navy, fontSize = 17.sp, fontWeight = FontWeight.Bold
+                )
+                Text(
+                    totalXp.toString() + " XP · " + tr(language, "ҳамаи пешрафт", "всего накоплено", "total earned"),
+                    color = Muted, fontSize = 10.sp
+                )
+            }
+            Box(Modifier.size(60.dp), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(
+                    progress = { progress },
+                    modifier = Modifier.fillMaxSize(),
+                    color = Green,
+                    trackColor = Color(0xFFE6EDF2),
+                    strokeWidth = 6.dp
+                )
+                Text("$completedToday/$DAILY_TARGET", color = Navy, fontSize = 11.sp, fontWeight = FontWeight.Black)
+            }
+        }
     }
 }
 
