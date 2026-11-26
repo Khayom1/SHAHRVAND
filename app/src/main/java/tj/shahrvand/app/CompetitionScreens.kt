@@ -28,7 +28,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
-private val C_Navy: Color @Composable get() = LocalShahrvandPalette.current.navy
+private val C_Navy: Color @Composable get() = LocalShahrvandPalette.current.navyText
 private val C_NavyText: Color @Composable get() = LocalShahrvandPalette.current.navyText
 private val C_Gold: Color @Composable get() = LocalShahrvandPalette.current.gold
 private val C_Green: Color @Composable get() = LocalShahrvandPalette.current.green
@@ -342,7 +342,7 @@ fun LeaderboardScreen(language:String,myAgeBand:String,getAccessToken:suspend()-
             }
         }
 
-        if (entries.isNotEmpty()) {
+        if (entries.size >= 3) {
             val topThree = entries.take(3)
             val maxXp = topThree.maxOf { it.xp }.coerceAtLeast(1)
             Card(
