@@ -42,6 +42,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -74,13 +75,48 @@ import kotlin.math.min
 import kotlin.math.roundToInt
 
 private const val ACTIVITY_ZONE = "Asia/Dushanbe"
-private val A_Navy = androidx.compose.ui.graphics.Color(0xFF183247)
-private val A_Gold = androidx.compose.ui.graphics.Color(0xFFC8954A)
-private val A_Green = androidx.compose.ui.graphics.Color(0xFF2F7969)
-private val A_Muted = androidx.compose.ui.graphics.Color(0xFF687987)
-private val A_Border = androidx.compose.ui.graphics.Color(0xFFDDE7EF)
+private val A_Navy: Color @Composable get() = LocalShahrvandPalette.current.navy
+private val A_Gold: Color @Composable get() = LocalShahrvandPalette.current.gold
+private val A_Green: Color @Composable get() = LocalShahrvandPalette.current.green
+private val A_Muted: Color @Composable get() = LocalShahrvandPalette.current.muted
+private val A_Border: Color @Composable get() = LocalShahrvandPalette.current.border
 
 private fun aTr(l: String, tg: String, ru: String, en: String) = when (l) { "ru" -> ru; "en" -> en; else -> tg }
+
+private fun activityError(language: String, raw: String): String {
+    val code = raw.uppercase()
+    return when {
+        "SELECT_EXACTLY_FIVE_INTERESTS" in code || "INTEREST_SELECTION_INVALID" in code ->
+            aTr(language, "Барои омӯзиш маҳз 5 мавзӯъ интихоб кун.", "Для обучения выбери ровно 5 тем.", "Select exactly 5 topics for learning.")
+        "ANOTHER_SESSION_ACTIVE" in code ->
+            aTr(language, "Вазифаи дигар ҳоло фаъол аст. Аввал онро анҷом деҳ ё бекор кун.", "Другое задание уже активно. Сначала заверши или отмени его.", "Another task is active. Finish or cancel it first.")
+        "DAILY_ATTEMPT_LIMIT" in code ->
+            aTr(language, "Шумораи кӯшишҳои имрӯз барои ин вазифа ба охир расид.", "Лимит попыток на сегодня исчерпан.", "Today's attempt limit for this task has been reached.")
+        "TASK_ALREADY_COMPLETED" in code ->
+            aTr(language, "Ин вазифа имрӯз аллакай тасдиқ шудааст.", "Это задание уже подтверждено сегодня.", "This task has already been verified today.")
+        "LEARNING_TIME_INSUFFICIENT" in code ->
+            aTr(language, "20 дақиқаи омӯзиши фаъол ҳанӯз пур нашудааст.", "Не набрано 20 минут активного обучения.", "The 20 minutes of active learning are not complete yet.")
+        "QUIZ_REQUIREMENT_NOT_MET" in code ->
+            aTr(language, "Ба камаш 3 савол аз 5 ҷавоби дуруст деҳ.", "Ответь правильно минимум на 3 из 5 вопросов.", "Answer at least 3 of the 5 quiz questions correctly.")
+        "DISTANCE_NOT_REACHED" in code ->
+            aTr(language, "Масофаи зарурӣ ҳанӯз пур нашудааст.", "Не достигнута нужная дистанция.", "The required distance has not been reached.")
+        "INSUFFICIENT_GPS_SAMPLES" in code ->
+            aTr(language, "GPS ҳанӯз нуқтаҳои кофӣ ҷамъ накардааст. Дар фазои кушод идома деҳ.", "GPS собрал мало точек. Продолжай на открытом пространстве.", "GPS has not collected enough samples. Continue in an open area.")
+        "GPS_ACCURACY_TOO_LOW" in code ->
+            aTr(language, "Дақиқии GPS паст аст. Ба ҷойи кушодтар гузар.", "Низкая точность GPS. Перейди на открытое место.", "GPS accuracy is too low. Move to a clearer outdoor area.")
+        "ROUTE_EVIDENCE" in code ->
+            aTr(language, "Масири GPS дуруст сабт нашуд. Сессияи навро дар фазои кушод оғоз кун.", "Маршрут GPS записан некорректно. Начни новую сессию на открытом месте.", "The GPS route was not recorded correctly. Start a new session outdoors.")
+        "VALID_REPS_NOT_REACHED" in code ->
+            aTr(language, "Шумораи ҳаракатҳои дуруст ҳанӯз кофӣ нест.", "Недостаточно правильных повторений.", "Not enough valid repetitions yet.")
+        "POSE_EVIDENCE_LOW" in code ->
+            aTr(language, "Камера баданро пурра намебинад. Телефонро дуртар гузор.", "Камера плохо видит тело. Отодвинь телефон.", "The camera cannot see your full body clearly. Move the phone back.")
+        "EXERCISE_TIME_LIMIT" in code ->
+            aTr(language, "Мӯҳлати машқ гузашт. Кӯшиши навро оғоз кун.", "Время упражнения истекло. Начни новую попытку.", "The exercise time limit was exceeded. Start a new attempt.")
+        else -> raw.take(220).ifBlank {
+            aTr(language, "Амалиёт иҷро нашуд. Аз нав кӯшиш кун.", "Операция не выполнена. Попробуй ещё раз.", "The operation failed. Please try again.")
+        }
+    }
+}
 
 data class ActivityTask(
     val id: String, val type: String,
@@ -235,7 +271,7 @@ private val activityInterests = listOf(
 )
 
 internal fun isValidInterestSelection(codes: Set<String>): Boolean =
-    codes.isNotEmpty() && codes.all { code -> activityInterests.any { it.code == code } }
+    codes.size == 5 && codes.all { code -> activityInterests.any { it.code == code } }
 
 @Composable
 fun DailyActivitiesScreen(language: String, getAccessToken: suspend () -> String) {
@@ -260,7 +296,7 @@ fun DailyActivitiesScreen(language: String, getAccessToken: suspend () -> String
             activeTask = task
             activeSession = session
             error = ""
-        } catch (e: Exception) { error = e.message ?: "Session error" }
+        } catch (e: Exception) { error = activityError(language, e.message ?: "Session error") }
         finally { busy = false }
     }
 
@@ -295,11 +331,11 @@ fun DailyActivitiesScreen(language: String, getAccessToken: suspend () -> String
         try {
             overview = DailyActivityRepository.load(getAccessToken())
             selectedInterests = overview?.interests.orEmpty()
-        } catch (e: Exception) { error = e.message ?: "Network error" }
+        } catch (e: Exception) { error = activityError(language, e.message ?: "Network error") }
         finally { loading = false }
     }
 
-    Column(Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Color(0xFFF1F6FA)).padding(horizontal = 16.dp, vertical = 14.dp)) {
+    Column(Modifier.fillMaxSize().background(LocalShahrvandPalette.current.background).padding(horizontal = 16.dp, vertical = 14.dp)) {
         Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
             Text(
                 aTr(language, "ФАЪОЛИЯТИ ҲАРРӮЗА", "ЕЖЕДНЕВНАЯ АКТИВНОСТЬ", "DAILY ACTIVITY"),
@@ -354,7 +390,16 @@ fun DailyActivitiesScreen(language: String, getAccessToken: suspend () -> String
             OutlinedButton(onClick={refresh++}) { Text(aTr(language,"Аз нав кӯшиш кун","Повторить","Retry")) }
         } else if (overview!!.interests.isEmpty() || editingInterests) {
             InterestPicker(language, selectedInterests, onToggle={ code ->
-                selectedInterests = if (code in selectedInterests) selectedInterests - code else selectedInterests + code
+                selectedInterests = when {
+                    code in selectedInterests -> selectedInterests - code
+                    selectedInterests.size < 5 -> selectedInterests + code
+                    else -> {
+                        error = aTr(language, "Маҳдудият — 5 мавзӯъ. Барои иваз кардан якеашро хориҷ кун.",
+                            "Можно выбрать только 5 тем. Чтобы заменить тему, сначала убери одну.",
+                            "The limit is 5 topics. Remove one before choosing another.")
+                        selectedInterests
+                    }
+                }
             }, saving=savingInterests, error=error, onSave={
                 scope.launch {
                     savingInterests=true
@@ -362,7 +407,7 @@ fun DailyActivitiesScreen(language: String, getAccessToken: suspend () -> String
                         DailyActivityRepository.saveInterests(getAccessToken(), selectedInterests)
                         editingInterests=false
                         refresh++
-                    } catch(e:Exception){error=e.message ?: "Save failed"}
+                    } catch(e:Exception){error=activityError(language,e.message ?: "Save failed")}
                     finally{savingInterests=false}
                 }
             })
@@ -391,8 +436,8 @@ fun DailyActivitiesScreen(language: String, getAccessToken: suspend () -> String
             val done = overview!!.tasks.count { overview!!.completed.containsKey(it.id) }
             val progress = if (taskCount > 0) done.toFloat() / taskCount else 0f
             Card(
-                colors=CardDefaults.cardColors(containerColor=androidx.compose.ui.graphics.Color.White.copy(alpha=0.84f)),
-                border=BorderStroke(1.dp,androidx.compose.ui.graphics.Color.White.copy(alpha=0.96f)),
+                colors=CardDefaults.cardColors(containerColor=LocalShahrvandPalette.current.surface.copy(alpha=0.98f)),
+                border=BorderStroke(1.dp,LocalShahrvandPalette.current.border),
                 elevation=CardDefaults.cardElevation(defaultElevation=7.dp),
                 shape=RoundedCornerShape(22.dp)
             ) {
@@ -417,8 +462,8 @@ fun DailyActivitiesScreen(language: String, getAccessToken: suspend () -> String
                 items(overview!!.tasks, key={it.id}) { task ->
                     val completed = overview!!.completed[task.id]
                     Card(
-                        colors=CardDefaults.cardColors(containerColor=if(completed!=null) androidx.compose.ui.graphics.Color(0xFFEAF5EF) else androidx.compose.ui.graphics.Color.White.copy(alpha=0.84f)),
-                        border=BorderStroke(1.dp, if(completed!=null) androidx.compose.ui.graphics.Color(0xFFC9DED1) else androidx.compose.ui.graphics.Color.White.copy(alpha=0.96f)),
+                        colors=CardDefaults.cardColors(containerColor=if(completed!=null) LocalShahrvandPalette.current.successSurface else LocalShahrvandPalette.current.surface.copy(alpha=0.98f)),
+                        border=BorderStroke(1.dp, if(completed!=null) LocalShahrvandPalette.current.successBorder else LocalShahrvandPalette.current.border),
                         elevation=CardDefaults.cardElevation(defaultElevation=6.dp),
                         shape=RoundedCornerShape(21.dp)
                     ) {
@@ -426,7 +471,7 @@ fun DailyActivitiesScreen(language: String, getAccessToken: suspend () -> String
                             Row(verticalAlignment=Alignment.CenterVertically) {
                                 Box(
                                     Modifier.size(45.dp).clip(RoundedCornerShape(14.dp))
-                                        .background(if(completed!=null) androidx.compose.ui.graphics.Color(0xFFE2F0E7) else androidx.compose.ui.graphics.Color(0xFFF0F4F6)),
+                                        .background(if(completed!=null) LocalShahrvandPalette.current.successSurface else LocalShahrvandPalette.current.surfaceVariant),
                                     contentAlignment=Alignment.Center
                                 ) { Text(taskIcon(task.type), fontSize=23.sp) }
                                 Spacer(Modifier.width(11.dp))
@@ -456,8 +501,17 @@ fun DailyActivitiesScreen(language: String, getAccessToken: suspend () -> String
     val task = activeTask
     val session = activeSession
     if (task != null && session != null) {
-        ActivitySessionDialog(language, task, session, selectedInterests, getAccessToken, onFinish={ refresh++; activeTask=null; activeSession=null },
-            onCancel={ activeTask=null; activeSession=null; refresh++ })
+        ActivitySessionDialog(
+            language, task, session, selectedInterests, getAccessToken,
+            onFinish = { refresh++; activeTask = null; activeSession = null },
+            onRejected = { reason ->
+                error = activityError(language, reason)
+                refresh++
+                activeTask = null
+                activeSession = null
+            },
+            onCancel = { activeTask = null; activeSession = null; refresh++ }
+        )
     }
 }
 
@@ -507,11 +561,11 @@ private fun InterestPicker(language: String, selected: Set<String>, onToggle: (S
                 )
             }
             Surface(
-                color=androidx.compose.ui.graphics.Color(0xFFFFF4E1),
+                color=LocalShahrvandPalette.current.goldSurface,
                 shape=RoundedCornerShape(14.dp)
             ) {
                 Text(
-                    selected.size.toString(),
+                    "${selected.size}/5",
                     modifier=Modifier.padding(horizontal=13.dp, vertical=8.dp),
                     color=A_Gold, fontSize=17.sp, fontWeight=FontWeight.ExtraBold
                 )
@@ -520,9 +574,9 @@ private fun InterestPicker(language: String, selected: Set<String>, onToggle: (S
         Text(
             aTr(
                 language,
-                "Ҳар қадар мавзӯъ хоҳӣ интихоб кун. Маҳдудияти 5 мавзӯъ нест — рӯйхатро баъдтар ҳам тағйир дода метавонӣ.",
-                "Выбирай любое количество тем. Ограничения в 5 интересов нет — список можно изменить позже.",
-                "Choose as many topics as you like. There is no five-topic limit, and you can edit the list later."
+                "Барои кушодани вазифаи омӯзишӣ маҳз 5 мавзӯъ интихоб кун. Баъд онҳоро тағйир додан мумкин аст.",
+                "Для учебного задания выбери ровно 5 тем. Позже список можно изменить.",
+                "Select exactly 5 topics for the learning task. You can change them later."
             ),
             color=A_Muted, fontSize=11.sp, lineHeight=16.sp
         )
@@ -615,8 +669,16 @@ private fun InterestPicker(language: String, selected: Set<String>, onToggle: (S
 }
 
 @Composable
-private fun ActivitySessionDialog(language: String, task: ActivityTask, session: ActivitySession,
-                                  interestCodes: Set<String>, getAccessToken: suspend ()->String, onFinish: ()->Unit, onCancel: ()->Unit) {
+private fun ActivitySessionDialog(
+    language: String,
+    task: ActivityTask,
+    session: ActivitySession,
+    interestCodes: Set<String>,
+    getAccessToken: suspend () -> String,
+    onFinish: () -> Unit,
+    onRejected: (String) -> Unit,
+    onCancel: () -> Unit
+) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var elapsed by remember(session.id) { mutableLongStateOf(0L) }
@@ -738,9 +800,21 @@ private fun ActivitySessionDialog(language: String, task: ActivityTask, session:
                                 .put("interest_codes",JSONArray().apply { interestCodes.sorted().forEach { put(it) } })
                         }
                         val result=DailyActivityRepository.finish(getAccessToken(),session,evidence)
-                        if(result.optBoolean("ok")) { status=aTr(language,"Сервер тасдиқ кард!","Сервер подтвердил!","Verified by server!"); delay(650); onFinish() }
-                        else status=aTr(language,"Натиҷа қабул нашуд: ","Результат не принят: ","Result rejected: ")+result.optString("reason")
-                    } catch(e:Exception) { status=e.message ?: "Verification error" }
+                        if (result.optBoolean("ok")) {
+                            status = aTr(language, "Сервер тасдиқ кард!", "Сервер подтвердил!", "Verified by server!")
+                            delay(650)
+                            onFinish()
+                        } else if (result.optBoolean("rejected")) {
+                            val reason = result.optString("reason")
+                            status = activityError(language, reason)
+                            delay(900)
+                            onRejected(reason)
+                        } else {
+                            status = activityError(language, result.optString("reason"))
+                        }
+                    } catch(e:Exception) {
+                        status = activityError(language, e.message ?: "Verification error")
+                    }
                     finally{submitting=false}
                 }
             },enabled=canSubmit && !submitting) {
@@ -808,6 +882,19 @@ private fun LearningPanel(language:String, interestCodes:Set<String>, elapsed:Lo
             Text(lessonFor(topic.code,language),fontSize=12.sp,lineHeight=18.sp,color=A_Muted)
         }
         Text("%02d:%02d / 20:00".format(elapsed/60,elapsed%60),fontSize=21.sp,color=A_Green,fontWeight=FontWeight.Black)
+        LinearProgressIndicator(
+            progress = { (elapsed / 1200f).coerceIn(0f, 1f) },
+            modifier = Modifier.fillMaxWidth().height(7.dp).clip(RoundedCornerShape(8.dp)),
+            color = A_Green,
+            trackColor = LocalShahrvandPalette.current.border
+        )
+        Text(
+            if (elapsed < 1200)
+                aTr(language, "Вақти омӯзиши фаъол — барнома бояд дар пеш бошад.", "Время активного обучения — приложение должно оставаться открытым.", "Active learning time — keep the app in the foreground.")
+            else
+                aTr(language, "20 дақиқа пур шуд. Акнун ба 5 савол ҷавоб деҳ.", "20 минут пройдены. Теперь ответь на 5 вопросов.", "20 minutes completed. Now answer all 5 questions."),
+            color = A_Muted, fontSize = 10.sp, lineHeight = 14.sp
+        )
         if(elapsed>=1200 && !quizStarted) Button(onClick=onQuiz) { Text(aTr(language,"Ба санҷиш гузаштан","Перейти к тесту","Start quiz")) }
         if(quizStarted) {
             val questions=listOf(

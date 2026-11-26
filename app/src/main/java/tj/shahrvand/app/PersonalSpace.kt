@@ -36,13 +36,13 @@ import java.time.Instant
 import java.time.LocalDate
 import java.util.Locale
 
-private val SpaceNavy = Color(0xFF20384B)
-private val SpaceGold = Color(0xFFB98A50)
-private val SpaceGreen = Color(0xFF36766D)
-private val SpaceRed = Color(0xFFB45D50)
-private val SpaceMuted = Color(0xFF777F7E)
-private val SpaceBorder = Color(0xFFDDE7EF)
-private val SpacePage = Color(0xFFF2F7FB)
+private val SpaceNavy: Color @Composable get() = LocalShahrvandPalette.current.navy
+private val SpaceGold: Color @Composable get() = LocalShahrvandPalette.current.gold
+private val SpaceGreen: Color @Composable get() = LocalShahrvandPalette.current.green
+private val SpaceRed: Color @Composable get() = LocalShahrvandPalette.current.danger
+private val SpaceMuted: Color @Composable get() = LocalShahrvandPalette.current.muted
+private val SpaceBorder: Color @Composable get() = LocalShahrvandPalette.current.border
+private val SpacePage: Color @Composable get() = LocalShahrvandPalette.current.background
 
 private fun spaceTr(lang: String, tg: String, ru: String, en: String): String = when (lang) {
     "ru" -> ru
@@ -304,7 +304,7 @@ fun FinanceOverviewCard(
     val maxValue = maxOf(income, expense, 1.0)
     Card(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onOpen),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = LocalShahrvandPalette.current.surface),
         shape = RoundedCornerShape(18.dp),
         border = BorderStroke(1.dp, SpaceBorder)
     ) {
@@ -403,8 +403,8 @@ fun PersonalSpaceHubScreen(
         Surface(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 15.dp, vertical = 5.dp),
             shape = RoundedCornerShape(20.dp),
-            color = Color.White.copy(alpha = 0.78f),
-            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.96f)),
+            color = LocalShahrvandPalette.current.surface.copy(alpha = 0.96f),
+            border = BorderStroke(1.dp, LocalShahrvandPalette.current.border),
             shadowElevation = 7.dp
         ) {
             SingleChoiceSegmentedButtonRow(
@@ -487,7 +487,7 @@ fun PersonalNotesScreen(
             }
         } else if (notes.isEmpty()) {
             Card(
-                colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.84f)),
+                colors = CardDefaults.cardColors(containerColor = LocalShahrvandPalette.current.surface.copy(alpha = 0.98f)),
                 border = BorderStroke(1.dp, Color.White.copy(alpha = 0.96f)),
                 elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
                 shape = RoundedCornerShape(22.dp)
@@ -506,7 +506,7 @@ fun PersonalNotesScreen(
             LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(bottom = 16.dp)) {
                 items(notes, key = { it.id }) { note ->
                     Card(
-                        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.86f)),
+                        colors = CardDefaults.cardColors(containerColor = LocalShahrvandPalette.current.surface.copy(alpha = 0.98f)),
                         border = BorderStroke(1.dp, Color.White.copy(alpha = 0.96f)),
                         elevation = CardDefaults.cardElevation(defaultElevation = 5.dp),
                         shape = RoundedCornerShape(20.dp)

@@ -36,13 +36,13 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import kotlinx.coroutines.launch
 
-private val ProfileNavy = Color(0xFF20384B)
-private val ProfileGreen = Color(0xFF36766D)
-private val ProfileGold = Color(0xFFB98A50)
-private val ProfilePage = Color(0xFFF1F6FA)
-private val ProfileInk = Color(0xFF263640)
-private val ProfileMuted = Color(0xFF777F7E)
-private val ProfileBorder = Color(0xFFDDE7EF)
+private val ProfileNavy: Color @Composable get() = LocalShahrvandPalette.current.navy
+private val ProfileGreen: Color @Composable get() = LocalShahrvandPalette.current.green
+private val ProfileGold: Color @Composable get() = LocalShahrvandPalette.current.gold
+private val ProfilePage: Color @Composable get() = LocalShahrvandPalette.current.background
+private val ProfileInk: Color @Composable get() = LocalShahrvandPalette.current.ink
+private val ProfileMuted: Color @Composable get() = LocalShahrvandPalette.current.muted
+private val ProfileBorder: Color @Composable get() = LocalShahrvandPalette.current.border
 
 private fun profileTr(language: String, tg: String, ru: String, en: String): String =
     when (language) {
@@ -157,8 +157,8 @@ internal fun ShahrvandProfileScreen(
         Card(
             Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(21.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.84f)),
-            border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.96f)),
+            colors = CardDefaults.cardColors(containerColor = LocalShahrvandPalette.current.surface.copy(alpha = 0.98f)),
+            border = androidx.compose.foundation.BorderStroke(1.dp, LocalShahrvandPalette.current.border),
             elevation = CardDefaults.cardElevation(defaultElevation = 7.dp)
         ) {
             Column(Modifier.fillMaxWidth().padding(15.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -209,7 +209,7 @@ private fun ProfileAchievementsCard(
     Card(
         modifier = Modifier.fillMaxWidth().padding(top = 16.dp).animateContentSize(),
         shape = RoundedCornerShape(22.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.86f)),
+        colors = CardDefaults.cardColors(containerColor = LocalShahrvandPalette.current.surface.copy(alpha = 0.98f)),
         border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.96f)),
         elevation = CardDefaults.cardElevation(defaultElevation = 7.dp)
     ) {
@@ -276,11 +276,11 @@ private fun ProfileAchievementsCard(
                             val earned = code in unlocked
                             Surface(
                                 modifier = Modifier.weight(1f).animateContentSize(),
-                                color = if (earned) Color(0xFFFFF4DE) else Color(0xFFF2F5F8),
+                                color = if (earned) LocalShahrvandPalette.current.goldSurface else LocalShahrvandPalette.current.surfaceVariant,
                                 shape = RoundedCornerShape(12.dp),
                                 border = androidx.compose.foundation.BorderStroke(
                                     1.dp,
-                                    if (earned) Color(0xFFE1C58D) else ProfileBorder
+                                    if (earned) LocalShahrvandPalette.current.gold else ProfileBorder
                                 )
                             ) {
                                 Column(
@@ -452,10 +452,12 @@ internal fun ShahrvandSettingsDialog(
     getAccessToken: suspend () -> String,
     fontScale: Float,
     fontFamilyChoice: String,
+    themeMode: String,
     onClose: () -> Unit,
     onLanguage: (String) -> Unit,
     onFontScale: (Float) -> Unit,
     onFontFamily: (String) -> Unit,
+    onThemeMode: (String) -> Unit,
     onProfileSaved: (ShahrvandProfile) -> Unit,
     onSignOut: () -> Unit,
     onClearLocalProgress: () -> Unit
@@ -482,7 +484,7 @@ internal fun ShahrvandSettingsDialog(
         Surface(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 13.dp).heightIn(min = 300.dp, max = 720.dp),
             shape = RoundedCornerShape(22.dp),
-            color = Color.White,
+            color = LocalShahrvandPalette.current.surface,
             shadowElevation = 12.dp
         ) {
             Column(Modifier.fillMaxWidth().padding(17.dp)) {
@@ -670,6 +672,21 @@ internal fun ShahrvandSettingsDialog(
                     }
 
                     ProfileSectionTitle(profileTr(language, "Намуди зоҳирӣ", "Оформление", "Appearance"))
+                    Text(profileTr(language, "Рангбандӣ", "Тема оформления", "Theme"),
+                        color = ProfileInk, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        listOf(
+                            "system" to profileTr(language, "Системавӣ", "Системная", "System"),
+                            "light" to profileTr(language, "Равшан", "Светлая", "Light"),
+                            "dark" to profileTr(language, "Торик", "Тёмная", "Dark")
+                        ).forEach { (mode, label) ->
+                            FilterChip(
+                                selected = themeMode == mode,
+                                onClick = { onThemeMode(mode) },
+                                label = { Text(label, fontSize = 11.sp) }
+                            )
+                        }
+                    }
                     Text(profileTr(language, "Андозаи ҳуруф", "Размер шрифта", "Font size") +
                         " • \${(fontScale * 100).toInt()}%", color = ProfileInk, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                     Slider(

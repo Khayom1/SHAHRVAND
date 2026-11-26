@@ -11,21 +11,27 @@ class InterestSelectionRulesTest {
     }
 
     @Test
-    fun acceptsMoreThanFiveInterests() {
-        assertTrue(
-            isValidInterestSelection(
-                setOf("science", "technology", "history", "geography", "mathematics", "languages")
-            )
-        )
+    fun acceptsExactlyFiveSupportedInterests() {
+        assertTrue(isValidInterestSelection(setOf("science", "technology", "history", "geography", "mathematics")))
     }
 
     @Test
-    fun acceptsNewTopics() {
-        assertTrue(isValidInterestSelection(setOf("dentistry", "ai", "robotics", "photography")))
+    fun rejectsMoreThanFiveInterests() {
+        assertFalse(isValidInterestSelection(setOf("science", "technology", "history", "geography", "mathematics", "languages")))
+    }
+
+    @Test
+    fun rejectsFewerThanFiveInterests() {
+        assertFalse(isValidInterestSelection(setOf("science", "technology", "history", "geography")))
+    }
+
+    @Test
+    fun acceptsNewTopicsWithinFiveSelectedItems() {
+        assertTrue(isValidInterestSelection(setOf("dentistry", "ai", "robotics", "photography", "cybersecurity")))
     }
 
     @Test
     fun rejectsUnsupportedTopics() {
-        assertFalse(isValidInterestSelection(setOf("science", "not-a-real-topic")))
+        assertFalse(isValidInterestSelection(setOf("science", "not-a-real-topic", "history", "geography", "mathematics")))
     }
 }

@@ -64,11 +64,11 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 
-private val SLEEP_NAVY = Color(0xFF183247)
-private val SLEEP_GOLD = Color(0xFFC8954A)
-private val SLEEP_GREEN = Color(0xFF2F7969)
-private val SLEEP_MUTED = Color(0xFF687987)
-private val SLEEP_BORDER = Color(0xFFDDE7EF)
+private val SLEEP_NAVY: Color @Composable get() = LocalShahrvandPalette.current.navy
+private val SLEEP_GOLD: Color @Composable get() = LocalShahrvandPalette.current.gold
+private val SLEEP_GREEN: Color @Composable get() = LocalShahrvandPalette.current.green
+private val SLEEP_MUTED: Color @Composable get() = LocalShahrvandPalette.current.muted
+private val SLEEP_BORDER: Color @Composable get() = LocalShahrvandPalette.current.border
 
 private fun sleepTr(language: String, tg: String, ru: String, en: String): String =
     when (language) { "ru" -> ru; "en" -> en; else -> tg }
@@ -271,7 +271,7 @@ fun SleepTrackingScreen(
     }
 
     Column(
-        modifier = Modifier.fillMaxSize().background(Color(0xFFF1F6FA)).verticalScroll(rememberScrollState()).padding(16.dp),
+        modifier = Modifier.fillMaxSize().background(LocalShahrvandPalette.current.background).verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
@@ -290,14 +290,14 @@ fun SleepTrackingScreen(
         }
 
         Card(
-            colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.84f)),
-            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.96f)),
+            colors = CardDefaults.cardColors(containerColor = LocalShahrvandPalette.current.surface.copy(alpha = 0.98f)),
+            border = BorderStroke(1.dp, LocalShahrvandPalette.current.border),
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
             shape = RoundedCornerShape(22.dp)
         ) {
             Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(9.dp)) {
-                    Surface(shape = RoundedCornerShape(12.dp), color = Color(0xFFF6EFE4)) {
+                    Surface(shape = RoundedCornerShape(12.dp), color = LocalShahrvandPalette.current.goldSurface) {
                         androidx.compose.material3.Icon(
                             Icons.Filled.Bedtime, contentDescription = null,
                             tint = SLEEP_GOLD, modifier = Modifier.padding(10.dp)
@@ -369,7 +369,7 @@ fun SleepTrackingScreen(
 
         if (error.isNotBlank()) {
             Card(
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF3F0).copy(alpha = 0.92f)),
+                colors = CardDefaults.cardColors(containerColor = LocalShahrvandPalette.current.dangerSurface),
                 border = BorderStroke(1.dp, Color.White.copy(alpha = 0.96f)),
                 shape = RoundedCornerShape(19.dp)
             ) {

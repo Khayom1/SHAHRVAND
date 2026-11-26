@@ -28,11 +28,11 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
-private val C_Navy = Color(0xFF20384B)
-private val C_Gold = Color(0xFFB98A50)
-private val C_Green = Color(0xFF36766D)
-private val C_Muted = Color(0xFF777F7E)
-private val C_Border = Color(0xFFDDE7EF)
+private val C_Navy: Color @Composable get() = LocalShahrvandPalette.current.navy
+private val C_Gold: Color @Composable get() = LocalShahrvandPalette.current.gold
+private val C_Green: Color @Composable get() = LocalShahrvandPalette.current.green
+private val C_Muted: Color @Composable get() = LocalShahrvandPalette.current.muted
+private val C_Border: Color @Composable get() = LocalShahrvandPalette.current.border
 
 data class WeeklyTask(
     val id: String, val weekday: Int, val titleTg: String, val titleRu: String, val titleEn: String,
@@ -171,19 +171,19 @@ fun WeeklyChallengesScreen(language:String,getAccessToken:suspend()->String) {
         catch(e:Exception) { error=e.message ?: "Network error" }
         finally { loading=false }
     }
-    Column(Modifier.fillMaxSize().background(Color(0xFFF1F6FA)).padding(14.dp)) {
+    Column(Modifier.fillMaxSize().background(LocalShahrvandPalette.current.background).padding(14.dp)) {
         Text(cTr(language,"Вазифаҳои ҳафтаина","Задания на неделю","Weekly challenges"),color=C_Navy,fontSize=21.sp,fontWeight=FontWeight.Black)
         Text(cTr(language,"Ҳар рӯз 6 вазифа · 42 қадам дар як ҳафта","6 заданий в день · 42 шага за неделю","6 tasks per day · 42 steps per week"),color=C_Muted,fontSize=11.sp)
         Spacer(Modifier.height(10.dp))
         val d=data
         if(loading && d==null) Box(Modifier.fillMaxSize(),contentAlignment=Alignment.Center){CircularProgressIndicator()}
-        else if(d==null) { Text(error,color=Color.Red); OutlinedButton(onClick={refresh++}){Text(cTr(language,"Аз нав кӯшиш кун","Повторить","Retry"))} }
+        else if(d==null) { Text(error,color=LocalShahrvandPalette.current.danger); OutlinedButton(onClick={refresh++}){Text(cTr(language,"Аз нав кӯшиш кун","Повторить","Retry"))} }
         else {
             val todays=d.tasks.filter{it.weekday==d.today.dayOfWeek.value}
             val done=todays.count{d.completed.containsKey(it.id)}
             Card(
-                colors=CardDefaults.cardColors(containerColor=Color.White.copy(alpha=0.84f)),
-                border=BorderStroke(1.dp,Color.White.copy(alpha=0.96f)),
+                colors=CardDefaults.cardColors(containerColor=LocalShahrvandPalette.current.surface.copy(alpha=0.98f)),
+                border=BorderStroke(1.dp,LocalShahrvandPalette.current.border),
                 elevation=CardDefaults.cardElevation(defaultElevation=7.dp),
                 shape=RoundedCornerShape(21.dp)
             ) {
@@ -218,8 +218,8 @@ fun WeeklyChallengesScreen(language:String,getAccessToken:suspend()->String) {
                     list.forEach { task ->
                         val completed=d.completed.containsKey(task.id)
                         Card(
-                            colors=CardDefaults.cardColors(containerColor=if(completed) Color(0xFFEAF5EF) else Color.White.copy(alpha=0.84f)),
-                            border=BorderStroke(1.dp,if(completed) Color(0xFFC9DED1) else Color.White.copy(alpha=0.96f)),
+                            colors=CardDefaults.cardColors(containerColor=if(completed) LocalShahrvandPalette.current.successSurface else LocalShahrvandPalette.current.surface.copy(alpha=0.98f)),
+                            border=BorderStroke(1.dp,if(completed) LocalShahrvandPalette.current.successBorder else Color.White.copy(alpha=0.96f)),
                             elevation=CardDefaults.cardElevation(defaultElevation=5.dp),
                             shape=RoundedCornerShape(19.dp)
                         ) {
@@ -421,8 +421,8 @@ fun LeaderboardScreen(language:String,myAgeBand:String,getAccessToken:suspend()-
                 contentPadding=PaddingValues(bottom=14.dp)
             ) {
                 items(entries,key={it.login}) { e ->
-                    val rowColor = if(e.isMe) Color(0xFFFFF4DE) else Color.White.copy(alpha=0.84f)
-                    val rowBorder = if(e.isMe) Color(0xFFC69A56) else Color.White.copy(alpha=0.96f)
+                    val rowColor = if(e.isMe) LocalShahrvandPalette.current.goldSurface else Color.White.copy(alpha=0.84f)
+                    val rowBorder = if(e.isMe) LocalShahrvandPalette.current.gold else Color.White.copy(alpha=0.96f)
                     Card(
                         modifier=Modifier.fillMaxWidth().animateContentSize(),
                         colors=CardDefaults.cardColors(containerColor=rowColor),
@@ -446,7 +446,7 @@ fun LeaderboardScreen(language:String,myAgeBand:String,getAccessToken:suspend()-
                                             Text(
                                                 achievementSymbol(code),
                                                 fontSize=13.sp,
-                                                modifier=Modifier.background(Color(0xFFF4F1EA),RoundedCornerShape(7.dp)).padding(horizontal=4.dp,vertical=2.dp)
+                                                modifier=Modifier.background(LocalShahrvandPalette.current.goldSurface,RoundedCornerShape(7.dp)).padding(horizontal=4.dp,vertical=2.dp)
                                             )
                                         }
                                     }
