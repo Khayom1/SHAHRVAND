@@ -121,7 +121,8 @@ object SupabaseCompetitionRepository {
                 val codes = o.optJSONArray("achievement_codes")
                 val badges = buildList {
                     if (codes != null) for (j in 0 until codes.length()) {
-                        codes.optString(j).takeIf { it.isNotBlank() }?.let(::add)
+                        val code = codes.optString(j)
+                        if (code.isNotBlank()) add(code)
                     }
                 }
                 add(LeaderEntry(
