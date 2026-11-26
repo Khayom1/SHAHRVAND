@@ -540,6 +540,7 @@ private fun ShahrvandApp() {
         }
     }
 
+    }
     if (settingsOpen) {
         ShahrvandSettingsDialog(
             language = language,
@@ -627,7 +628,6 @@ private fun ShahrvandApp() {
                 completedToday.clear()
             }
         )
-    }
     }
 }
 

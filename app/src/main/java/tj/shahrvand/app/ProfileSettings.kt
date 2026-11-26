@@ -102,7 +102,7 @@ internal fun ShahrvandProfileScreen(
                 fontWeight = FontWeight.Bold
             )
             IconButton(onClick = onSettings) {
-                Icon(Icons.Filled.Settings, contentDescription = profileTr(language, "Танзимот", "Настройки", "Settings"), tint = ProfileNavy)
+                Icon(Icons.Filled.Settings, contentDescription = profileTr(language, "Танзимот", "Настройки", "Settings"), tint = ProfileNavyText)
             }
         }
 
@@ -689,10 +689,10 @@ internal fun ShahrvandSettingsDialog(
                         }
                     }
                     Text(profileTr(language, "Андозаи ҳуруф", "Размер шрифта", "Font size") +
-                        " • \${(fontScale * 100).toInt()}%", color = ProfileInk, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                        " • ${(fontScale * 100).toInt()}%", color = ProfileInk, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                     Slider(
                         value = fontScale.coerceIn(0.90f, 1.15f),
-                        onValueChange = onFontScale,
+                        onValueChange = { newScale -> onFontScale(newScale) },
                         valueRange = 0.90f..1.15f,
                         steps = 4
                     )
@@ -729,8 +729,13 @@ internal fun ShahrvandSettingsDialog(
                                 "Text preview: this font should fit cards, buttons, and lists."),
                             modifier = Modifier.fillMaxWidth().padding(12.dp),
                             color = ProfileInk,
-                            fontSize = 14.sp,
-                            lineHeight = 20.sp
+                            fontSize = (14f * fontScale).sp,
+                            lineHeight = (20f * fontScale).sp,
+                            fontFamily = when (fontFamilyChoice) {
+                                "sans" -> androidx.compose.ui.text.font.FontFamily.SansSerif
+                                "serif" -> androidx.compose.ui.text.font.FontFamily.Serif
+                                else -> androidx.compose.ui.text.font.FontFamily.Default
+                            }
                         )
                     }
 
