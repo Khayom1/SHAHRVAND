@@ -84,7 +84,7 @@ private data class SleepNight(
 )
 
 
-private object SupabaseSleepRepository {
+internal object SupabaseSleepRepository {
     private val base get() = BuildConfig.SUPABASE_URL.trimEnd('/')
     private val key get() = BuildConfig.SUPABASE_PUBLISHABLE_KEY
 
