@@ -467,7 +467,11 @@ private fun ActivitySessionDialog(language: String, task: ActivityTask, session:
                     Text(aTr(language,"GPS намунаҳо: $gpsSamples · Қадамҳо: $steps · дақиқии миёна: %.1f м".format(avgAccuracy),
                         "GPS-точки: $gpsSamples · шаги: $steps · средняя точность: %.1f м".format(avgAccuracy),
                         "GPS samples: $gpsSamples · steps: $steps · average accuracy: %.1f m".format(avgAccuracy)),fontSize=11.sp,color=A_Muted)
-                    if(task.type.startsWith("gps_")) Text(aTr(language,"Мӯҳлат: ${limit/60} дақиқа","Лимит: ${limit/60} минут","Time limit: ${limit/60} min"),color=A_Muted,fontSize=11.sp)
+                    if(task.type.startsWith("gps_") && limit > 0) {
+                        Text(aTr(language,"Мӯҳлат: ${limit/60} дақиқа","Лимит: ${limit/60} минут","Time limit: ${limit/60} min"),color=A_Muted,fontSize=11.sp)
+                    } else if (task.type.startsWith("gps_")) {
+                        Text(aTr(language,"Вақти иҷро маҳдуд нест.","Ограничения по времени нет.","No time limit."),color=A_Muted,fontSize=11.sp)
+                    }
                     Text(aTr(language,"Роҳро бехатар интихоб кун. Телефон GPS-ро танҳо ҳангоми фаъол будани сессия истифода мебарад.","Выбирай безопасный маршрут. GPS работает только во время активной сессии.","Choose a safe route. GPS is used only during this active session."),fontSize=11.sp,color=A_Muted)
                 } else if (pose) {
                     PoseCameraCounter(task.type,onMetrics={poseMetrics=it},modifier=Modifier.fillMaxWidth().height(230.dp))
