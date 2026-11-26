@@ -169,18 +169,10 @@ private object SleepHealthConnectRepository {
         val candidates = response.records.mapNotNull { record ->
             if (record.endTime.isAfter(now)) return@mapNotNull null
 
-            val minutes = if (record.stages.isEmpty()) {
-                Duration.between(record.startTime, record.endTime).toMinutes()
-            } else {
-                record.stages.asSequence()
-                    .filter { stage ->
-                        stage.stage == SleepSessionRecord.STAGE_TYPE_SLEEPING ||
-                            stage.stage == SleepSessionRecord.STAGE_TYPE_LIGHT ||
-                            stage.stage == SleepSessionRecord.STAGE_TYPE_DEEP ||
-                            stage.stage == SleepSessionRecord.STAGE_TYPE_REM
-                    }
-                    .sumOf { Duration.between(it.startTime, it.endTime).toMinutes() }
-            }
+            // The server validates the full recorded session interval (end - start).
+            // Use the same duration here; summing sleep stages can be shorter and
+            // incorrectly prevent an otherwise eligible night from reaching the XP RPC.
+            val minutes = Duration.between(record.startTime, record.endTime).toMinutes()
             if (minutes !in 120L..960L) return@mapNotNull null
 
             SleepNight(
