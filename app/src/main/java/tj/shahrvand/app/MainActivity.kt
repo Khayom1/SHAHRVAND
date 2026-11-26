@@ -229,18 +229,13 @@ private fun ShahrvandApp() {
                 isAuthenticated = false
                 return@LaunchedEffect
             }
-            val serverSummary = runCatching { SupabaseCompetitionRepository.myAchievements(token) }.getOrNull()
-            if (serverSummary != null) {
-                totalXp = serverSummary.totalXp
-                prefs.edit().putInt("total_xp", serverSummary.totalXp).apply()
-            }
             runCatching { PersonalSpaceRepository.fetchMoneyEntries(token) }
                 .onSuccess { financeEntries = it }
         }
     }
 
     LaunchedEffect(tab, isAuthenticated) {
-        if (isAuthenticated) {
+        if (isAuthenticated && tab != 3) {
             val token = runCatching { getValidAccessToken() }.getOrNull() ?: return@LaunchedEffect
             val serverSummary = runCatching { SupabaseCompetitionRepository.myAchievements(token) }.getOrNull()
             if (serverSummary != null) {
