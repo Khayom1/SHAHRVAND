@@ -27,6 +27,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.health.connect.client.HealthConnectClient
@@ -174,7 +177,7 @@ object DailyActivityRepository {
     }
 
     suspend fun saveInterests(token: String, codes: Set<String>) {
-        require(codes.size == 5) { "Маҳз 5 шавқро интихоб кун." }
+        require(isValidInterestSelection(codes)) { "Ақаллан як мавзӯи дурустро интихоб кун." }
         val arr = JSONArray().apply { codes.sorted().forEach { put(it) } }
         val result = JSONObject(request("/rest/v1/rpc/shahrvand_set_my_interests", "POST", token, JSONObject().put("p_codes", arr)))
         if (!result.optBoolean("ok")) throw IllegalStateException("Шавқҳо нигоҳ дошта нашуданд.")
@@ -196,8 +199,43 @@ private val activityInterests = listOf(
     Interest("culture","Фарҳанг","Культура","Culture"),
     Interest("arts","Санъат","Искусство","Arts"),
     Interest("sports","Варзиш","Спорт","Sports"),
-    Interest("finance","Молия","Финансы","Finance")
+    Interest("finance","Молия","Финансы","Finance"),
+    Interest("physics","Физика","Физика","Physics"),
+    Interest("chemistry","Кимиё","Химия","Chemistry"),
+    Interest("biology","Биология","Биология","Biology"),
+    Interest("astronomy","Ситорашиносӣ","Астрономия","Astronomy"),
+    Interest("medicine","Тиб","Медицина","Medicine"),
+    Interest("psychology","Равоншиносӣ","Психология","Psychology"),
+    Interest("philosophy","Фалсафа","Философия","Philosophy"),
+    Interest("programming","Барномасозӣ","Программирование","Programming"),
+    Interest("ai","Зеҳни сунъӣ","Искусственный интеллект","Artificial intelligence"),
+    Interest("engineering","Муҳандисӣ","Инженерия","Engineering"),
+    Interest("robotics","Робототехника","Робототехника","Robotics"),
+    Interest("cybersecurity","Амнияти рақамӣ","Кибербезопасность","Cybersecurity"),
+    Interest("environment","Муҳити зист","Окружающая среда","Environment"),
+    Interest("animals","Ҳайвонот","Животные","Animals"),
+    Interest("space","Кайҳон","Космос","Space"),
+    Interest("politics","Сиёсат","Политика","Politics"),
+    Interest("economics","Иқтисод","Экономика","Economics"),
+    Interest("business","Соҳибкорӣ","Предпринимательство","Business"),
+    Interest("law","Ҳуқуқ","Право","Law"),
+    Interest("sociology","Ҷомеашиносӣ","Социология","Sociology"),
+    Interest("literature","Адабиёт","Литература","Literature"),
+    Interest("music","Мусиқӣ","Музыка","Music"),
+    Interest("design","Тарроҳӣ","Дизайн","Design"),
+    Interest("cinema","Синамо","Кино","Cinema"),
+    Interest("photography","Аксбардорӣ","Фотография","Photography"),
+    Interest("architecture","Меъморӣ","Архитектура","Architecture"),
+    Interest("cooking","Пухтупаз","Кулинария","Cooking"),
+    Interest("travel","Саёҳат","Путешествия","Travel"),
+    Interest("aviation","Ҳавопаймоӣ","Авиация","Aviation"),
+    Interest("agriculture","Кишоварзӣ","Сельское хозяйство","Agriculture"),
+    Interest("dentistry","Дандонпизишкӣ","Стоматология","Dentistry"),
+    Interest("gaming","Бозиҳои рақамӣ","Видеоигры","Gaming")
 )
+
+internal fun isValidInterestSelection(codes: Set<String>): Boolean =
+    codes.isNotEmpty() && codes.all { code -> activityInterests.any { it.code == code } }
 
 @Composable
 fun DailyActivitiesScreen(language: String, getAccessToken: suspend () -> String) {
@@ -211,6 +249,7 @@ fun DailyActivitiesScreen(language: String, getAccessToken: suspend () -> String
     var activeSession by remember { mutableStateOf<ActivitySession?>(null) }
     var pendingTask by remember { mutableStateOf<ActivityTask?>(null) }
     var selectedInterests by remember { mutableStateOf(setOf<String>()) }
+    var editingInterests by remember { mutableStateOf(false) }
     var savingInterests by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
 
@@ -313,18 +352,41 @@ fun DailyActivitiesScreen(language: String, getAccessToken: suspend () -> String
         else if (overview == null) {
             Text(error, color=MaterialTheme.colorScheme.error)
             OutlinedButton(onClick={refresh++}) { Text(aTr(language,"Аз нав кӯшиш кун","Повторить","Retry")) }
-        } else if (overview!!.interests.size != 5) {
+        } else if (overview!!.interests.isEmpty() || editingInterests) {
             InterestPicker(language, selectedInterests, onToggle={ code ->
-                selectedInterests = if (code in selectedInterests) selectedInterests - code else if (selectedInterests.size < 5) selectedInterests + code else selectedInterests
+                selectedInterests = if (code in selectedInterests) selectedInterests - code else selectedInterests + code
             }, saving=savingInterests, error=error, onSave={
                 scope.launch {
                     savingInterests=true
-                    try { DailyActivityRepository.saveInterests(getAccessToken(), selectedInterests); refresh++ }
-                    catch(e:Exception){error=e.message ?: "Save failed"}
+                    try {
+                        DailyActivityRepository.saveInterests(getAccessToken(), selectedInterests)
+                        editingInterests=false
+                        refresh++
+                    } catch(e:Exception){error=e.message ?: "Save failed"}
                     finally{savingInterests=false}
                 }
             })
         } else {
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal=2.dp, vertical=2.dp),
+                verticalAlignment=Alignment.CenterVertically
+            ) {
+                Column(Modifier.weight(1f), verticalArrangement=Arrangement.spacedBy(2.dp)) {
+                    Text(
+                        aTr(language,"Мавзӯъҳои интихобшуда","Выбранные темы","Selected topics"),
+                        color=A_Navy, fontSize=12.sp, fontWeight=FontWeight.Bold
+                    )
+                    Text(
+                        overview!!.interests.size.toString() + aTr(
+                            language," мавзӯъ барои омӯзиши шахсӣ"," тем для персонального обучения"," topics for personalised learning"
+                        ),
+                        color=A_Muted, fontSize=10.sp
+                    )
+                }
+                TextButton(onClick={ editingInterests=true }) {
+                    Text(aTr(language,"Тағйир додан","Изменить","Edit topics"))
+                }
+            }
             val taskCount = overview!!.tasks.size
             val done = overview!!.tasks.count { overview!!.completed.containsKey(it.id) }
             val progress = if (taskCount > 0) done.toFloat() / taskCount else 0f
@@ -414,19 +476,130 @@ private fun taskIcon(type: String) = when(type) {
 @Composable
 private fun InterestPicker(language: String, selected: Set<String>, onToggle: (String)->Unit,
                            saving: Boolean, error: String, onSave: ()->Unit) {
-    Column(Modifier.fillMaxSize().padding(8.dp), verticalArrangement=Arrangement.spacedBy(8.dp)) {
-        Text(aTr(language,"5 шавқи худро интихоб кун","Выбери 5 интересов","Choose your 5 interests"), color=A_Navy, fontSize=18.sp, fontWeight=FontWeight.Bold)
-        Text(aTr(language,"Дарсҳои ҳаррӯза аз ҳамин мавзӯъҳо интихоб мешаванд.","Ежедневные уроки будут подбираться по этим темам.","Daily lessons will be selected from these interests."), color=A_Muted, fontSize=12.sp)
-        Text("${selected.size}/5", color=A_Gold, fontWeight=FontWeight.Bold)
-        LazyColumn(Modifier.weight(1f), verticalArrangement=Arrangement.spacedBy(4.dp)) {
-            items(activityInterests, key={it.code}) { item ->
-                FilterChip(selected=item.code in selected, onClick={onToggle(item.code)}, enabled=!saving,
-                    label={Text(aTr(language,item.tg,item.ru,item.en))})
+    var search by remember { mutableStateOf("") }
+    val filtered = activityInterests.filter { item ->
+        search.isBlank() ||
+            item.label(language).contains(search.trim(), ignoreCase=true) ||
+            item.code.contains(search.trim(), ignoreCase=true)
+    }
+    Column(
+        Modifier.fillMaxSize().padding(horizontal=2.dp, vertical=4.dp),
+        verticalArrangement=Arrangement.spacedBy(8.dp)
+    ) {
+        Row(verticalAlignment=Alignment.CenterVertically) {
+            Column(Modifier.weight(1f), verticalArrangement=Arrangement.spacedBy(3.dp)) {
+                Text(
+                    aTr(language,"ФАРДИСОЗИИ ОМӮЗИШ","НАСТРОЙКА ОБУЧЕНИЯ","PERSONALISE LEARNING"),
+                    color=A_Gold, fontSize=9.sp, fontWeight=FontWeight.ExtraBold
+                )
+                Text(
+                    aTr(language,"Мавзӯъҳои дӯстдоштаатро интихоб кун","Выбери интересующие тебя темы","Choose the topics you enjoy"),
+                    color=A_Navy, fontSize=19.sp, lineHeight=24.sp, fontWeight=FontWeight.Bold
+                )
+            }
+            Surface(
+                color=androidx.compose.ui.graphics.Color(0xFFFFF4E1),
+                shape=RoundedCornerShape(14.dp)
+            ) {
+                Text(
+                    selected.size.toString(),
+                    modifier=Modifier.padding(horizontal=13.dp, vertical=8.dp),
+                    color=A_Gold, fontSize=17.sp, fontWeight=FontWeight.ExtraBold
+                )
+            }
+        }
+        Text(
+            aTr(
+                language,
+                "Ҳар қадар мавзӯъ хоҳӣ интихоб кун. Маҳдудияти 5 мавзӯъ нест — рӯйхатро баъдтар ҳам тағйир дода метавонӣ.",
+                "Выбирай любое количество тем. Ограничения в 5 интересов нет — список можно изменить позже.",
+                "Choose as many topics as you like. There is no five-topic limit, and you can edit the list later."
+            ),
+            color=A_Muted, fontSize=11.sp, lineHeight=16.sp
+        )
+        OutlinedTextField(
+            value=search,
+            onValueChange={search=it},
+            modifier=Modifier.fillMaxWidth(),
+            singleLine=true,
+            shape=RoundedCornerShape(13.dp),
+            placeholder={
+                Text(aTr(language,"Ҷустуҷӯи мавзӯъ...","Поиск тем...","Search topics..."), fontSize=12.sp)
+            }
+        )
+        Row(verticalAlignment=Alignment.CenterVertically) {
+            Text(
+                aTr(language,"ҲАМАИ МАВЗӮЪҲО","ВСЕ ТЕМЫ","ALL TOPICS"),
+                color=A_Navy, fontSize=10.sp, fontWeight=FontWeight.ExtraBold
+            )
+            Spacer(Modifier.weight(1f))
+            Text(
+                "${filtered.size} / ${activityInterests.size}",
+                color=A_Muted, fontSize=10.sp, fontWeight=FontWeight.Medium
+            )
+        }
+        Card(
+            modifier=Modifier.weight(1f).fillMaxWidth(),
+            colors=CardDefaults.cardColors(containerColor=androidx.compose.ui.graphics.Color.White),
+            border=BorderStroke(1.dp,A_Border),
+            shape=RoundedCornerShape(18.dp)
+        ) {
+            if (filtered.isEmpty()) {
+                Box(Modifier.fillMaxSize(), contentAlignment=Alignment.Center) {
+                    Text(
+                        aTr(language,"Мавзӯъ ёфт нашуд.","Темы не найдены.","No topics found."),
+                        color=A_Muted, fontSize=12.sp
+                    )
+                }
+            } else {
+                LazyVerticalGrid(
+                    columns=GridCells.Adaptive(minSize=138.dp),
+                    modifier=Modifier.fillMaxSize().padding(horizontal=10.dp, vertical=8.dp),
+                    contentPadding=PaddingValues(bottom=8.dp),
+                    horizontalArrangement=Arrangement.spacedBy(8.dp),
+                    verticalArrangement=Arrangement.spacedBy(7.dp)
+                ) {
+                    items(filtered, key={it.code}) { item ->
+                        val isSelected = item.code in selected
+                        FilterChip(
+                            selected=isSelected,
+                            onClick={onToggle(item.code)},
+                            enabled=!saving,
+                            modifier=Modifier.fillMaxWidth(),
+                            shape=RoundedCornerShape(12.dp),
+                            label={
+                                Text(
+                                    item.label(language),
+                                    fontSize=11.sp,
+                                    maxLines=2,
+                                    lineHeight=14.sp
+                                )
+                            },
+                            leadingIcon=if(isSelected) {
+                                { Text("✓", fontSize=12.sp, fontWeight=FontWeight.Bold) }
+                            } else null
+                        )
+                    }
+                }
             }
         }
         if(error.isNotBlank()) Text(error,color=MaterialTheme.colorScheme.error,fontSize=11.sp)
-        Button(onClick=onSave, enabled=selected.size==5 && !saving, modifier=Modifier.fillMaxWidth()) {
-            Text(if(saving) "…" else aTr(language,"Нигоҳ доштан","Сохранить","Save"))
+        Button(
+            onClick=onSave,
+            enabled=isValidInterestSelection(selected) && !saving,
+            modifier=Modifier.fillMaxWidth().height(48.dp),
+            shape=RoundedCornerShape(14.dp)
+        ) {
+            Text(
+                if(saving) "…" else aTr(
+                    language,
+                    "Нигоҳ доштан · ${selected.size}",
+                    "Сохранить · ${selected.size}",
+                    "Save · ${selected.size}"
+                ),
+                fontSize=13.sp,
+                fontWeight=FontWeight.Bold
+            )
         }
     }
 }
@@ -592,7 +765,24 @@ private fun lessonFor(code:String,lang:String):String {
         "culture" -> LessonCopy("Фарҳанг забон, анъана, арзиш ва таҷрибаи муштараки ҷомеаро дар бар мегирад. Барои фаҳмидани фарҳанги дигар аввал гӯш кун, савол деҳ ва аз умумисозии одамон худдорӣ намо.","Культура включает язык, традиции, ценности и общий опыт общества. Чтобы понять другую культуру, сначала слушай, задавай вопросы и избегай обобщений о людях.","Culture includes language, traditions, values, and shared experience. To understand another culture, listen, ask questions, and avoid generalizing about people.")
         "arts" -> LessonCopy("Санъат фикр ва эҳсосро бо шакл, ранг, садо ё ҳаракат ифода мекунад. Композитсия тартиби унсурҳост; контраст диққатро ҷалб мекунад ва тавозун ҳисси ҳамоҳангӣ медиҳад.","Искусство выражает идеи и чувства через форму, цвет, звук или движение. Композиция — порядок элементов; контраст привлекает внимание, а баланс создаёт гармонию.","Art expresses ideas and feelings through form, color, sound, or movement. Composition arranges elements; contrast draws attention and balance creates harmony.")
         "sports" -> LessonCopy("Машқи босамар аз такмил ва истироҳат иборат аст. Гармикунӣ баданро омода мекунад, техникаи дуруст хавфи осебро кам мекунад ва барқароршавӣ ба мушакҳо вақт медиҳад.","Эффективная тренировка сочетает нагрузку и отдых. Разминка готовит тело, правильная техника снижает риск травм, а восстановление даёт мышцам время адаптироваться.","Effective training combines effort and recovery. Warm-ups prepare the body, good technique reduces injury risk, and recovery gives muscles time to adapt.")
-        else -> LessonCopy("Буҷет нақшаи даромад ва хароҷот аст. Аввал даромадро ҳисоб кун, хароҷоти заруриро ҷудо намо ва баъд барои пасандоз ва хоҳишҳо маблағ муайян кун. Сабти хароҷот қарорҳои беҳтар медиҳад.","Бюджет — план доходов и расходов. Сначала посчитай доход, выдели обязательные траты, затем определи суммы для сбережений и желаний. Учёт расходов помогает принимать решения.","A budget plans income and spending. Count income, set aside essential costs, then allocate money to savings and wants. Tracking expenses supports better decisions.")
+        "finance" -> LessonCopy("Буҷет нақшаи даромад ва хароҷот аст. Аввал даромадро ҳисоб кун, хароҷоти заруриро ҷудо намо ва баъд барои пасандоз ва хоҳишҳо маблағ муайян кун. Сабти хароҷот қарорҳои беҳтар медиҳад.","Бюджет — план доходов и расходов. Сначала посчитай доход, выдели обязательные траты, затем определи суммы для сбережений и желаний. Учёт расходов помогает принимать решения.","A budget plans income and spending. Count income, set aside essential costs, then allocate money to savings and wants. Tracking expenses supports better decisions.")
+        in setOf("physics","chemistry","biology","astronomy","medicine","dentistry","space") ->
+            LessonCopy("Барои омӯзиши ин соҳа аввал мафҳумҳои асосӣ ва далелҳоро ҷудо кун. Мушоҳида, ченкунӣ ва санҷиши сарчашмаҳо кӯмак мекунанд, ки хулосаи дуруст барорӣ.","Для изучения этой области сначала отдели основные понятия от доказательств. Наблюдения, измерения и проверка источников помогают делать обоснованные выводы.","To study this field, separate core concepts from evidence. Observation, measurement, and source checking help you reach sound conclusions.")
+        in setOf("programming","ai","engineering","robotics","cybersecurity","technology") ->
+            LessonCopy("Ҳалли масъала аз муайян кардани ҳадаф оғоз мешавад. Қадамҳоро ба тартиб ҷудо кун, натиҷаро санҷ ва хатоҳоро ислоҳ намо. Амният ва махфиятро аз аввал ба назар гир.","Решение задачи начинается с ясной цели. Разбей работу на шаги, проверь результат и исправь ошибки. Учитывай безопасность и конфиденциальность с самого начала.","Problem-solving starts with a clear goal. Break the work into steps, test the result, and correct errors. Consider security and privacy from the beginning.")
+        in setOf("psychology","philosophy","politics","law","sociology") ->
+            LessonCopy("Ҳангоми омӯзиши рафтор ва ҷомеа далелро аз ақида ҷудо кун. Як ҳодисаро аз чанд нуқтаи назар бин ва барои ҳар хулоса сарчашмаи боэътимод ҷӯй.","При изучении человека и общества отделяй факты от мнений. Рассматривай событие с разных сторон и ищи надёжные источники для каждого вывода.","When studying people and society, separate facts from opinions. Consider different perspectives and look for reliable sources for each conclusion.")
+        in setOf("literature","music","design","cinema","photography","architecture","arts","culture") ->
+            LessonCopy("Дар эҷодкорӣ ҳам идея ва ҳам тарзи иҷро муҳиманд. Ба сохтор, услуб ва интихоби унсурҳо диққат деҳ; асарҳоро муқоиса кун ва сабаби таъсири онҳоро шарҳ деҳ.","В творчестве важны и идея, и исполнение. Обращай внимание на структуру, стиль и выбор элементов; сравнивай работы и объясняй, почему они производят впечатление.","Creative work depends on both the idea and its execution. Notice structure, style, and choices; compare works and explain why they have an effect.")
+        in setOf("environment","animals","nature","agriculture","travel","aviation","geography") ->
+            LessonCopy("Ин соҳа бо муҳит, ҷой ва таъсири инсон алоқаманд аст. Маълумоти мушоҳидавӣ, харитаҳо ва муқоисаи шароит барои фаҳмидани тағйирот кумак мекунанд.","Эта область связана со средой, местами и влиянием человека. Наблюдения, карты и сравнение условий помогают понять изменения.","This field connects environments, places, and human impact. Observations, maps, and comparisons help explain change.")
+        in setOf("economics","business") ->
+            LessonCopy("Қарори иқтисодӣ муқоисаи захира, хароҷот ва натиҷа аст. Пеш аз интихоб маълумотро ҷамъ кун, хавфро арзёбӣ намо ва натиҷаро бо ҳадаф муқоиса кун.","Экономическое решение сопоставляет ресурсы, затраты и результат. Перед выбором собери данные, оцени риск и сравни итог с целью.","An economic decision compares resources, costs, and outcomes. Gather information, assess risk, and compare the result with the goal.")
+        "cooking" ->
+            LessonCopy("Пухтупаз дониш дар бораи маҳсулот, миқдор ва ҳароратро талаб мекунад. Дастурро риоя кун, асбобҳоро бехатар истифода бар ва ба тозагӣ аҳамият деҳ.","Кулинария требует знаний о продуктах, количестве и температуре. Следуй рецепту, безопасно используй инструменты и соблюдай чистоту.","Cooking uses knowledge of ingredients, quantities, and temperature. Follow recipes, use tools safely, and maintain cleanliness.")
+        "gaming" ->
+            LessonCopy("Бозии рақамӣ қоида, стратегия ва ҳамкориро истифода мебарад. Барои беҳтар бозӣ кардан вазъиятро таҳлил кун, қарорҳоро санҷ ва вақти бозиро идора намо.","Видеоигры используют правила, стратегию и взаимодействие. Анализируй ситуацию, проверяй решения и контролируй время игры.","Digital games use rules, strategy, and teamwork. Analyse situations, test decisions, and manage play time.")
+        else -> LessonCopy("Барои омӯзиши мавзӯъ саволи мушаххас гузор, мафҳумҳои асосиро ёб ва маълумотро аз чанд сарчашма муқоиса кун. Баъд донишро бо мисол ё машқ санҷ.","Для изучения темы сформулируй конкретный вопрос, найди основные понятия и сравни сведения из нескольких источников. Затем проверь знания на примере или упражнении.","To learn a topic, ask a specific question, identify its core concepts, and compare several sources. Then test your understanding with an example or exercise.")
     }
     return aTr(lang,lesson.tg,lesson.ru,lesson.en)
 }
@@ -602,7 +792,7 @@ private fun LearningPanel(language:String, interestCodes:Set<String>, elapsed:Lo
                           onQuiz:()->Unit, answers:Map<Int,Int>, onAnswer:(Int,Int)->Unit) {
     val topics = activityInterests.filter { it.code in interestCodes }
     Column(Modifier.fillMaxWidth().heightIn(max=430.dp).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(8.dp)) {
-        Text(aTr(language,"Дарсҳо аз рӯи 5 шавқи интихобшуда","Уроки по 5 выбранным интересам","Lessons based on your 5 selected interests"),color=A_Navy,fontWeight=FontWeight.Bold)
+        Text(aTr(language,"Дарсҳо аз рӯи мавзӯъҳои интихобшуда","Уроки по выбранным темам","Lessons based on your selected topics"),color=A_Navy,fontWeight=FontWeight.Bold)
         topics.forEach { topic ->
             Text(topic.label(language),color=A_Gold,fontWeight=FontWeight.Bold,fontSize=12.sp)
             Text(lessonFor(topic.code,language),fontSize=12.sp,lineHeight=18.sp,color=A_Muted)
