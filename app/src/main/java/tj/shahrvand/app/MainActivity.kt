@@ -298,12 +298,9 @@ private fun ShahrvandApp() {
     fun finishMission(mission: Mission) {
         if (!ProgressRules.canCompleteToday(mission.id, completedToday.toSet())) return
         completedToday.add(mission.id)
-        // Home missions are personal checklists, not score-awarding tasks.
-        // XP is loaded only from Supabase's verified score records.
-        totalCompleted += 1
+        // Local checklist state is separate from server-verified XP and task totals.
         prefs.edit()
             .putStringSet("completed_today", completedToday.toSet())
-            .putInt("total_completed", totalCompleted)
             .putString("progress_day", today)
             .apply()
     }
@@ -488,9 +485,15 @@ private fun ShahrvandApp() {
                     totalXp = totalXp,
                     totalCompleted = totalCompleted,
                     getAccessToken = ::getValidAccessToken,
-                    onServerXp = { value ->
-                        totalXp = value
-                        prefs.edit().putInt("total_xp", value).apply()
+                    onServerSummary = { summary ->
+                        achievementSummary = summary
+                        achievementSummaryLoading = false
+                        totalXp = summary.totalXp
+                        totalCompleted = summary.verifiedTasks
+                        prefs.edit()
+                            .putInt("total_xp", summary.totalXp)
+                            .putInt("total_completed", summary.verifiedTasks)
+                            .apply()
                     },
                     onBack = {
                         tab = 0
