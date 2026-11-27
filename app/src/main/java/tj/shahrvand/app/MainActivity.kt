@@ -572,7 +572,8 @@ private fun ShahrvandApp() {
                         homeDestination = "personal"
                     },
                     onOpenSleep = { homeDestination = "sleep" },
-                    onOpenHealth = { tab = 4 },
+                    onOpenHealth = { healthSection = "profile"; tab = 4 },
+                    onOpenCommunity = { tab = 5 },
                     onOpenProfile = { tab = 3 },
                     onOpenSettings = { settingsOpen = true },
                     onToggleTheme = {
