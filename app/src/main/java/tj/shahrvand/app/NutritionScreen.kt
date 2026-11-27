@@ -73,6 +73,23 @@ private fun FoodCatalogItem.localizedName(language: String): String = when (lang
     else -> nameTg
 }
 
+private fun foodPreparationLabel(language: String, state: FoodPreparationState): String = when (state) {
+    FoodPreparationState.RAW -> nutritionTr(language, "хом", "сырой", "raw")
+    FoodPreparationState.COOKED -> nutritionTr(language, "пухта", "приготовленный", "cooked")
+    FoodPreparationState.DRIED -> nutritionTr(language, "хушк", "сушёный", "dried")
+    FoodPreparationState.BAKED -> nutritionTr(language, "дар танӯр пухта", "запечённый", "baked")
+    FoodPreparationState.FERMENTED -> nutritionTr(language, "ферментшуда", "ферментированный", "fermented")
+    FoodPreparationState.CANNED -> nutritionTr(language, "консервшуда", "консервированный", "canned")
+    FoodPreparationState.UNKNOWN -> nutritionTr(language, "номаълум", "неизвестно", "unknown")
+}
+
+private fun macroSummary(language: String, protein: Double, carbs: Double, fat: Double): String {
+    val p = nutritionTr(language, "сафеда", "белка", "protein")
+    val c = nutritionTr(language, "карбогидрат", "углеводов", "carbs")
+    val f = nutritionTr(language, "равған", "жиров", "fat")
+    return String.format(Locale.US, "%.1f г %s · %.1f г %s · %.1f г %s", protein, p, carbs, c, fat, f)
+}
+
 private fun nutritionSourceLabel(language: String, source: NutritionDataSource): String = when (source) {
     NutritionDataSource.USDA_FOOD_DATA_CENTRAL -> "USDA FoodData Central"
     NutritionDataSource.TAJIK_LAB_ANALYSIS ->
@@ -283,7 +300,7 @@ internal fun NutritionScreen(
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
                     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                         Text(nutritionTr(language, "Ғизои сабтшуда", "Записанные блюда", "Logged meals"), color = palette.ink, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                        Text(nutritionTr(language, "Имрӯз · Душанбе", "Сегодня · Душанбе", "Today · Dushanbe"), color = palette.muted, fontSize = 10.sp)
+                        Text(nutritionTr(language, "Имрӯз", "Сегодня", "Today"), color = palette.muted, fontSize = 10.sp)
                     }
                     Surface(shape = RoundedCornerShape(12.dp), color = palette.surface, border = BorderStroke(1.dp, palette.border)) {
                         Text("${meals.size}", modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp), color = palette.navy, fontWeight = FontWeight.Bold, fontSize = 12.sp)
@@ -409,36 +426,7 @@ internal fun NutritionScreen(
                 Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
                     Text(
                         nutritionTr(language, "Ҳолати маҳсулот: ", "Состояние продукта: ", "Food state: ") +
-                            nutritionTr(
-                                language,
-                                when (foodForDialog.preparationState) {
-                                    FoodPreparationState.RAW -> "хом"
-                                    FoodPreparationState.COOKED -> "пухта"
-                                    FoodPreparationState.DRIED -> "хушк"
-                                    FoodPreparationState.BAKED -> "дар танӯр пухта"
-                                    FoodPreparationState.FERMENTED -> "ферментшуда"
-                                    FoodPreparationState.CANNED -> "консервшуда"
-                                    FoodPreparationState.UNKNOWN -> "номаълум"
-                                },
-                                when (foodForDialog.preparationState) {
-                                    FoodPreparationState.RAW -> "сырой"
-                                    FoodPreparationState.COOKED -> "приготовленный"
-                                    FoodPreparationState.DRIED -> "сушёный"
-                                    FoodPreparationState.BAKED -> "запечённый"
-                                    FoodPreparationState.FERMENTED -> "ферментированный"
-                                    FoodPreparationState.CANNED -> "консервированный"
-                                    FoodPreparationState.UNKNOWN -> "неизвестно"
-                                },
-                                when (foodForDialog.preparationState) {
-                                    FoodPreparationState.RAW -> "raw"
-                                    FoodPreparationState.COOKED -> "cooked"
-                                    FoodPreparationState.DRIED -> "dried"
-                                    FoodPreparationState.BAKED -> "baked"
-                                    FoodPreparationState.FERMENTED -> "fermented"
-                                    FoodPreparationState.CANNED -> "canned"
-                                    FoodPreparationState.UNKNOWN -> "unknown"
-                                }
-                            ),
+                            foodPreparationLabel(language, foodForDialog.preparationState),
                         color = palette.muted, fontSize = 11.sp
                     )
                     OutlinedTextField(
@@ -455,7 +443,7 @@ internal fun NutritionScreen(
                             color = palette.navy, fontWeight = FontWeight.Bold, fontSize = 22.sp
                         )
                         Text(
-                            String.format(Locale.US, "P %.1fg · C %.1fg · F %.1fg", preview.proteinG, preview.carbohydrateG, preview.fatG),
+                            macroSummary(language, preview.proteinG, preview.carbohydrateG, preview.fatG),
                             color = palette.muted, fontSize = 11.sp
                         )
                     } else {
@@ -547,19 +535,7 @@ private fun FoodSearchRow(
                 Text(food.localizedName(language), color = palette.ink, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(
                     nutritionTr(language, "Ба 100 г · ", "На 100 г · ", "Per 100 g · ") +
-                        nutritionTr(language,
-                            when (food.preparationState) {
-                                FoodPreparationState.RAW -> "хом"
-                                FoodPreparationState.COOKED -> "пухта"
-                                FoodPreparationState.DRIED -> "хушк"
-                                FoodPreparationState.BAKED -> "пухта дар танӯр"
-                                FoodPreparationState.FERMENTED -> "ферментшуда"
-                                FoodPreparationState.CANNED -> "консервшуда"
-                                FoodPreparationState.UNKNOWN -> "номаълум"
-                            },
-                            food.preparationState.name.lowercase(Locale.ROOT),
-                            food.preparationState.name.lowercase(Locale.ROOT)
-                        ),
+                        foodPreparationLabel(language, food.preparationState),
                     color = palette.muted, fontSize = 9.sp
                 )
             }
@@ -601,7 +577,7 @@ private fun MealLogCard(
                 Text(meal.itemName, color = palette.ink, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text("${meal.portionGrams.toInt()} г · $time", color = palette.muted, fontSize = 9.sp)
                 Text(
-                    String.format(Locale.US, "P %.1f · C %.1f · F %.1f г", meal.nutrients.proteinG, meal.nutrients.carbohydrateG, meal.nutrients.fatG),
+                    macroSummary(language, meal.nutrients.proteinG, meal.nutrients.carbohydrateG, meal.nutrients.fatG),
                     color = palette.muted, fontSize = 9.sp
                 )
                 Text(
