@@ -156,3 +156,29 @@ grant select on public.shahrvand_recipe_catalog to authenticated;
 grant select on public.shahrvand_recipe_ingredients to authenticated;
 grant select, insert, delete on public.shahrvand_meal_logs to authenticated;
 grant select, insert, delete on public.shahrvand_water_logs to authenticated;
+
+
+-- Extend the existing owner-scoped deletion RPC to cover nutrition history too.
+create or replace function public.shahrvand_delete_my_health_data()
+returns void
+language plpgsql
+security invoker
+set search_path = ''
+as $$
+begin
+  delete from public.shahrvand_meal_logs
+  where user_id = auth.uid();
+
+  delete from public.shahrvand_water_logs
+  where user_id = auth.uid();
+
+  delete from public.shahrvand_body_measurements
+  where user_id = auth.uid();
+
+  delete from public.shahrvand_health_profiles
+  where user_id = auth.uid();
+end;
+$$;
+
+revoke all on function public.shahrvand_delete_my_health_data() from public, anon;
+grant execute on function public.shahrvand_delete_my_health_data() to authenticated;
