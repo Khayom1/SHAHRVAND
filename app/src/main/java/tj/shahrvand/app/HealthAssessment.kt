@@ -50,6 +50,34 @@ object HealthAssessment {
         return estimate.takeIf { it.isFinite() && it > 0.0 }
     }
 
+    /**
+     * Estimates total daily energy expenditure (TDEE) for adult maintenance.
+     * Activity multipliers follow the conventional sedentary/light/moderate/high
+     * categories. This is an estimate, not a prescribed intake or weight-loss plan.
+     */
+    fun estimateMaintenanceEnergyKcalPerDay(
+        ageYears: Int,
+        heightCm: Double,
+        weightKg: Double,
+        sexAtBirth: String,
+        activityLevel: String
+    ): Double? {
+        val resting = estimateRestingEnergyKcalPerDay(
+            ageYears = ageYears,
+            heightCm = heightCm,
+            weightKg = weightKg,
+            sexAtBirth = sexAtBirth
+        ) ?: return null
+        val activityFactor = when (activityLevel) {
+            "sedentary" -> 1.2
+            "light" -> 1.375
+            "moderate" -> 1.55
+            "high" -> 1.725
+            else -> return null
+        }
+        return (resting * activityFactor).takeIf { it.isFinite() && it > 0.0 }
+    }
+
     fun assessBmi(ageYears: Int, heightCm: Double, weightKg: Double): BmiAssessment? {
         if (ageYears !in 7..120) return null
         if (!heightCm.isFinite() || heightCm !in 80.0..250.0) return null
