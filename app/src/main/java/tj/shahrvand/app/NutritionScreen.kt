@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.LocalDining
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.RestaurantMenu
 import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -119,6 +120,7 @@ internal fun NutritionScreen(
     var saving by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf("") }
     var selectedFood by remember { mutableStateOf<FoodCatalogItem?>(null) }
+    var showRecipeCalculator by remember { mutableStateOf(false) }
     var portionText by remember { mutableStateOf("100") }
 
     suspend fun reloadToday() {
@@ -151,6 +153,26 @@ internal fun NutritionScreen(
         sodiumMg = meals.sumOf { it.nutrients.sodiumMg }
     )
     val waterTotal = waterLogs.sumOf { it.volumeMl }
+
+    if (showRecipeCalculator) {
+        RecipeCalculatorScreen(
+            language = language,
+            foods = foods,
+            onBack = { showRecipeCalculator = false },
+            onSaveMeal = { name, recipeIngredients, cookedWeight, portion ->
+                val added = NutritionRepository.addRecipeMeal(
+                    displayName = name,
+                    ingredients = recipeIngredients,
+                    finalCookedWeightGrams = cookedWeight,
+                    portionGrams = portion,
+                    accessToken = getAccessToken()
+                )
+                meals = listOf(added) + meals
+                added
+            }
+        )
+        return
+    }
 
     Column(
         Modifier.fillMaxSize().shahrvandCanvas(),
@@ -289,6 +311,16 @@ internal fun NutritionScreen(
                     }
                 }
             }
+        }
+
+        OutlinedButton(
+            onClick = { showRecipeCalculator = true },
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+            shape = RoundedCornerShape(14.dp)
+        ) {
+            Icon(Icons.Filled.RestaurantMenu, contentDescription = null)
+            Spacer(Modifier.size(8.dp))
+            Text(nutritionTr(language, "Ҳисоб кардани дорухат", "Рассчитать рецепт", "Calculate a recipe"))
         }
 
         LazyColumn(
