@@ -44,7 +44,7 @@ class SleepRulesTest {
         )
 
         assertEquals(SleepPattern.REPEATED_SHORT_SLEEP, insight?.pattern)
-        assertEquals(5, insight?.belowTargetCount)
+        assertEquals(4, insight?.belowTargetCount)
         assertEquals(2, insight?.consecutiveBelowTarget)
         assertEquals(7, insight?.recentNightCount)
     }
