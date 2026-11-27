@@ -154,7 +154,7 @@ revoke all on public.shahrvand_water_logs from anon, public;
 grant select on public.shahrvand_food_catalog to authenticated;
 grant select on public.shahrvand_recipe_catalog to authenticated;
 grant select on public.shahrvand_recipe_ingredients to authenticated;
-grant select, insert, delete on public.shahrvand_meal_logs to authenticated;
+grant select, delete on public.shahrvand_meal_logs to authenticated;
 grant select, insert, delete on public.shahrvand_water_logs to authenticated;
 
 
