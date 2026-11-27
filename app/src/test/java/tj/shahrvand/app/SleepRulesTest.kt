@@ -23,6 +23,16 @@ class SleepRulesTest {
     }
 
     @Test
+    fun sleepEligibilityIsProviderAgnosticButRejectsManualOrMissingSource() {
+        assertTrue(SleepRules.isEligibleRecord(false, "com.sec.android.app.shealth"))
+        assertTrue(SleepRules.isEligibleRecord(false, "com.google.android.apps.fitness"))
+        assertTrue(SleepRules.isEligibleRecord(false, "com.xiaomi.wearable"))
+        assertFalse(SleepRules.isEligibleRecord(true, "com.sec.android.app.shealth"))
+        assertFalse(SleepRules.isEligibleRecord(false, ""))
+        assertFalse(SleepRules.isEligibleRecord(false, "   "))
+    }
+
+    @Test
     fun adultTargetIsAtLeastSevenHours() {
         assertEquals(420L, SleepRules.minimumTargetMinutes(18))
         assertEquals(420L, SleepRules.minimumTargetMinutes(60))
