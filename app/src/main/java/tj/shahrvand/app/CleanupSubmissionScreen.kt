@@ -338,9 +338,9 @@ internal fun CleanupSubmissionScreen(
                         Text(
                             nutritionTr(
                                 language,
-                                "Файлҳо дар анбори хусусӣ нигоҳ дошта мешаванд. Онҳо барои баррасии дархост ба масъули SHAHRVAND дастрас мешаванд. Ҷойгиршавии телефон худкор сабт намешавад.",
-                                "Файлы хранятся в приватном хранилище и будут доступны ответственному SHAHRVAND для проверки заявки. Геолокация телефона автоматически не записывается.",
-                                "Files are stored in private storage and made available to the SHAHRVAND reviewer. Your phone location is not collected automatically."
+                                "Файлҳо дар анбори хусусӣ нигоҳ дошта мешаванд ва барои баррасӣ ба масъули SHAHRVAND дастрас мешаванд. Барнома GPS-и телефонро намепурсад, аммо худи акс ё видео метавонад метамаълумоти ҷойгиршавӣ дошта бошад; пеш аз фиристодан файлро санҷ.",
+                                "Файлы хранятся в приватном хранилище и доступны ответственному SHAHRVAND для проверки. Приложение не запрашивает GPS телефона, но выбранные фото и видео могут содержать геометаданные местоположения; проверь их перед отправкой.",
+                                "Files are stored privately for review by SHAHRVAND staff. The app does not request phone GPS, but selected photos or videos may contain embedded location metadata; check them before sending."
                             ),
                             color = palette.muted, fontSize = 10.sp, lineHeight = 15.sp
                         )
