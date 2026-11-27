@@ -109,6 +109,16 @@ class NutritionCalculatorTest {
     }
 
     @Test
+    fun rejectsUnknownNutritionSourceAndOversizedPortions() {
+        val valid = food("valid", FoodPreparationState.RAW, 52.0)
+        val unknownSource = valid.copy(source = NutritionDataSource.UNKNOWN)
+
+        assertNull(NutritionCalculator.forFoodPortion(unknownSource, 100.0))
+        assertNull(NutritionCalculator.forFoodPortion(valid, 10000.01))
+        assertNull(NutritionCalculator.forFoodPortion(valid, Double.POSITIVE_INFINITY))
+    }
+
+    @Test
     fun nutrientValuesMustBeFiniteAndNonNegative() {
         assertTrue(FoodNutrients(100.0, 2.0, 3.0, 4.0, 1.0, 5.0).isValid())
         assertTrue(!FoodNutrients(-1.0, 2.0, 3.0, 4.0, 1.0, 5.0).isValid())
