@@ -251,7 +251,7 @@ internal fun HealthProfileScreen(
                     )
                     OutlinedTextField(
                         value = restingHeartRateText,
-                        onValueChange = { restingHeartRateText = it.filter(Char::isDigit).take(3) },
+                        onValueChange = { restingHeartRateText = it.filter { ch -> ch.isDigit() }.take(3) },
                         modifier = Modifier.weight(1f),
                         label = { Text(healthTr(language, "Набзи оромӣ", "Пульс в покое", "Resting HR")) },
                         suffix = { Text("bpm") },
