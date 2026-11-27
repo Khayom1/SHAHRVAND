@@ -106,6 +106,8 @@ class NutritionCalculatorTest {
         assertNull(NutritionCalculator.forRecipe(emptyList(), 200.0))
         assertNull(NutritionCalculator.forRecipe(listOf(RecipeIngredient(apple, -10.0)), 200.0))
         assertNull(NutritionCalculator.forRecipe(listOf(RecipeIngredient(apple, 100.0)), 0.0))
+        assertNull(NutritionCalculator.forRecipe(listOf(RecipeIngredient(apple, 100000.1)), 200000.0))
+        assertNull(NutritionCalculator.forRecipe(listOf(RecipeIngredient(apple, 100.0)), 100000.1))
     }
 
     @Test
