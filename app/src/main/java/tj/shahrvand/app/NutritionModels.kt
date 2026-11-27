@@ -9,7 +9,8 @@ enum class NutritionDataSource {
     TAJIK_LAB_ANALYSIS,
     MANUFACTURER_LABEL,
     RECIPE_ESTIMATE,
-    USER_ENTERED
+    USER_ENTERED,
+    UNKNOWN
 }
 
 enum class FoodPreparationState {
@@ -52,6 +53,7 @@ data class FoodCatalogItem(
         id.isNotBlank() &&
             nameTg.isNotBlank() &&
             nutrientsPer100g.isValid() &&
+            source != NutritionDataSource.UNKNOWN &&
             sourceReference.isNotBlank() &&
             preparationState != FoodPreparationState.UNKNOWN
 }
@@ -78,7 +80,7 @@ data class RecipeNutritionResult(
 
 object NutritionCalculator {
     fun forFoodPortion(food: FoodCatalogItem, portionGrams: Double): NutritionTotals? {
-        if (!food.isUsableForCalculation() || !portionGrams.isFinite() || portionGrams <= 0.0) {
+        if (!food.isUsableForCalculation() || !portionGrams.isFinite() || portionGrams <= 0.0 || portionGrams > 10000.0) {
             return null
         }
         return scale(food.nutrientsPer100g, portionGrams / 100.0)
