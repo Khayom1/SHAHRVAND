@@ -8,6 +8,29 @@ import org.junit.Test
 
 class HealthAssessmentTest {
     @Test
+    fun mifflinStJeorEstimatesRestingEnergyForAdults() {
+        assertEquals(
+            1648.75,
+            HealthAssessment.estimateRestingEnergyKcalPerDay(30, 175.0, 70.0, "male") ?: 0.0,
+            0.0001
+        )
+        assertEquals(
+            1482.75,
+            HealthAssessment.estimateRestingEnergyKcalPerDay(30, 175.0, 70.0, "female") ?: 0.0,
+            0.0001
+        )
+    }
+
+    @Test
+    fun restingEnergyEstimateRejectsUnvalidatedAgeAndMissingSex() {
+        assertNull(HealthAssessment.estimateRestingEnergyKcalPerDay(19, 170.0, 60.0, "male"))
+        assertNull(HealthAssessment.estimateRestingEnergyKcalPerDay(79, 170.0, 60.0, "female"))
+        assertNull(HealthAssessment.estimateRestingEnergyKcalPerDay(30, 170.0, 60.0, "not_specified"))
+        assertNull(HealthAssessment.estimateRestingEnergyKcalPerDay(30, Double.NaN, 60.0, "male"))
+        assertNull(HealthAssessment.estimateRestingEnergyKcalPerDay(30, 170.0, Double.POSITIVE_INFINITY, "female"))
+    }
+
+    @Test
     fun adultBmiUsesAdultScreeningRanges() {
         assertEquals(
             AdultBmiCategory.UNDERWEIGHT,
