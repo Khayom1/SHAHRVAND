@@ -7,7 +7,7 @@ alter table public.shahrvand_food_catalog
 
 alter table public.shahrvand_food_catalog
   add constraint shahrvand_food_catalog_preparation_state_check
-  check (preparation_state in ('raw', 'cooked', 'dried', 'baked', 'fermented', 'canned'));
+  check (preparation_state in ('raw', 'cooked', 'dried', 'baked', 'fermented', 'canned', 'as_sold'));
 
 insert into public.shahrvand_food_catalog (
   id, name_tg, name_ru, name_en, category, preparation_state,
