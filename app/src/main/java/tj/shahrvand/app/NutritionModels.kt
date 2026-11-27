@@ -98,13 +98,15 @@ object NutritionCalculator {
     ): RecipeNutritionResult? {
         if (ingredients.isEmpty() ||
             !finalCookedWeightGrams.isFinite() ||
-            finalCookedWeightGrams <= 0.0
+            finalCookedWeightGrams <= 0.0 ||
+            finalCookedWeightGrams > 100000.0
         ) return null
 
         if (ingredients.any {
                 !it.food.isUsableForCalculation() ||
                     !it.amountGrams.isFinite() ||
-                    it.amountGrams <= 0.0
+                    it.amountGrams <= 0.0 ||
+                    it.amountGrams > 100000.0
             }
         ) return null
 
