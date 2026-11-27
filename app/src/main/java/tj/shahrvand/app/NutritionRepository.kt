@@ -286,7 +286,8 @@ object NutritionRepository {
             "usda_fdc" -> NutritionDataSource.USDA_FOOD_DATA_CENTRAL
             "tajik_lab" -> NutritionDataSource.TAJIK_LAB_ANALYSIS
             "manufacturer_label" -> NutritionDataSource.MANUFACTURER_LABEL
-            else -> NutritionDataSource.RECIPE_ESTIMATE
+            "recipe_estimate" -> NutritionDataSource.RECIPE_ESTIMATE
+            else -> NutritionDataSource.UNKNOWN
         },
         sourceReference = optString("source_reference"),
         verifiedAt = optString("verified_at").takeIf { it.isNotBlank() && it != "null" },
