@@ -49,7 +49,8 @@ begin
     raise exception 'INVALID_FINAL_COOKED_WEIGHT' using errcode = '22023';
   end if;
 
-  if p_portion_g is null or p_portion_g <= 0 or p_portion_g > 10000 then
+  if p_portion_g is null or p_portion_g <= 0 or p_portion_g > 10000
+     or p_portion_g > p_final_cooked_weight_g then
     raise exception 'INVALID_PORTION' using errcode = '22023';
   end if;
 
