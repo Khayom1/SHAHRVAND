@@ -416,6 +416,7 @@ internal fun NutritionScreen(
                                     FoodPreparationState.COOKED -> "пухта"
                                     FoodPreparationState.DRIED -> "хушк"
                                     FoodPreparationState.BAKED -> "дар танӯр пухта"
+                                    FoodPreparationState.FERMENTED -> "ферментшуда"
                                     FoodPreparationState.UNKNOWN -> "номаълум"
                                 },
                                 when (foodForDialog.preparationState) {
@@ -423,6 +424,7 @@ internal fun NutritionScreen(
                                     FoodPreparationState.COOKED -> "приготовленный"
                                     FoodPreparationState.DRIED -> "сушёный"
                                     FoodPreparationState.BAKED -> "запечённый"
+                                    FoodPreparationState.FERMENTED -> "ферментированный"
                                     FoodPreparationState.UNKNOWN -> "неизвестно"
                                 },
                                 when (foodForDialog.preparationState) {
@@ -430,6 +432,7 @@ internal fun NutritionScreen(
                                     FoodPreparationState.COOKED -> "cooked"
                                     FoodPreparationState.DRIED -> "dried"
                                     FoodPreparationState.BAKED -> "baked"
+                                    FoodPreparationState.FERMENTED -> "fermented"
                                     FoodPreparationState.UNKNOWN -> "unknown"
                                 }
                             ),
@@ -547,6 +550,7 @@ private fun FoodSearchRow(
                                 FoodPreparationState.COOKED -> "пухта"
                                 FoodPreparationState.DRIED -> "хушк"
                                 FoodPreparationState.BAKED -> "пухта дар танӯр"
+                                FoodPreparationState.FERMENTED -> "ферментшуда"
                                 FoodPreparationState.UNKNOWN -> "номаълум"
                             },
                             food.preparationState.name.lowercase(Locale.ROOT),
