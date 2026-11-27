@@ -248,7 +248,7 @@ internal fun RecipeCalculatorScreen(
                                             when (language) { "ru" -> line.food.nameRu; "en" -> line.food.nameEn; else -> line.food.nameTg },
                                             color = palette.ink, fontSize = 11.sp, fontWeight = FontWeight.SemiBold
                                         )
-                                        Text("${line.amountGrams.toInt()} г · ${line.food.preparationState.name.lowercase(Locale.ROOT)}", color = palette.muted, fontSize = 9.sp)
+                                        Text("${line.amountGrams.toInt()} г · ${foodPreparationLabel(language, line.food.preparationState)} · ${nutritionSourceLabel(language, line.food.source)}", color = palette.muted, fontSize = 8.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
                                     }
                                     Text(
                                         String.format(Locale.US, "%.0f kcal", line.food.nutrientsPer100g.energyKcal * line.amountGrams / 100.0),
@@ -294,7 +294,7 @@ internal fun RecipeCalculatorScreen(
                         )
                         if (recipeResult != null) {
                             Text(
-                                String.format(Locale.US, "%.1f kcal / 100 g", recipeResult.per100g.energyKcal),
+                                nutritionTr(language, String.format(Locale.US, "%.1f ккал / 100 г", recipeResult.per100g.energyKcal), String.format(Locale.US, "%.1f ккал / 100 г", recipeResult.per100g.energyKcal), String.format(Locale.US, "%.1f kcal / 100 g", recipeResult.per100g.energyKcal)),
                                 color = palette.navy, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold
                             )
                             Text(
@@ -303,7 +303,7 @@ internal fun RecipeCalculatorScreen(
                             )
                             if (portionTotals != null) {
                                 Text(
-                                    String.format(Locale.US, "%.0f kcal · P %.1f g · C %.1f g · F %.1f g", portionTotals.energyKcal, portionTotals.proteinG, portionTotals.carbohydrateG, portionTotals.fatG),
+                                    nutritionTr(language, String.format(Locale.US, "%.0f ккал · ", portionTotals.energyKcal), String.format(Locale.US, "%.0f ккал · ", portionTotals.energyKcal), String.format(Locale.US, "%.0f kcal · ", portionTotals.energyKcal)) + macroSummary(language, portionTotals.proteinG, portionTotals.carbohydrateG, portionTotals.fatG),
                                     color = palette.ink, fontSize = 11.sp, fontWeight = FontWeight.SemiBold
                                 )
                             }
