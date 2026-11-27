@@ -383,7 +383,7 @@ fun SleepTrackingScreen(
 
         if (sleepInsight != null && sleepInsight.pattern != SleepPattern.ADEQUATE) {
             val insight = sleepInsight
-            val averageLabel = "" + (insight.averageMinutes / 60L) + " " +
+            val averageLabel = (insight.averageMinutes / 60L).toString() + " " +
                 sleepTr(language, "соат", "ч", "h") + " " +
                 (insight.averageMinutes % 60L) + " " +
                 sleepTr(language, "дақ", "мин", "min")
@@ -411,9 +411,9 @@ fun SleepTrackingScreen(
             val summary = when (insight.pattern) {
                 SleepPattern.REPEATED_SHORT_SLEEP -> sleepTr(
                     language,
-                    "Дар 7 сабти охир ${insight.belowTargetCount} аз ${insight.recentNightCount} шаб аз ҳадафи синну сол камтар хоб рафтӣ. Давомнокии миёна: ",
-                    "В последних 7 записях ${insight.belowTargetCount} из ${insight.recentNightCount} ночей были короче возрастной цели. Средняя длительность: ",
-                    "In the latest 7 records, ${insight.belowTargetCount} of ${insight.recentNightCount} nights were below your age-based target. Average duration: "
+                    "Дар сабтҳои охир ${insight.belowTargetCount} аз ${insight.recentNightCount} шаб аз ҳадафи синну сол камтар хоб рафтӣ. Давомнокии миёна: ",
+                    "В последних записях ${insight.belowTargetCount} из ${insight.recentNightCount} ночей были короче возрастной цели. Средняя длительность: ",
+                    "In the latest records, ${insight.belowTargetCount} of ${insight.recentNightCount} nights were below your age-based target. Average duration: "
                 ) + averageLabel + "."
                 SleepPattern.LAST_NIGHT_SHORT -> sleepTr(
                     language,
