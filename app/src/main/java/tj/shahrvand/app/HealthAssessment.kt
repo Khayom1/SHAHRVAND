@@ -22,6 +22,34 @@ data class BmiAssessment(
 }
 
 object HealthAssessment {
+    /**
+     * Predicts resting energy expenditure (REE), not total daily energy needs.
+     * Mifflin-St Jeor was developed in adults aged 19-78; SHAHRVAND applies it
+     * conservatively only from age 20 through 78 and only when sex at birth is specified.
+     * This is an estimate, not a measured metabolic rate or a calorie target.
+     */
+    fun estimateRestingEnergyKcalPerDay(
+        ageYears: Int,
+        heightCm: Double,
+        weightKg: Double,
+        sexAtBirth: String
+    ): Double? {
+        if (ageYears !in 20..78) return null
+        if (!heightCm.isFinite() || heightCm !in 80.0..250.0) return null
+        if (!weightKg.isFinite() || weightKg !in 5.0..500.0) return null
+
+        val sexConstant = when (sexAtBirth) {
+            "male" -> 5.0
+            "female" -> -161.0
+            else -> return null
+        }
+        val estimate = (10.0 * weightKg) +
+            (6.25 * heightCm) -
+            (5.0 * ageYears) +
+            sexConstant
+        return estimate.takeIf { it.isFinite() && it > 0.0 }
+    }
+
     fun assessBmi(ageYears: Int, heightCm: Double, weightKg: Double): BmiAssessment? {
         if (ageYears !in 7..120) return null
         if (!heightCm.isFinite() || heightCm !in 80.0..250.0) return null
