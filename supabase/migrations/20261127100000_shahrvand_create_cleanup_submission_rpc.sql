@@ -77,8 +77,48 @@ begin
         and coalesce(o.owner_id, '') = v_user_id::text
         and coalesce(o.metadata ->> 'mimetype', '') =
             any(string_to_array(v_expected_mime[v_index], ','))
-        and coalesce((o.metadata ->> 'size')::bigint, 0) > 0
-        and coalesce((o.metadata ->> 'size')::bigint, 0) <= 52428800
+        and case
+              when coalesce(o.metadata ->> 'size', '') ~ '^[0-9]+
+    ) then
+      raise exception 'EVIDENCE_FILE_NOT_FOUND_OR_INVALID' using errcode = 'P0002';
+    end if;
+  end loop;
+
+  insert into public.shahrvand_cleanup_submissions (
+    user_id,
+    before_photo_path,
+    before_video_path,
+    after_photo_path,
+    after_video_path,
+    status,
+    xp_awarded
+  ) values (
+    v_user_id,
+    p_before_photo_path,
+    p_before_video_path,
+    p_after_photo_path,
+    p_after_video_path,
+    'pending_review',
+    0
+  )
+  returning id, created_at into v_submission_id, v_created_at;
+
+  return jsonb_build_object(
+    'ok', true,
+    'submission_id', v_submission_id,
+    'status', 'pending_review',
+    'submitted_at', v_created_at,
+    'xp_awarded', 0
+  );
+end;
+$$;
+
+revoke all on function public.shahrvand_create_cleanup_submission(text, text, text, text) from public, anon;
+grant execute on function public.shahrvand_create_cleanup_submission(text, text, text, text) to authenticated;
+
+                then (o.metadata ->> 'size')::bigint between 1 and 52428800
+              else false
+            end
     ) then
       raise exception 'EVIDENCE_FILE_NOT_FOUND_OR_INVALID' using errcode = 'P0002';
     end if;
