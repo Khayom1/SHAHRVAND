@@ -112,7 +112,8 @@ object NutritionRepository {
                 accessToken,
                 JSONObject()
                     .put("p_food_id", food.id)
-                    .put("p_portion_g", portionGrams),
+                    .put("p_portion_g", portionGrams)
+                    .put("p_display_name", displayName.trim()),
                 null
             )
         )
@@ -120,7 +121,7 @@ object NutritionRepository {
             ?: throw IllegalStateException("Сервер сабти хӯрокро барнагардонд.")
         MealLogRecord(
             id = row.optString("id"),
-            itemName = displayName.trim(),
+            itemName = row.optString("item_name_snapshot"),
             portionGrams = row.optDouble("portion_g"),
             nutrients = NutritionTotals(
                 row.optDouble("energy_kcal"),
