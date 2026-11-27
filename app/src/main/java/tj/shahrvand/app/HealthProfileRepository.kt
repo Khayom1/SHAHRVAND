@@ -129,6 +129,17 @@ object HealthProfileRepository {
         isNewWeight
     }
 
+    suspend fun deleteMyHealthData(userId: String, accessToken: String) = withContext(Dispatchers.IO) {
+        requireValidSession(userId, accessToken)
+        request(
+            "/rest/v1/rpc/shahrvand_delete_my_health_data",
+            "POST",
+            accessToken,
+            JSONObject(),
+            null
+        )
+    }
+
     private fun requireValidSession(userId: String, accessToken: String) {
         require(userId.matches(Regex("^[0-9a-fA-F]{8}-(?:[0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$"))) {
             "Идентификатори корбар нодуруст аст."
