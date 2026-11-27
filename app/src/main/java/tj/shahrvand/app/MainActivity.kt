@@ -33,6 +33,7 @@ import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Bedtime
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -361,15 +362,23 @@ private fun ShahrvandApp() {
         modifier = Modifier.fillMaxSize().shahrvandCanvas(),
         containerColor = Color.Transparent,
         bottomBar = {
+            val navTabs = listOf(0, 1, 4, 2, 3)
             val labels = listOf(
                 tr(language, "Асосӣ", "Главная", "Home"),
-                tr(language, "Вазифаҳо", "Задания", "Tasks"),
+                tr(language, "Фаъолият", "Активность", "Activity"),
+                tr(language, "Саломатӣ", "Здоровье", "Health"),
                 tr(language, "Рейтинг", "Рейтинг", "Ranking"),
                 tr(language, "Профил", "Профиль", "Profile")
             )
-            val icons = listOf(Icons.Filled.Home, Icons.Filled.Explore, Icons.Filled.EmojiEvents, Icons.Filled.AccountCircle)
+            val icons = listOf(
+                Icons.Filled.Home,
+                Icons.Filled.Explore,
+                Icons.Filled.Favorite,
+                Icons.Filled.EmojiEvents,
+                Icons.Filled.AccountCircle
+            )
             Surface(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 7.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 7.dp),
                 shape = RoundedCornerShape(25.dp),
                 color = LocalShahrvandPalette.current.surface.copy(alpha = 0.98f),
                 contentColor = Ink,
@@ -377,31 +386,32 @@ private fun ShahrvandApp() {
                 shadowElevation = 3.dp
             ) {
                 Row(
-                    Modifier.fillMaxWidth().padding(horizontal = 7.dp, vertical = 6.dp),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    Modifier.fillMaxWidth().padding(horizontal = 5.dp, vertical = 6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(2.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     labels.forEachIndexed { index, label ->
-                        val selected = tab == index
+                        val destination = navTabs[index]
+                        val selected = tab == destination
                         Column(
                             Modifier.weight(1f).clip(RoundedCornerShape(18.dp))
                                 .background(if (selected) LocalShahrvandPalette.current.selected else Color.Transparent)
                                 .clickable {
-                                    tab = index
-                                    if (index != 0) homeDestination = "dashboard"
+                                    tab = destination
+                                    if (destination != 0) homeDestination = "dashboard"
                                 }
-                                .padding(horizontal = 2.dp, vertical = 8.dp),
+                                .padding(horizontal = 1.dp, vertical = 8.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             Icon(
                                 icons[index], contentDescription = label,
                                 tint = if (selected) Navy else Muted,
-                                modifier = Modifier.size(23.dp)
+                                modifier = Modifier.size(22.dp)
                             )
                             Text(
                                 label, color = if (selected) Navy else Muted,
-                                fontSize = 10.sp,
+                                fontSize = 9.sp,
                                 fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
                                 maxLines = 1
                             )
@@ -478,6 +488,7 @@ private fun ShahrvandApp() {
                             homeDestination = "personal"
                         },
                         onOpenSleep = { homeDestination = "sleep" },
+                        onOpenHealth = { tab = 4 },
                         onOpenProfile = { tab = 3 },
                         onOpenSettings = { settingsOpen = true },
                         onToggleTheme = {
@@ -488,6 +499,16 @@ private fun ShahrvandApp() {
                 }
                 1 -> DailyActivitiesScreen(language, ::getValidAccessToken)
                 2 -> LeaderboardScreen(language, ageBand ?: "18_plus", ::getValidAccessToken)
+                4 -> HealthProfileScreen(
+                    language = language,
+                    userId = prefs.getString("auth_user_id", "") ?: "",
+                    age = accountAge,
+                    getAccessToken = ::getValidAccessToken,
+                    onBack = {
+                        tab = 0
+                        homeDestination = "dashboard"
+                    }
+                )
                 3 -> ShahrvandProfileScreen(
                     language = language,
                     firstName = accountFirstName,
@@ -526,6 +547,7 @@ private fun ShahrvandApp() {
                         homeDestination = "personal"
                     },
                     onOpenSleep = { homeDestination = "sleep" },
+                    onOpenHealth = { tab = 4 },
                     onOpenProfile = { tab = 3 },
                     onOpenSettings = { settingsOpen = true },
                     onToggleTheme = {
@@ -761,6 +783,7 @@ private fun HomeScreen(
     onOpenLeaderboard: () -> Unit,
     onOpenNotes: () -> Unit,
     onOpenSleep: () -> Unit,
+    onOpenHealth: () -> Unit,
     onOpenProfile: () -> Unit,
     onOpenSettings: () -> Unit,
     onToggleTheme: () -> Unit
@@ -887,10 +910,11 @@ private fun HomeScreen(
 
         Text(tr(language, "ҚИСМҲОИ ШАҲРВАНД", "РАЗДЕЛЫ SHAHRVAND", "EXPLORE SHAHRVAND"),
             color = palette.muted, fontSize = 10.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 0.7.sp)
-        Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             DashboardShortcut(Modifier.weight(1f), "🏆", tr(language, "Рейтинг", "Рейтинг", "Ranking"), palette, onOpenLeaderboard)
-            DashboardShortcut(Modifier.weight(1f), "🗒", tr(language, "Ёддоштҳо", "Заметки", "Notes"), palette, onOpenNotes)
+            DashboardShortcut(Modifier.weight(1f), "🗒", tr(language, "Ёддошт", "Заметки", "Notes"), palette, onOpenNotes)
             DashboardShortcut(Modifier.weight(1f), "🌙", tr(language, "Хоб", "Сон", "Sleep"), palette, onOpenSleep)
+            DashboardShortcut(Modifier.weight(1f), "♥", tr(language, "Саломатӣ", "Здоровье", "Health"), palette, onOpenHealth)
         }
         Spacer(Modifier.height(5.dp))
     }
