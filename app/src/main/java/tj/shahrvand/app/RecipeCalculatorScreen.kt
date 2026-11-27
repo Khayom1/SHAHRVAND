@@ -248,7 +248,7 @@ internal fun RecipeCalculatorScreen(
                                             when (language) { "ru" -> line.food.nameRu; "en" -> line.food.nameEn; else -> line.food.nameTg },
                                             color = palette.ink, fontSize = 11.sp, fontWeight = FontWeight.SemiBold
                                         )
-                                        Text("${line.amountGrams.toInt()} г · ${foodPreparationLabel(language, line.food.preparationState)} · ${nutritionSourceLabel(language, line.food.source)}", color = palette.muted, fontSize = 8.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                        Text(String.format(Locale.US, "%.1f г · %s · %s", line.amountGrams, foodPreparationLabel(language, line.food.preparationState), nutritionSourceLabel(language, line.food.source)), color = palette.muted, fontSize = 8.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
                                     }
                                     Text(
                                         String.format(Locale.US, "%.0f kcal", line.food.nutrientsPer100g.energyKcal * line.amountGrams / 100.0),
@@ -346,7 +346,8 @@ internal fun RecipeCalculatorScreen(
                         ingredients.isNotEmpty() && recipeResult != null &&
                         finalWeight != null && finalWeight > 0.0 &&
                         portion != null && portion > 0.0 && portion <= 10000.0 &&
-                        portionTotals != null,
+                        finalWeight != null && portion <= finalWeight &&
+                        finalWeight <= 100000.0 && portionTotals != null,
                     modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp),
                     shape = RoundedCornerShape(15.dp)
                 ) {
