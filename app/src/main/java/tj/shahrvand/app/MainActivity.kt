@@ -554,6 +554,7 @@ private fun ShahrvandApp() {
                     summary = achievementSummary,
                     summaryLoading = achievementSummaryLoading,
                     onOpenMissions = { tab = 1 },
+                    onOpenActivity = { tab = 1 },
                     onOpenLeaderboard = { tab = 2 },
                     onOpenNotes = {
                         personalSection = "notes"
