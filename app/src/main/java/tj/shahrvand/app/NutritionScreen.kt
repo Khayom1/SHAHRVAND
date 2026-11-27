@@ -472,7 +472,7 @@ internal fun NutritionScreen(
                             saving = true
                             error = ""
                             try {
-                                val meal = NutritionRepository.addFoodMeal(foodForDialog, parsedPortion!!, getAccessToken())
+                                val meal = NutritionRepository.addFoodMeal(foodForDialog, parsedPortion!!, foodForDialog.localizedName(language), getAccessToken())
                                 meals = listOf(meal) + meals
                                 selectedFood = null
                             } catch (e: Exception) {
@@ -595,6 +595,10 @@ private fun MealLogCard(
                 Text(
                     String.format(Locale.US, "P %.1f · C %.1f · F %.1f г", meal.nutrients.proteinG, meal.nutrients.carbohydrateG, meal.nutrients.fatG),
                     color = palette.muted, fontSize = 9.sp
+                )
+                Text(
+                    meal.sourceSnapshot.substringBefore(':').replace('_', ' '),
+                    color = palette.muted, fontSize = 8.sp, maxLines = 1
                 )
             }
             Column(horizontalAlignment = Alignment.End) {
