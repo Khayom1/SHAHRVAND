@@ -78,7 +78,11 @@ begin
         and coalesce(o.metadata ->> 'mimetype', '') =
             any(string_to_array(v_expected_mime[v_index], ','))
         and case
-              when coalesce(o.metadata ->> 'size', '') ~ '^[0-9]+
+              when length(coalesce(o.metadata ->> 'size', '')) between 1 and 10
+               and translate(o.metadata ->> 'size', '0123456789', '') = ''
+                then (o.metadata ->> 'size')::bigint between 1 and 52428800
+              else false
+            end
     ) then
       raise exception 'EVIDENCE_FILE_NOT_FOUND_OR_INVALID' using errcode = 'P0002';
     end if;
