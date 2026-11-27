@@ -3,7 +3,8 @@
 
 create or replace function public.shahrvand_add_food_meal(
   p_food_id text,
-  p_portion_g numeric
+  p_portion_g numeric,
+  p_display_name text
 )
 returns setof public.shahrvand_meal_logs
 language plpgsql
@@ -23,6 +24,10 @@ begin
 
   if p_portion_g is null or p_portion_g <= 0 or p_portion_g > 10000 then
     raise exception 'INVALID_PORTION' using errcode = '22023';
+  end if;
+
+  if p_display_name is null or length(trim(p_display_name)) not between 1 and 160 then
+    raise exception 'INVALID_DISPLAY_NAME' using errcode = '22023';
   end if;
 
   select *
@@ -49,7 +54,7 @@ begin
     sodium_mg,
     source_snapshot
   ) values (
-    v_food.name_tg,
+    trim(p_display_name),
     v_food.id,
     null,
     p_portion_g,
@@ -65,5 +70,5 @@ begin
 end;
 $$;
 
-revoke all on function public.shahrvand_add_food_meal(text, numeric) from public, anon;
-grant execute on function public.shahrvand_add_food_meal(text, numeric) to authenticated;
+revoke all on function public.shahrvand_add_food_meal(text, numeric, text) from public, anon;
+grant execute on function public.shahrvand_add_food_meal(text, numeric, text) to authenticated;
