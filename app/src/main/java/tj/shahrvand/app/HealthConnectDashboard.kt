@@ -205,7 +205,8 @@ internal fun HealthActivityDashboard(
         }
     }
 
-    val today = week?.today
+    val loadedWeek = week
+    val today = loadedWeek?.today
     val steps = today?.steps ?: 0L
     val activeCalories = today?.activeCalories ?: 0.0
     val activeMinutes = today?.exerciseMinutes ?: 0L
@@ -267,7 +268,7 @@ internal fun HealthActivityDashboard(
                 Box(Modifier.fillMaxWidth().padding(12.dp), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.dp)
                 }
-            } else if (week != null) {
+            } else if (loadedWeek != null) {
                 Row(
                     Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -303,12 +304,12 @@ internal fun HealthActivityDashboard(
                     dashboardTr(language, "ФАЪОЛИЯТИ 7 РӮЗИ ОХИР", "АКТИВНОСТЬ ЗА 7 ДНЕЙ", "LAST 7 DAYS"),
                     color = palette.muted, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold
                 )
-                WeeklyStepsChart(language, week.days, palette)
+                WeeklyStepsChart(language, loadedWeek.days, palette)
                 Text(
                     dashboardTr(language, "ПЕШРАФТИ МАШҚҲО", "ПРОГРЕСС ТРЕНИРОВОК", "WORKOUT PROGRESS"),
                     color = palette.muted, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold
                 )
-                week.days.takeLast(3).asReversed().forEach { day ->
+                loadedWeek.days.takeLast(3).asReversed().forEach { day ->
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(
                             day.date.dayOfWeek.getDisplayName(
