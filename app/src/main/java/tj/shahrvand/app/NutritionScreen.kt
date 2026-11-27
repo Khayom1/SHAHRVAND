@@ -123,6 +123,8 @@ private fun mealSourceLabel(language: String, snapshot: String): String = when {
 @Composable
 internal fun NutritionScreen(
     language: String,
+    userId: String,
+    age: Int,
     getAccessToken: suspend () -> String,
     onBack: () -> Unit
 ) {
@@ -132,6 +134,7 @@ internal fun NutritionScreen(
     var foods by remember { mutableStateOf(emptyList<FoodCatalogItem>()) }
     var meals by remember { mutableStateOf(emptyList<MealLogRecord>()) }
     var waterLogs by remember { mutableStateOf(emptyList<WaterLogRecord>()) }
+    var healthSnapshot by remember { mutableStateOf<HealthProfileSnapshot?>(null) }
     var loading by remember { mutableStateOf(true) }
     var searching by remember { mutableStateOf(false) }
     var saving by remember { mutableStateOf(false) }
@@ -154,6 +157,9 @@ internal fun NutritionScreen(
             foods = NutritionRepository.searchFoods("", token)
             meals = NutritionRepository.loadTodayMeals(token)
             waterLogs = NutritionRepository.loadTodayWater(token)
+            healthSnapshot = if (userId.isNotBlank()) {
+                runCatching { HealthProfileRepository.load(userId, token) }.getOrNull()
+            } else null
         } catch (e: Exception) {
             error = e.message ?: nutritionTr(language, "Маълумот гирифта нашуд.", "Не удалось загрузить данные.", "Could not load nutrition data.")
         } finally {
@@ -170,6 +176,18 @@ internal fun NutritionScreen(
         sodiumMg = meals.sumOf { it.nutrients.sodiumMg }
     )
     val waterTotal = waterLogs.sumOf { it.volumeMl }
+    val restingEnergyKcal = healthSnapshot?.let { snapshot ->
+        val profile = snapshot.profile
+        val measurement = snapshot.latestMeasurement
+        if (profile != null && measurement != null) {
+            HealthAssessment.estimateRestingEnergyKcalPerDay(
+                ageYears = age,
+                heightCm = profile.heightCm,
+                weightKg = measurement.weightKg,
+                sexAtBirth = profile.sexAtBirth
+            )
+        } else null
+    }
 
     if (showRecipeCalculator) {
         RecipeCalculatorScreen(
@@ -255,6 +273,67 @@ internal fun NutritionScreen(
                         ),
                         color = palette.muted, fontSize = 10.sp, lineHeight = 15.sp
                     )
+                }
+            }
+
+            if (restingEnergyKcal != null || age in 20..78 || age < 20) {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = palette.surface),
+                    border = BorderStroke(1.dp, palette.border),
+                    shape = RoundedCornerShape(20.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                ) {
+                    Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(
+                            nutritionTr(language, "АРЗЁБИИ ЭНЕРГИЯ ДАР ҲОЛАТИ ОРОМӢ", "РАСХОД ЭНЕРГИИ В ПОКОЕ", "RESTING ENERGY EXPENDITURE"),
+                            color = palette.muted, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold
+                        )
+                        if (restingEnergyKcal != null) {
+                            Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Text(
+                                    String.format(Locale.US, "%.0f", restingEnergyKcal),
+                                    color = palette.ink, fontSize = 28.sp, fontWeight = FontWeight.Black
+                                )
+                                Text("kcal/day", color = palette.muted, fontSize = 11.sp, modifier = Modifier.padding(bottom = 4.dp))
+                            }
+                            Text(
+                                nutritionTr(
+                                    language,
+                                    "Тахмини энергияе, ки организм дар ҳолати оромӣ истифода мекунад. Ин меъёри умумии калорияи рӯзона ё тавсияи хӯрок нест.",
+                                    "Оценка энергии, которую организм расходует в покое. Это не общая суточная норма калорий и не рекомендация по питанию.",
+                                    "Estimated energy used at rest. This is not total daily energy expenditure or a calorie-intake recommendation."
+                                ),
+                                color = palette.muted, fontSize = 10.sp, lineHeight = 15.sp
+                            )
+                            Text(
+                                nutritionTr(language, "Формула: Mifflin–St Jeor · тахминӣ", "Формула: Mifflin–St Jeor · оценка", "Mifflin–St Jeor equation · estimate"),
+                                color = palette.navyLight, fontSize = 9.sp, fontWeight = FontWeight.SemiBold
+                            )
+                        } else if (age < 20) {
+                            Text(
+                                nutritionTr(
+                                    language,
+                                    "Барои синни то 20 сол ин формулаи калонсолон истифода намешавад.",
+                                    "Для возраста до 20 лет эта взрослая формула не применяется.",
+                                    "This adult equation is not used for people under 20."
+                                ),
+                                color = palette.muted, fontSize = 10.sp, lineHeight = 15.sp
+                            )
+                        } else if (age <= 78) {
+                            Text(
+                                nutritionTr(
+                                    language,
+                                    "Барои ҳисоб қад, вазни охирин ва интихоби ҷинси биологӣ дар профили саломатӣ лозим аст.",
+                                    "Для расчёта нужны рост, последний вес и указание биологического пола в профиле здоровья.",
+                                    "Height, latest weight and sex at birth in the health profile are needed for this estimate."
+                                ),
+                                color = palette.muted, fontSize = 10.sp, lineHeight = 15.sp
+                            )
+                            TextButton(onClick = onBack, contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)) {
+                                Text(nutritionTr(language, "Пур кардани профили саломатӣ", "Заполнить профиль здоровья", "Complete health profile"))
+                            }
+                        }
+                    }
                 }
             }
 
