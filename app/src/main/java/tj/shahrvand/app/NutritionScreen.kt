@@ -188,6 +188,19 @@ internal fun NutritionScreen(
             )
         } else null
     }
+    val maintenanceEnergyKcal = healthSnapshot?.let { snapshot ->
+        val profile = snapshot.profile
+        val measurement = snapshot.latestMeasurement
+        if (profile != null && measurement != null) {
+            HealthAssessment.estimateMaintenanceEnergyKcalPerDay(
+                ageYears = age,
+                heightCm = profile.heightCm,
+                weightKg = measurement.weightKg,
+                sexAtBirth = profile.sexAtBirth,
+                activityLevel = profile.activityLevel
+            )
+        } else null
+    }
 
     if (showRecipeCalculator) {
         RecipeCalculatorScreen(
@@ -265,12 +278,21 @@ internal fun NutritionScreen(
                         MacroPill(language, nutritionTr(language, "Равған", "Жиры", "Fat"), totals.fatG, Color(0xFF9B77D8), Modifier.weight(1f))
                     }
                     Text(
-                        nutritionTr(
-                            language,
-                            "Ҳадафи калориявӣ ҳоло таъин нашудааст. Ин танҳо ҷамъбасти сабтҳои воридкардаи туст.",
-                            "Цель по калориям пока не задана. Это только сумма внесённых тобой записей.",
-                            "No calorie target is set yet. This is only the total from meals you have logged."
-                        ),
+                        if (maintenanceEnergyKcal != null) {
+                            nutritionTr(
+                                language,
+                                "Тахмини нигоҳ доштани вазн: ~" + String.format(Locale.US, "%.0f", maintenanceEnergyKcal) + " ккал/рӯз. Ин ҳисоб тахминӣ аст.",
+                                "Оценка для поддержания веса: ~" + String.format(Locale.US, "%.0f", maintenanceEnergyKcal) + " ккал/день. Это приблизительный расчёт.",
+                                "Estimated maintenance: ~" + String.format(Locale.US, "%.0f", maintenanceEnergyKcal) + " kcal/day. This is an estimate."
+                            )
+                        } else {
+                            nutritionTr(
+                                language,
+                                "Меъёри шахсӣ ҳоло ҳисоб намешавад. Маълумоти профил ё меъёрҳои махсуси синну сол заруранд.",
+                                "Персональная оценка пока недоступна. Нужны данные профиля или специальные возрастные нормы.",
+                                "A personalised estimate is unavailable; profile data or age-specific guidance is needed."
+                            )
+                        },
                         color = palette.muted, fontSize = 10.sp, lineHeight = 15.sp
                     )
                 }
@@ -305,6 +327,33 @@ internal fun NutritionScreen(
                                 ),
                                 color = palette.muted, fontSize = 10.sp, lineHeight = 15.sp
                             )
+                            if (maintenanceEnergyKcal != null) {
+                                Text(
+                                    nutritionTr(language, "Нигоҳ доштани вазн: ~", "Поддержание веса: ~", "Estimated maintenance: ~") +
+                                        String.format(Locale.US, "%.0f", maintenanceEnergyKcal) +
+                                        nutritionTr(language, " ккал/рӯз", " ккал/день", " kcal/day"),
+                                    color = palette.ink, fontSize = 17.sp, fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    nutritionTr(
+                                        language,
+                                        "Ҳисоб бо назардошти фаъолияти ҳаррӯза анҷом шуд. Ин ҳадафи ҳатмӣ нест ва барои кам ё зиёд кардани вазн тавсия намедиҳад.",
+                                        "Расчёт учитывает ежедневную активность. Это не обязательная норма и не рекомендация для снижения или набора веса.",
+                                        "Calculated using daily activity. This is not a required intake or a recommendation to lose or gain weight."
+                                    ),
+                                    color = palette.muted, fontSize = 10.sp, lineHeight = 15.sp
+                                )
+                            } else {
+                                Text(
+                                    nutritionTr(
+                                        language,
+                                        "Барои меъёри нигоҳдории вазн сатҳи фаъолиятро дар профил пур кун.",
+                                        "Для оценки поддержания веса укажи уровень активности в профиле.",
+                                        "Complete your activity level in the health profile for a maintenance estimate."
+                                    ),
+                                    color = palette.muted, fontSize = 10.sp, lineHeight = 15.sp
+                                )
+                            }
                             Text(
                                 nutritionTr(language, "Формула: Mifflin–St Jeor · тахминӣ", "Формула: Mifflin–St Jeor · оценка", "Mifflin–St Jeor equation · estimate"),
                                 color = palette.navyLight, fontSize = 9.sp, fontWeight = FontWeight.SemiBold
