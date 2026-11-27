@@ -84,14 +84,14 @@ internal fun foodPreparationLabel(language: String, state: FoodPreparationState)
     FoodPreparationState.UNKNOWN -> nutritionTr(language, "номаълум", "неизвестно", "unknown")
 }
 
-private fun macroSummary(language: String, protein: Double, carbs: Double, fat: Double): String {
+internal fun macroSummary(language: String, protein: Double, carbs: Double, fat: Double): String {
     val p = nutritionTr(language, "сафеда", "белка", "protein")
     val c = nutritionTr(language, "карбогидрат", "углеводов", "carbs")
     val f = nutritionTr(language, "равған", "жиров", "fat")
     return String.format(Locale.US, "%.1f г %s · %.1f г %s · %.1f г %s", protein, p, carbs, c, fat, f)
 }
 
-private fun nutritionSourceLabel(language: String, source: NutritionDataSource): String = when (source) {
+internal fun nutritionSourceLabel(language: String, source: NutritionDataSource): String = when (source) {
     NutritionDataSource.USDA_FOOD_DATA_CENTRAL -> "USDA FoodData Central"
     NutritionDataSource.TAJIK_LAB_ANALYSIS ->
         nutritionTr(language, "Таҳлили лаборатории Тоҷикистон", "Лабораторный анализ Таджикистана", "Tajikistan laboratory analysis")
