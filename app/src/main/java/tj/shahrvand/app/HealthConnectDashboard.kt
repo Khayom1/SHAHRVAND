@@ -19,6 +19,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -43,6 +44,7 @@ import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
 import androidx.health.connect.client.records.ExerciseSessionRecord
 import androidx.health.connect.client.records.StepsRecord
+import androidx.health.connect.client.records.SleepSessionRecord
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import androidx.lifecycle.Lifecycle
@@ -302,6 +304,32 @@ internal fun HealthActivityDashboard(
                     color = palette.muted, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold
                 )
                 WeeklyStepsChart(language, week.days, palette)
+                Text(
+                    dashboardTr(language, "ПЕШРАФТИ МАШҚҲО", "ПРОГРЕСС ТРЕНИРОВОК", "WORKOUT PROGRESS"),
+                    color = palette.muted, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold
+                )
+                week.days.takeLast(3).asReversed().forEach { day ->
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            day.date.dayOfWeek.getDisplayName(
+                                TextStyle.SHORT,
+                                when (language) { "ru" -> Locale("ru"); "en" -> Locale.ENGLISH; else -> Locale("tg", "TJ") }
+                            ),
+                            modifier = Modifier.size(width = 34.dp, height = 16.dp),
+                            color = palette.muted, fontSize = 9.sp
+                        )
+                        LinearProgressIndicator(
+                            progress = { (day.exerciseMinutes.toFloat() / ACTIVE_MINUTE_GOAL.toFloat()).coerceIn(0f, 1f) },
+                            modifier = Modifier.weight(1f).height(6.dp).clip(CircleShape),
+                            color = palette.navyLight,
+                            trackColor = palette.surfaceVariant
+                        )
+                        Text(
+                            "${day.exerciseMinutes} мин",
+                            color = palette.ink, fontSize = 9.sp, fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         dashboardTr(language, "Таърихи машқҳо ва масофа", "Тренировки и дистанция", "Workouts and distance"),
@@ -398,6 +426,158 @@ private fun WeeklyStepsChart(
                 }
                 Spacer(Modifier.height(4.dp))
                 Text(dayLabel, color = palette.muted, fontSize = 8.sp, maxLines = 1)
+            }
+        }
+    }
+}
+
+
+@Composable
+internal fun SleepRecoveryDashboardCard(
+    language: String,
+    age: Int,
+    onOpenSleep: () -> Unit
+) {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val palette = LocalShahrvandPalette.current
+    val supported = remember { HealthConnectClient.getSdkStatus(context) == HealthConnectClient.SDK_AVAILABLE }
+    val sleepPermission = remember { HealthPermission.getReadPermission(SleepSessionRecord::class) }
+    var permissionGranted by remember { mutableStateOf(false) }
+    var loading by remember { mutableStateOf(false) }
+    var refresh by remember { mutableIntStateOf(0) }
+    var lastNightMinutes by remember { mutableStateOf<Long?>(null) }
+    var hasStages by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf("") }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        PermissionController.createRequestPermissionResultContract()
+    ) { granted ->
+        permissionGranted = sleepPermission in granted
+        if (permissionGranted) refresh++
+    }
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) refresh++
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    LaunchedEffect(refresh, supported) {
+        if (!supported) return@LaunchedEffect
+        loading = true
+        error = ""
+        try {
+            val client = HealthConnectClient.getOrCreate(context)
+            permissionGranted = sleepPermission in client.permissionController.getGrantedPermissions()
+            if (permissionGranted) {
+                val now = Instant.now()
+                val from = now.minus(Duration.ofDays(10))
+                val records = client.readRecords(
+                    ReadRecordsRequest(
+                        recordType = SleepSessionRecord::class,
+                        timeRangeFilter = TimeRangeFilter.between(from, now),
+                        pageSize = 500
+                    )
+                ).records
+                val valid = records.filter { record ->
+                    !record.endTime.isAfter(now) &&
+                        Duration.between(record.startTime, record.endTime).toMinutes() in 120L..960L
+                }
+                val latestDate = valid.maxOfOrNull { it.endTime.atZone(DASHBOARD_ZONE).toLocalDate() }
+                val latest = latestDate?.let { date ->
+                    val sameNight = valid.filter { it.endTime.atZone(DASHBOARD_ZONE).toLocalDate() == date }
+                    sameNight.filterNot {
+                        it.metadata.recordingMethod == androidx.health.connect.client.records.metadata.Metadata.RECORDING_METHOD_MANUAL_ENTRY ||
+                            it.metadata.dataOrigin.packageName != "com.sec.android.app.shealth"
+                    }.maxByOrNull { it.endTime }
+                        ?: sameNight.maxByOrNull { it.endTime }
+                }
+                lastNightMinutes = latest?.let { Duration.between(it.startTime, it.endTime).toMinutes() }
+                hasStages = latest?.stages?.isNotEmpty() == true
+            } else {
+                lastNightMinutes = null
+                hasStages = false
+            }
+        } catch (e: Exception) {
+            error = e.message ?: dashboardTr(language, "Маълумоти хоб гирифта нашуд.", "Не удалось получить данные сна.", "Sleep data could not be read.")
+        } finally {
+            loading = false
+        }
+    }
+
+    val targetMinutes = SleepRules.minimumTargetMinutes(age)
+    val minutes = lastNightMinutes ?: 0L
+    val hoursLabel = if (lastNightMinutes == null) "—" else "${minutes / 60}с ${minutes % 60}д"
+    val progress = if (targetMinutes > 0) (minutes.toFloat() / targetMinutes.toFloat()).coerceIn(0f, 1f) else 0f
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = palette.surface),
+        shape = RoundedCornerShape(23.dp),
+        border = BorderStroke(1.dp, palette.border),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(Modifier.fillMaxWidth().padding(15.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(dashboardTr(language, "ХОБ ВА БАРҚАРОРШАВӢ", "СОН И ВОССТАНОВЛЕНИЕ", "SLEEP & RECOVERY"),
+                        color = palette.muted, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold)
+                    Text(dashboardTr(language, "Хоби охирин", "Последний сон", "Last sleep"),
+                        color = palette.ink, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                }
+                Text(hoursLabel, color = palette.navy, fontSize = 19.sp, fontWeight = FontWeight.Black)
+            }
+            when {
+                !supported -> Text(
+                    dashboardTr(language, "Health Connect дастрас нест.", "Health Connect недоступен.", "Health Connect is unavailable."),
+                    color = palette.muted, fontSize = 10.sp
+                )
+                !permissionGranted -> {
+                    Text(
+                        dashboardTr(language, "Барои нишон додани хоби сабтшуда иҷозати хондан лозим аст.", "Нужно разрешение на чтение записей сна.", "Permission is needed to read recorded sleep."),
+                        color = palette.muted, fontSize = 10.sp
+                    )
+                    Button(
+                        onClick = { permissionLauncher.launch(setOf(sleepPermission)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(13.dp)
+                    ) {
+                        Text(dashboardTr(language, "Пайваст кардани маълумоти хоб", "Подключить данные сна", "Connect sleep data"))
+                    }
+                }
+                loading -> CircularProgressIndicator(Modifier.size(19.dp), strokeWidth = 2.dp)
+                lastNightMinutes != null -> {
+                    LinearProgressIndicator(
+                        progress = { progress },
+                        modifier = Modifier.fillMaxWidth().height(7.dp).clip(CircleShape),
+                        color = palette.navyLight,
+                        trackColor = palette.surfaceVariant
+                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            if (minutes >= targetMinutes)
+                                dashboardTr(language, "Ҳадафи хоб иҷро шуд", "Цель сна достигнута", "Sleep goal reached")
+                            else
+                                dashboardTr(language, "То ҳадаф: ${(targetMinutes - minutes).coerceAtLeast(0) / 60} соат", "До цели: ${(targetMinutes - minutes).coerceAtLeast(0) / 60} ч", "Below sleep goal by ${(targetMinutes - minutes).coerceAtLeast(0) / 60} h"),
+                            modifier = Modifier.weight(1f),
+                            color = palette.muted, fontSize = 9.sp
+                        )
+                        if (hasStages) {
+                            Text(dashboardTr(language, "Марҳилаҳо дастрас", "Фазы доступны", "Stages available"),
+                                color = palette.green, fontSize = 8.sp, fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                }
+                else -> Text(
+                    error.ifBlank { dashboardTr(language, "Сабти хоб ёфт нашуд. Хобро аз Health Connect пайваст кун.", "Запись сна не найдена. Подключи сон через Health Connect.", "No sleep record found. Connect a sleep source through Health Connect.") },
+                    color = palette.muted, fontSize = 10.sp, lineHeight = 14.sp
+                )
+            }
+            androidx.compose.material3.TextButton(onClick = onOpenSleep) {
+                Text(dashboardTr(language, "Таҳлили пурраи хоб", "Полный анализ сна", "Full sleep analysis"), fontSize = 10.sp)
             }
         }
     }
