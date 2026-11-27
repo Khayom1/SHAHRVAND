@@ -17,6 +17,7 @@ enum class FoodPreparationState {
     COOKED,
     DRIED,
     BAKED,
+    FERMENTED,
     UNKNOWN
 }
 
