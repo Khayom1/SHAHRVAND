@@ -106,6 +106,20 @@ internal fun nutritionSourceLabel(language: String, source: NutritionDataSource)
         nutritionTr(language, "Манбаъ муайян нест", "Источник не определён", "Unknown source")
 }
 
+private fun mealSourceLabel(language: String, snapshot: String): String = when {
+    snapshot.startsWith("{") ->
+        nutritionTr(language, "Ҳисоби дорухат", "Расчёт рецепта", "Recipe calculation")
+    snapshot.startsWith("usda_fdc:") -> "USDA FoodData Central"
+    snapshot.startsWith("tajik_lab:") ->
+        nutritionTr(language, "Таҳлили лаборатории Тоҷикистон", "Лабораторный анализ Таджикистана", "Tajikistan laboratory analysis")
+    snapshot.startsWith("manufacturer_label:") ->
+        nutritionTr(language, "Нишони истеҳсолкунанда", "Этикетка производителя", "Manufacturer label")
+    snapshot.startsWith("recipe_estimate:") ->
+        nutritionTr(language, "Ҳисоби дорухат", "Расчёт по рецепту", "Recipe calculation")
+    else ->
+        nutritionTr(language, "Манбаъ сабт шудааст", "Источник сохранён", "Source recorded")
+}
+
 @Composable
 internal fun NutritionScreen(
     language: String,
@@ -616,7 +630,7 @@ private fun MealLogCard(
                     color = palette.muted, fontSize = 9.sp
                 )
                 Text(
-                    meal.sourceSnapshot.substringBefore(':').replace('_', ' '),
+                    mealSourceLabel(language, meal.sourceSnapshot),
                     color = palette.muted, fontSize = 8.sp, maxLines = 1
                 )
             }
