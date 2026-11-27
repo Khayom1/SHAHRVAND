@@ -36,12 +36,22 @@ class HealthAssessmentTest {
         val sedentary = HealthAssessment.estimateMaintenanceEnergyKcalPerDay(
             30, 175.0, 70.0, "male", "sedentary"
         )
+        val light = HealthAssessment.estimateMaintenanceEnergyKcalPerDay(
+            30, 175.0, 70.0, "male", "light"
+        )
         val moderate = HealthAssessment.estimateMaintenanceEnergyKcalPerDay(
             30, 175.0, 70.0, "male", "moderate"
         )
+        val high = HealthAssessment.estimateMaintenanceEnergyKcalPerDay(
+            30, 175.0, 70.0, "male", "high"
+        )
         assertEquals(1978.5, sedentary ?: 0.0, 0.001)
+        assertEquals(2267.03125, light ?: 0.0, 0.001)
         assertEquals(2555.5625, moderate ?: 0.0, 0.001)
-        assertTrue((moderate ?: 0.0) > (sedentary ?: 0.0))
+        assertEquals(2844.09375, high ?: 0.0, 0.001)
+        assertTrue((light ?: 0.0) > (sedentary ?: 0.0))
+        assertTrue((moderate ?: 0.0) > (light ?: 0.0))
+        assertTrue((high ?: 0.0) > (moderate ?: 0.0))
     }
 
     @Test
