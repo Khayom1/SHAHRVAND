@@ -172,7 +172,6 @@ internal fun CleanupSubmissionScreen(
                 .onSuccess { beforeVideo = it; error = "" }
                 .onFailure { error = it.message ?: "Файл қабул нашуд." }
         }
-        busyPicker = ""
     }
     val afterPhotoPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         if (uri != null) {
@@ -180,7 +179,6 @@ internal fun CleanupSubmissionScreen(
                 .onSuccess { afterPhoto = it; error = "" }
                 .onFailure { error = it.message ?: "Файл қабул нашуд." }
         }
-        busyPicker = ""
     }
     val afterVideoPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         if (uri != null) {
@@ -188,7 +186,6 @@ internal fun CleanupSubmissionScreen(
                 .onSuccess { afterVideo = it; error = "" }
                 .onFailure { error = it.message ?: "Файл қабул нашуд." }
         }
-        busyPicker = ""
     }
 
     Column(Modifier.fillMaxSize().shahrvandCanvas()) {
@@ -280,7 +277,6 @@ internal fun CleanupSubmissionScreen(
                     language = language,
                     enabled = !uploading && !hasPending,
                     onPick = {
-                        busyPicker = "before_photo"
                         beforePhotoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                     },
                     onRemove = { beforePhoto = null }
@@ -294,7 +290,6 @@ internal fun CleanupSubmissionScreen(
                     language = language,
                     enabled = !uploading && !hasPending,
                     onPick = {
-                        busyPicker = "before_video"
                         beforeVideoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.VideoOnly))
                     },
                     onRemove = { beforeVideo = null }
@@ -308,7 +303,6 @@ internal fun CleanupSubmissionScreen(
                     language = language,
                     enabled = !uploading && !hasPending,
                     onPick = {
-                        busyPicker = "after_photo"
                         afterPhotoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                     },
                     onRemove = { afterPhoto = null }
@@ -322,7 +316,6 @@ internal fun CleanupSubmissionScreen(
                     language = language,
                     enabled = !uploading && !hasPending,
                     onPick = {
-                        busyPicker = "after_video"
                         afterVideoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.VideoOnly))
                     },
                     onRemove = { afterVideo = null }
