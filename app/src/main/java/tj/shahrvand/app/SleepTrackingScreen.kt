@@ -226,11 +226,12 @@ fun SleepTrackingScreen(
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-    val sdkStatus = remember { HealthConnectClient.getSdkStatus(context) }
     var permissionGranted by remember { mutableStateOf(false) }
     var loading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf("") }
     var refreshCounter by remember { mutableIntStateOf(0) }
+    // Re-check provider availability after returning from system settings or installing Health Connect.
+    val sdkStatus = remember(context, refreshCounter) { HealthConnectClient.getSdkStatus(context) }
     var nights by remember { mutableStateOf<List<SleepNight>>(emptyList()) }
     var rewardMessage by remember { mutableStateOf("") }
 
