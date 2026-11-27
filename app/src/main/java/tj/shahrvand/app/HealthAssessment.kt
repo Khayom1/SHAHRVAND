@@ -21,6 +21,11 @@ data class BmiAssessment(
         get() = adultCategory == null
 }
 
+data class DailyHydrationReference(
+    val totalWaterMl: Int,
+    val beverageWaterMl: Int
+)
+
 object HealthAssessment {
     /**
      * Predicts resting energy expenditure (REE), not total daily energy needs.
@@ -76,6 +81,27 @@ object HealthAssessment {
             else -> return null
         }
         return (resting * activityFactor).takeIf { it.isFinite() && it > 0.0 }
+    }
+
+    /**
+     * Age- and sex-specific adequate-intake reference values for healthy people.
+     * Activity and heat can increase needs; this is not a fixed prescription.
+     * Pregnancy, lactation and fluid-restricted conditions need clinical advice.
+     */
+    fun estimateDailyHydrationReference(
+        ageYears: Int,
+        sexAtBirth: String
+    ): DailyHydrationReference? {
+        val values = when {
+            ageYears in 9..13 && sexAtBirth == "male" -> 2400 to 1800
+            ageYears in 9..13 && sexAtBirth == "female" -> 2100 to 1600
+            ageYears in 14..18 && sexAtBirth == "male" -> 3300 to 2600
+            ageYears in 14..18 && sexAtBirth == "female" -> 2300 to 1800
+            ageYears in 19..120 && sexAtBirth == "male" -> 3700 to 3000
+            ageYears in 19..120 && sexAtBirth == "female" -> 2700 to 2200
+            else -> return null
+        }
+        return DailyHydrationReference(values.first, values.second)
     }
 
     fun assessBmi(ageYears: Int, heightCm: Double, weightKg: Double): BmiAssessment? {
