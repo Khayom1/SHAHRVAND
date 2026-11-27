@@ -81,6 +81,7 @@ internal fun foodPreparationLabel(language: String, state: FoodPreparationState)
     FoodPreparationState.BAKED -> nutritionTr(language, "дар танӯр пухта", "запечённый", "baked")
     FoodPreparationState.FERMENTED -> nutritionTr(language, "ферментшуда", "ферментированный", "fermented")
     FoodPreparationState.CANNED -> nutritionTr(language, "консервшуда", "консервированный", "canned")
+    FoodPreparationState.AS_SOLD -> nutritionTr(language, "дар шакли фурӯш", "в товарном виде", "as sold")
     FoodPreparationState.UNKNOWN -> nutritionTr(language, "номаълум", "неизвестно", "unknown")
 }
 
