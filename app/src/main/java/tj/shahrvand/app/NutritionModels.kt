@@ -20,6 +20,7 @@ enum class FoodPreparationState {
     BAKED,
     FERMENTED,
     CANNED,
+    AS_SOLD,
     UNKNOWN
 }
 
