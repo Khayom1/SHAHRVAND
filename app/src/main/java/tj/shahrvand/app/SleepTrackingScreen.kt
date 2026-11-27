@@ -58,11 +58,6 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import org.json.JSONObject
-import java.net.HttpURLConnection
-import java.net.URL
 
 private val SLEEP_NAVY: Color @Composable get() = LocalShahrvandPalette.current.navy
 private val SLEEP_NAVY_TEXT: Color @Composable get() = LocalShahrvandPalette.current.navyText
@@ -86,55 +81,23 @@ private data class SleepNight(
     val isManual: Boolean
 )
 
-
-internal object SupabaseSleepRepository {
-    private val base get() = BuildConfig.SUPABASE_URL.trimEnd('/')
-    private val key get() = BuildConfig.SUPABASE_PUBLISHABLE_KEY
-
-    suspend fun award(
-        token: String,
-        wakeDate: String,
-        startedAt: Instant,
-        endedAt: Instant,
-        sourcePackage: String,
-        isManual: Boolean
-    ): Boolean = withContext(Dispatchers.IO) {
-        var connection: HttpURLConnection? = null
-        try {
-            val body = JSONObject()
-                .put("p_wake_date", wakeDate)
-                .put("p_started_at", startedAt.toString())
-                .put("p_ended_at", endedAt.toString())
-                .put("p_source_package", sourcePackage)
-                .put("p_is_manual", isManual)
-            connection = (URL("$base/rest/v1/rpc/shahrvand_award_sleep_xp").openConnection() as HttpURLConnection).apply {
-                requestMethod = "POST"
-                connectTimeout = 12000
-                readTimeout = 15000
-                setRequestProperty("apikey", key)
-                setRequestProperty("Authorization", "Bearer $token")
-                setRequestProperty("Accept", "application/json")
-                setRequestProperty("Content-Type", "application/json")
-                doOutput = true
-            }
-            connection.outputStream.bufferedWriter(Charsets.UTF_8).use { it.write(body.toString()) }
-            val code = connection.responseCode
-            val stream = if (code in 200..299) connection.inputStream else connection.errorStream
-            val raw = stream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }.orEmpty()
-            if (code !in 200..299) {
-                val message = runCatching { JSONObject(raw).optString("message") }.getOrNull().orEmpty()
-                throw IllegalStateException(message.ifBlank { "HTTP $code" })
-            }
-            val result = JSONObject(raw)
-            result.optBoolean("ok") &&
-                result.optBoolean("qualified") &&
-                !result.optBoolean("already_awarded") &&
-                result.optInt("xp_awarded") == SleepRules.REWARD_XP
-        } finally {
-            connection?.disconnect()
-        }
+/** Human-readable labels for apps that commonly publish sleep records to Health Connect. */
+internal object SleepSourceLabels {
+    fun label(packageName: String): String = when (packageName) {
+        "com.sec.android.app.shealth" -> "Samsung Health"
+        "com.google.android.apps.fitness" -> "Google Fit"
+        "com.fitbit.FitbitMobile" -> "Fitbit"
+        "com.xiaomi.wearable" -> "Mi Fitness"
+        "com.xiaomi.hm.health" -> "Zepp Life"
+        "com.huawei.health" -> "Huawei Health"
+        "com.garmin.android.apps.connectmobile" -> "Garmin Connect"
+        "com.withings.wiscale2" -> "Withings"
+        "com.ouraring.oura" -> "Oura"
+        "fi.polar.polarflow" -> "Polar Flow"
+        else -> packageName.substringAfterLast('.').ifBlank { "Health Connect" }
     }
 }
+
 
 private object SleepHealthConnectRepository {
     val permissions = setOf(
@@ -169,9 +132,7 @@ private object SleepHealthConnectRepository {
         val candidates = response.records.mapNotNull { record ->
             if (record.endTime.isAfter(now)) return@mapNotNull null
 
-            // The server validates the full recorded session interval (end - start).
-            // Use the same duration here; summing sleep stages can be shorter and
-            // incorrectly prevent an otherwise eligible night from reaching the XP RPC.
+            // Use the full session interval; summing sleep stages can be shorter.
             val minutes = Duration.between(record.startTime, record.endTime).toMinutes()
             if (minutes !in 120L..960L) return@mapNotNull null
 
@@ -191,8 +152,9 @@ private object SleepHealthConnectRepository {
         return candidates.groupBy { it.wakeDate }
             .values
             .mapNotNull { sameDate ->
-                // Prefer an automatic Samsung Health record over a longer manual estimate.
-                sameDate.filterNot { it.isManual || it.sourcePackage != "com.sec.android.app.shealth" }
+                // Prefer device/app-recorded data over manual estimates. Health Connect
+                // is the common Android bridge; the originating app varies by device.
+                sameDate.filterNot { it.isManual }
                     .maxByOrNull { it.minutes }
                     ?: sameDate.maxByOrNull { it.minutes }
             }
@@ -203,18 +165,17 @@ private object SleepHealthConnectRepository {
 @Composable
 fun SleepTrackingScreen(
     language: String,
-    age: Int,
-    onReward: suspend (date: String, startedAt: Instant, endedAt: Instant, sourcePackage: String, isManual: Boolean) -> Boolean
+    age: Int
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-    val sdkStatus = remember { HealthConnectClient.getSdkStatus(context) }
     var permissionGranted by remember { mutableStateOf(false) }
     var loading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf("") }
     var refreshCounter by remember { mutableIntStateOf(0) }
+    // Re-check provider availability after returning from system settings or installing Health Connect.
+    val sdkStatus = remember(context, refreshCounter) { HealthConnectClient.getSdkStatus(context) }
     var nights by remember { mutableStateOf<List<SleepNight>>(emptyList()) }
-    var rewardMessage by remember { mutableStateOf("") }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         PermissionController.createRequestPermissionResultContract()
@@ -247,49 +208,10 @@ fun SleepTrackingScreen(
         }
     }
 
-    val today = remember { LocalDate.now(SLEEP_ZONE) }
     val latest = nights.firstOrNull()
-    val todaysNight = nights.firstOrNull { it.wakeDate == today }
     val targetMinutes = SleepRules.minimumTargetMinutes(age)
-    val durationQualifies = todaysNight?.let { SleepRules.qualifies(age, it.minutes) } == true
-    val qualifies = todaysNight?.let {
-        !it.isManual && it.sourcePackage == "com.sec.android.app.shealth" &&
-            SleepRules.qualifies(age, it.minutes)
-    } == true
-
-    LaunchedEffect(todaysNight?.wakeDate, todaysNight?.minutes, todaysNight?.sourcePackage, todaysNight?.isManual, qualifies) {
-        rewardMessage = ""
-        if (todaysNight != null && durationQualifies && !qualifies) {
-            rewardMessage = when {
-                todaysNight.isManual -> sleepTr(language,
-                    "Сабти дастӣ барои гирифтани XP қабул намешавад.",
-                    "Ручная запись не подходит для начисления XP.",
-                    "Manual sleep entries are not eligible for XP.")
-                else -> sleepTr(language,
-                    "Барои XP сабти автоматии Samsung Health лозим аст.",
-                    "Для XP нужна автоматическая запись Samsung Health.",
-                    "An automatic Samsung Health record is required for XP.")
-            }
-        } else if (qualifies && todaysNight != null) {
-            try {
-                rewardMessage = if (onReward(
-                    todaysNight.wakeDate.toString(),
-                    todaysNight.start,
-                    todaysNight.end,
-                    todaysNight.sourcePackage,
-                    todaysNight.isManual
-                )) {
-                    sleepTr(language, "Офарин! +15 XP барои хоби кофӣ.", "Отлично! +15 XP за достаточный сон.", "Great! +15 XP for sufficient sleep.")
-                } else {
-                    sleepTr(language, "Холи ин шаб аллакай ҳисоб шудааст.", "Очки за эту ночь уже начислены.", "This night's points have already been awarded.")
-                }
-            } catch (e: Exception) {
-                error = e.message ?: sleepTr(language,
-                    "Сервер XP-ро тасдиқ накард. Баъдтар навсозӣ кун.",
-                    "Сервер не подтвердил XP. Повтори позже.",
-                    "The server could not verify XP. Try refreshing later.")
-            }
-        }
+    val sleepInsight = remember(nights, targetMinutes) {
+        SleepRules.analyzeRecentNights(nights.map { it.minutes }, targetMinutes)
     }
 
     Column(
@@ -297,16 +219,16 @@ fun SleepTrackingScreen(
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
-            Text(sleepTr(language, "ОДАТИ ХОБ", "ПРИВЫЧКА СНА", "SLEEP HABIT"),
+            Text(sleepTr(language, "САЛОМАТИИ ХОБ", "ЗДОРОВЫЙ СОН", "SLEEP HEALTH"),
                 color = SLEEP_GOLD, fontSize = 10.sp, fontWeight = FontWeight.ExtraBold)
-            Text(sleepTr(language, "Хоби кофӣ — пешрафти ҳаррӯза.", "Достаточный сон — ежедневный прогресс.", "Enough sleep is daily progress."),
+            Text(sleepTr(language, "Хоб барои саломатӣ ва барқароршавии организм муҳим аст.", "Сон важен для здоровья и восстановления организма.", "Sleep is essential for health and recovery."),
                 color = SLEEP_NAVY_TEXT, fontSize = 22.sp, fontWeight = FontWeight.Black)
             Text(
                 sleepTr(
                     language,
-                    "SHAHRVAND сабти хобро аз Health Connect мехонад. Барои ҳисоб кардани XP сана, вақти оғозу анҷом ва манбаи сабт ба сервер фиристода мешаванд; худи сабти Health Connect нусхабардорӣ намешавад.",
-                    "SHAHRVAND читает записи сна через Health Connect. Для начисления XP на сервер отправляются дата, время начала и окончания, а также источник записи; сама запись Health Connect не копируется.",
-                    "SHAHRVAND reads sleep records through Health Connect. To award XP, the date, start and end times, and record source are sent to the server; the Health Connect record itself is not copied."
+                    "SHAHRVAND маълумоти хобро мустақиман аз Health Connect мехонад. Маълумот танҳо барои назорати саломатӣ ва барқароршавӣ дар ҳамин дастгоҳ истифода мешавад.",
+                    "SHAHRVAND читает данные сна напрямую из Health Connect. Они используются только для контроля здоровья и восстановления на этом устройстве.",
+                    "SHAHRVAND reads sleep data directly from Health Connect. It is used only for health and recovery insights on this device."
                 ), color = SLEEP_MUTED, fontSize = 12.sp, lineHeight = 18.sp
             )
         }
@@ -336,16 +258,15 @@ fun SleepTrackingScreen(
                             }, color = SLEEP_MUTED, fontSize = 11.sp
                         )
                     }
-                    Text("+15 XP", color = SLEEP_GOLD, fontWeight = FontWeight.Black, fontSize = 14.sp)
                 }
                 HorizontalDivider(color = SLEEP_BORDER)
                 when {
                     sdkStatus != HealthConnectClient.SDK_AVAILABLE -> {
                         Text(
                             sleepTr(language,
-                                "Health Connect дастрас нест. Онро дар телефон насб ё навсозӣ кун ва Samsung Health-ро низ навсозӣ намо.",
-                                "Health Connect недоступен. Установи или обнови его на телефоне и обнови Samsung Health.",
-                                "Health Connect is unavailable. Install or update it on your phone and update Samsung Health."),
+                                "Health Connect дастрас нест. Онро аз Google Play насб ё навсозӣ кун.",
+                                "Health Connect недоступен. Установи или обнови его через Google Play.",
+                                "Health Connect is unavailable. Install or update it from Google Play."),
                             color = SLEEP_MUTED, fontSize = 12.sp, lineHeight = 18.sp
                         )
                     }
@@ -378,9 +299,9 @@ fun SleepTrackingScreen(
                         } else if (nights.isEmpty()) {
                             Text(
                                 sleepTr(language,
-                                    "Сабти хоб ёфт нашуд. Дар Samsung Health ба Settings → Health Connect даромада, дастрасии Sleep-ро фаъол кун. Баъд саҳифаро навсозӣ намо.",
-                                    "Запись сна не найдена. В Samsung Health открой Settings → Health Connect и разреши доступ к Sleep. Затем обнови экран.",
-                                    "No sleep record found. In Samsung Health, open Settings → Health Connect and enable Sleep sharing, then refresh this screen."),
+                                    "Сабти хоб ёфт нашуд. Дар барномаи соат ё тандурустии худ ҳамоҳангсозии Sleep бо Health Connect-ро фаъол кун, иҷозати Sleep-ро деҳ ва боз навсозӣ намо.",
+                                    "Запись сна не найдена. В приложении часов или здоровья включи синхронизацию Sleep с Health Connect, разреши доступ к сну и обнови экран.",
+                                    "No sleep record found. Enable Sleep sync with Health Connect in your watch or health app, grant sleep access, then refresh."),
                                 color = SLEEP_MUTED, fontSize = 12.sp, lineHeight = 18.sp
                             )
                         }
@@ -422,8 +343,7 @@ fun SleepTrackingScreen(
                     Text(dateLabel + " · " + startLabel + " – " + endLabel, color = SLEEP_MUTED, fontSize = 12.sp)
                     Text(
                         sleepTr(language, "Манба: ", "Источник: ", "Source: ") +
-                            if (latest.sourcePackage == "com.sec.android.app.shealth") "Samsung Health"
-                            else latest.sourcePackage.substringAfterLast('.').ifBlank { "Health Connect" },
+                            SleepSourceLabels.label(latest.sourcePackage),
                         color = SLEEP_MUTED, fontSize = 10.sp
                     )
                     Text(
@@ -456,58 +376,124 @@ fun SleepTrackingScreen(
                             fontWeight = FontWeight.Bold, fontSize = 12.sp,
                             modifier = Modifier.weight(1f)
                         )
-                        if (latest.wakeDate == today && qualifies) {
-                            Text("+15 XP", color = SLEEP_GREEN, fontWeight = FontWeight.Black)
-                        }
-                    }
-                    if (rewardMessage.isNotBlank()) {
-                        Text(rewardMessage, color = SLEEP_GREEN, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     }
                 }
             }
         }
 
-        if (latest != null && latest.minutes < targetMinutes) {
+        if (sleepInsight != null && sleepInsight.pattern != SleepPattern.ADEQUATE) {
+            val insight = sleepInsight
+            val averageLabel = (insight.averageMinutes / 60L).toString() + " " +
+                sleepTr(language, "соат", "ч", "h") + " " +
+                (insight.averageMinutes % 60L) + " " +
+                sleepTr(language, "дақ", "мин", "min")
+            val title = when (insight.pattern) {
+                SleepPattern.REPEATED_SHORT_SLEEP -> sleepTr(
+                    language,
+                    "КАМХОБИИ ТАКРОРШАВАНДА",
+                    "ПОВТОРЯЮЩИЙСЯ НЕДОСЫП",
+                    "REPEATED SHORT SLEEP"
+                )
+                SleepPattern.LAST_NIGHT_SHORT -> sleepTr(
+                    language,
+                    "ХОБИ ШАБИ ОХИР КАМ БУД",
+                    "ПОСЛЕДНЯЯ НОЧЬ БЫЛА КОРОТКОЙ",
+                    "LAST NIGHT'S SLEEP WAS SHORT"
+                )
+                SleepPattern.MIXED_RECENT_SLEEP -> sleepTr(
+                    language,
+                    "РЕҶАИ ХОБ НОМУНТАЗАМ АСТ",
+                    "РЕЖИМ СНА НЕСТАБИЛЕН",
+                    "RECENT SLEEP IS INCONSISTENT"
+                )
+                SleepPattern.ADEQUATE -> ""
+            }
+            val summary = when (insight.pattern) {
+                SleepPattern.REPEATED_SHORT_SLEEP -> sleepTr(
+                    language,
+                    "Дар сабтҳои охир ${insight.belowTargetCount} аз ${insight.recentNightCount} шаб аз ҳадафи синну сол камтар хоб рафтӣ. Давомнокии миёна: ",
+                    "В последних записях ${insight.belowTargetCount} из ${insight.recentNightCount} ночей были короче возрастной цели. Средняя длительность: ",
+                    "In the latest records, ${insight.belowTargetCount} of ${insight.recentNightCount} nights were below your age-based target. Average duration: "
+                ) + averageLabel + "."
+                SleepPattern.LAST_NIGHT_SHORT -> sleepTr(
+                    language,
+                    "Сабти охирин аз ҳадафи синну сол камтар аст. Аз рӯи сабтҳои дастрас ҳоло камхобии такроршаванда муайян нашудааст.",
+                    "Последняя запись ниже возрастной цели. По доступным записям повторяющийся недосып пока не выявлен.",
+                    "The latest record is below your age-based target. The available records do not yet show a repeated pattern."
+                )
+                SleepPattern.MIXED_RECENT_SLEEP -> sleepTr(
+                    language,
+                    "Шаби охир ба ҳадаф расид, аммо дар ${insight.belowTargetCount} аз ${insight.recentNightCount} сабти охир хоб кам буд. Давомнокии миёна: ",
+                    "Последняя ночь достигла цели, но в ${insight.belowTargetCount} из ${insight.recentNightCount} последних записей сна было недостаточно. Средняя длительность: ",
+                    "The latest night met the target, but ${insight.belowTargetCount} of the latest ${insight.recentNightCount} records were short. Average duration: "
+                ) + averageLabel + "."
+                SleepPattern.ADEQUATE -> ""
+            }
+            val tips = when (insight.pattern) {
+                SleepPattern.REPEATED_SHORT_SLEEP -> listOf(
+                    sleepTr(language,
+                        "Барои 7 шаби оянда вақти кофии хобро пешакӣ дар тақвим ҷудо кун; вақти бедоршавиро ҳар рӯз тақрибан яксон нигоҳ дор.",
+                        "На ближайшие 7 ночей заранее выдели достаточно времени для сна и старайся вставать примерно в одно время.",
+                        "For the next 7 nights, protect enough time for sleep and keep your wake-up time consistent."),
+                    sleepTr(language,
+                        "Қаҳва, чойи сиёҳи сахт ва энергетикро дар 8 соати пеш аз хоб истеъмол накун; кофеин метавонад таъсири дароз дошта бошад.",
+                        "Не употребляй кофе, крепкий чёрный чай и энергетики в течение 8 часов перед сном: действие кофеина может быть длительным.",
+                        "Avoid coffee, strong black tea and energy drinks during the 8 hours before bedtime; caffeine can have lasting effects."),
+                    sleepTr(language,
+                        "30–60 дақиқа пеш аз хоб телефонро канор гузор, равшаниро кам кун ва кори ором интихоб намо.",
+                        "За 30–60 минут до сна отложи телефон, приглуши свет и выбери спокойное занятие.",
+                        "Put your phone away, dim the lights and choose a quiet activity 30–60 minutes before bed."),
+                    sleepTr(language,
+                        "Ҷои хобро ором, торик ва каме салқин нигоҳ дор; рӯзона дар рӯшноии табиӣ сайр кун.",
+                        "Сделай спальню тихой, тёмной и прохладной; днём выходи на естественный свет.",
+                        "Keep the bedroom quiet, dark and comfortably cool; get natural daylight during the day.")
+                )
+                SleepPattern.LAST_NIGHT_SHORT -> buildList {
+                    add(sleepTr(language,
+                        "Имрӯз вақти иловагӣ барои хоби шаби оянда ҷудо кун; кӯшиш кун вақти бедоршавӣ доимӣ монад.",
+                        "Сегодня заранее выдели больше времени для сна следующей ночью и сохрани привычное время подъёма.",
+                        "Set aside enough opportunity for a longer night of sleep, while keeping your usual wake-up time."))
+                    add(sleepTr(language,
+                        "Агар хоболуд бошӣ, ронандагӣ ё кори хатарнокро анҷом надеҳ; аввал бехатариро интихоб кун.",
+                        "При сонливости не садись за руль и не выполняй опасную работу; сначала позаботься о безопасности.",
+                        "Do not drive or do hazardous tasks when sleepy; put safety first."))
+                    if (age >= 18) add(sleepTr(language,
+                        "Агар рӯзона сахт хоболуд бошӣ, хоби кӯтоҳи то 20 дақиқа дар аввали нисфирӯзӣ метавонад ҳушёриро беҳтар кунад; дер хоб накун.",
+                        "Если днём сильно хочется спать, короткий сон до 20 минут в первой половине дня может повысить бодрость; не спи поздно.",
+                        "If needed, an early-afternoon nap of up to 20 minutes may improve alertness; avoid napping late."))
+                    add(sleepTr(language,
+                        "Чойи сиёҳи сахт, қаҳва ва энергетикро наздики вақти хоб нанӯш.",
+                        "Не пей крепкий чёрный чай, кофе и энергетики близко ко времени сна.",
+                        "Avoid strong tea, coffee and energy drinks close to bedtime."))
+                }
+                SleepPattern.MIXED_RECENT_SLEEP -> listOf(
+                    sleepTr(language,
+                        "Шаби охир хубтар буд — ҳамин реҷаро нигоҳ дор: вақти хоб ва бедоршавиро ҳар рӯз тақрибан яксон интихоб кун.",
+                        "Последняя ночь была лучше — закрепи результат: ложись и вставай примерно в одно время каждый день.",
+                        "The latest night was better. Build on it by keeping bedtime and wake time consistent."),
+                    sleepTr(language,
+                        "Рӯзҳои дарсӣ ё кориро пешакӣ ба нақша гир, то вазифаҳо вақти хобро кам накунанд.",
+                        "Планируй учёбу и работу заранее, чтобы дела не сокращали время сна.",
+                        "Plan study and work ahead so they do not keep cutting into your sleep window."),
+                    sleepTr(language,
+                        "Пеш аз хоб экран ва равшании зиёдро кам кун; чойи сахт ва кофеинро дер нанӯш.",
+                        "Перед сном сократи экранное время и яркий свет; не пей крепкий чай и кофеин поздно.",
+                        "Reduce screen time and bright light before bed; avoid late caffeine.")
+                )
+                SleepPattern.ADEQUATE -> emptyList()
+            }
             Card(
                 colors = CardDefaults.cardColors(containerColor = LocalShahrvandPalette.current.goldSurface),
                 border = BorderStroke(1.dp, SLEEP_BORDER),
                 shape = RoundedCornerShape(20.dp)
             ) {
-                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
+                    Text(title, color = SLEEP_NAVY_TEXT, fontWeight = FontWeight.ExtraBold, fontSize = 12.sp)
+                    Text(summary, color = SLEEP_NAVY_TEXT, fontSize = 12.sp, lineHeight = 18.sp)
                     Text(
-                        sleepTr(language, "ЧӢ КОР КУНӢ, ТО ХОБ БЕҲТАР ШАВАД", "КАК УЛУЧШИТЬ СОН", "HOW TO IMPROVE YOUR SLEEP"),
-                        color = SLEEP_NAVY_TEXT, fontWeight = FontWeight.ExtraBold, fontSize = 12.sp
+                        sleepTr(language, "ПЕШНИҲОДҲОИ МУВОФИҚ БА САБТҲОИ ТУ", "РЕКОМЕНДАЦИИ ПО ТВОИМ ЗАПИСЯМ", "RECOMMENDATIONS BASED ON YOUR RECORDS"),
+                        color = SLEEP_GOLD, fontWeight = FontWeight.ExtraBold, fontSize = 10.sp
                     )
-                    Text(
-                        sleepTr(language,
-                            "Хоби сабтшуда аз ҳадафи синну соли ту камтар аст. Ин тавсияҳо одатҳои дастгиришудаи илмӣ мебошанд:",
-                            "Записанный сон короче возрастной нормы. Вот научно обоснованные привычки:",
-                            "Your recorded sleep is below the age-based target. These are evidence-based habits:"
-                        ), color = SLEEP_NAVY_TEXT, fontSize = 12.sp, lineHeight = 18.sp
-                    )
-                    val tips = when (language) {
-                        "ru" -> listOf(
-                            "Ложись и вставай примерно в одно время, включая выходные.",
-                            "Не пей чай с кофеином, кофе и энергетики во второй половине дня.",
-                            "Не ешь тяжёлую пищу непосредственно перед сном; выбирай обычный сбалансированный ужин за 2–3 часа.",
-                            "За 30–60 минут до сна убери телефон и приглуши свет.",
-                            "Днём гуляй или занимайся физической активностью; интенсивную тренировку закончи заранее."
-                        )
-                        "en" -> listOf(
-                            "Keep a consistent bedtime and wake time, including weekends.",
-                            "Avoid caffeinated tea, coffee and energy drinks in the afternoon and evening.",
-                            "Avoid heavy meals right before bed; have a balanced, familiar dinner 2–3 hours earlier.",
-                            "Put the phone away and dim lights 30–60 minutes before bedtime.",
-                            "Get daylight and physical activity during the day; finish intense exercise well before bed."
-                        )
-                        else -> listOf(
-                            "Ҳар рӯз, ҳатто рӯзҳои истироҳат, тақрибан дар як вақт хоб раву бедор шав.",
-                            "Нимаи дуюми рӯз чойи сиёҳи сахт, қаҳва ва энергетик нанӯш.",
-                            "Пеш аз хоб хӯроки вазнин нахӯр; 2–3 соат пештар шоми муътадилу гуногун истеъмол кун.",
-                            "30–60 дақиқа пеш аз хоб телефонро канор гузор ва чароғро кам кун.",
-                            "Рӯзона каме дар рӯшноии рӯз сайр ё машқ кун; машқи шадидро хеле дер анҷом надеҳ."
-                        )
-                    }
                     tips.forEach { tip ->
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Top) {
                             Text("•", color = SLEEP_GOLD, fontWeight = FontWeight.Black)
@@ -516,9 +502,23 @@ fun SleepTrackingScreen(
                     }
                     Text(
                         sleepTr(language,
-                            "Ғизои махсусе нест, ки камхобиро ҷуброн кунад. Агар мушкили хоб чанд ҳафта давом кунад ё рӯзона сахт хоболуд бошӣ, ба духтур муроҷиат кун.",
-                            "Нет продукта, который компенсирует недостаток сна. Если проблемы длятся несколько недель или есть сильная дневная сонливость, обратись к врачу.",
-                            "No food can compensate for insufficient sleep. If sleep problems persist for weeks or you have severe daytime sleepiness, consult a clinician."
+                            "Ғизои одии мутавозин бихӯр ва об нӯш; ягон хӯрок камбуди хобро ҷуброн намекунад. Энергетикро роҳи ислоҳи камхобӣ нашумор.",
+                            "Выбирай обычное сбалансированное питание и пей воду; еда не компенсирует недосып. Не используй энергетики как способ исправить нехватку сна.",
+                            "Choose regular balanced meals and drink water; food cannot replace lost sleep. Do not use energy drinks to make up for insufficient sleep."
+                        ), color = SLEEP_MUTED, fontSize = 10.sp, lineHeight = 15.sp
+                    )
+                    Text(
+                        sleepTr(language,
+                            "Агар камхобӣ чанд ҳафта давом кунад, ё бо вуҷуди вақти кофӣ хоб рафтан рӯзона сахт хоболуд бошӣ, ба духтур муроҷиат кун. Агар нишонаҳо ногаҳон сахт бошанд, зудтар ёрии тиббӣ гир.",
+                            "Если недосып продолжается несколько недель или сильная сонливость сохраняется даже при достаточном времени для сна, обратись к врачу. При внезапных выраженных симптомах обратись за медицинской помощью раньше.",
+                            "If short sleep continues for several weeks, or you remain very sleepy despite allowing enough time for sleep, consult a clinician. Seek care sooner for sudden or severe symptoms."
+                        ), color = SLEEP_MUTED, fontSize = 10.sp, lineHeight = 15.sp
+                    )
+                    Text(
+                        sleepTr(language,
+                            "Ин таҳлил танҳо давомнокии сабтшудаи хобро истифода мебарад; он сифати хоб ё сабаби камхобиро муайян намекунад.",
+                            "Анализ учитывает только записанную продолжительность сна; он не определяет качество сна или причину недосыпа.",
+                            "This analysis uses recorded sleep duration only; it does not determine sleep quality or the cause of short sleep."
                         ), color = SLEEP_MUTED, fontSize = 10.sp, lineHeight = 15.sp
                     )
                 }
@@ -527,9 +527,9 @@ fun SleepTrackingScreen(
 
         Text(
             sleepTr(language,
-                "Маълумоти хоб метавонад дертар ба Health Connect ҳамоҳанг шавад. Баъди кушодани Samsung Health ин саҳифаро навсозӣ кун. XP-и хоб ба рейтинги ҳафтаинаи серверӣ низ дохил мешавад.",
-                "Данные сна могут синхронизироваться с Health Connect с задержкой. После открытия Samsung Health обнови эту страницу. Очки за сон также входят в недельный серверный рейтинг.",
-                "Sleep data may sync to Health Connect with a delay. After opening Samsung Health, refresh this page. Sleep XP is also included in the server weekly leaderboard."
+                "Маълумоти хоб метавонад бо таъхир ба Health Connect ҳамоҳанг шавад. Барномаи манбаи хобро кушо, баъд ин саҳифаро навсозӣ кун. Маълумоти хоб барои назорати саломатӣ истифода мешавад.",
+                "Данные сна могут поступать в Health Connect с задержкой. Открой приложение-источник сна, затем обнови эту страницу. Данные сна нужны для контроля здоровья.",
+                "Sleep data may sync to Health Connect with a delay. Open the app that records your sleep, then refresh this screen. Sleep data is used for health insights."
             ), color = SLEEP_MUTED, fontSize = 10.sp, lineHeight = 15.sp
         )
     }
