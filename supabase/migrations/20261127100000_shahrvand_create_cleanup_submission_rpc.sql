@@ -45,7 +45,7 @@ begin
   end if;
 
   if cardinality(v_paths) <> 4
-     or (select count(distinct value) from unnest(v_paths) as value) <> 4 then
+     or (select count(distinct path_value) from unnest(v_paths) as path_rows(path_value)) <> 4 then
     raise exception 'EVIDENCE_PATHS_MUST_BE_DISTINCT' using errcode = '22023';
   end if;
 
