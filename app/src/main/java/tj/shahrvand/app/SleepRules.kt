@@ -12,4 +12,8 @@ object SleepRules {
 
     fun qualifies(age: Int, sleepMinutes: Long): Boolean =
         sleepMinutes >= minimumTargetMinutes(age)
+
+    /** Accept non-manual sleep sessions from any connected Health Connect provider. */
+    fun isEligibleRecord(isManual: Boolean, sourcePackage: String): Boolean =
+        !isManual && sourcePackage.isNotBlank()
 }
