@@ -206,9 +206,7 @@ internal fun HealthProfileScreen(
                         "build_habit" to healthTr(language, "Одатҳои солим", "Здоровые привычки", "Healthy habits"),
                         "maintain" to healthTr(language, "Нигоҳ доштани ҳолати ҷорӣ", "Поддерживать форму", "Maintain current health"),
                         "build_strength" to healthTr(language, "Қувват ва мушакҳо", "Сила и мышцы", "Build strength"),
-                        "improve_endurance" to healthTr(language, "Тобоварӣ", "Выносливость", "Improve endurance"),
-                        "gain_weight" to healthTr(language, "Зиёд кардани вазн", "Набор веса", "Gain weight"),
-                        "weight_management" to healthTr(language, "Идоракунии вазн", "Контроль веса", "Weight management")
+                        "improve_endurance" to healthTr(language, "Тобоварӣ", "Выносливость", "Improve endurance")
                     ),
                     onSelected = { healthGoal = it }
                 )
