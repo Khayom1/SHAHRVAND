@@ -34,6 +34,7 @@ import androidx.compose.material.icons.filled.Bedtime
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.LocalFlorist
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -363,10 +364,11 @@ private fun ShahrvandApp() {
         modifier = Modifier.fillMaxSize().shahrvandCanvas(),
         containerColor = Color.Transparent,
         bottomBar = {
-            val navTabs = listOf(0, 1, 4, 2, 3)
+            val navTabs = listOf(0, 1, 5, 4, 2, 3)
             val labels = listOf(
                 tr(language, "Асосӣ", "Главная", "Home"),
                 tr(language, "Фаъолият", "Активность", "Activity"),
+                tr(language, "Ҷомеа", "Сообщество", "Community"),
                 tr(language, "Саломатӣ", "Здоровье", "Health"),
                 tr(language, "Рейтинг", "Рейтинг", "Ranking"),
                 tr(language, "Профил", "Профиль", "Profile")
@@ -374,6 +376,7 @@ private fun ShahrvandApp() {
             val icons = listOf(
                 Icons.Filled.Home,
                 Icons.Filled.Explore,
+                Icons.Filled.LocalFlorist,
                 Icons.Filled.Favorite,
                 Icons.Filled.EmojiEvents,
                 Icons.Filled.AccountCircle
@@ -490,6 +493,7 @@ private fun ShahrvandApp() {
                         },
                         onOpenSleep = { homeDestination = "sleep" },
                         onOpenHealth = { healthSection = "profile"; tab = 4 },
+                        onOpenCommunity = { tab = 5 },
                         onOpenProfile = { tab = 3 },
                         onOpenSettings = { settingsOpen = true },
                         onToggleTheme = {
@@ -521,6 +525,15 @@ private fun ShahrvandApp() {
                         }
                     )
                 }
+                5 -> CleanupSubmissionScreen(
+                    language = language,
+                    userId = prefs.getString("auth_user_id", "") ?: "",
+                    getAccessToken = ::getValidAccessToken,
+                    onBack = {
+                        tab = 0
+                        homeDestination = "dashboard"
+                    }
+                )
                 3 -> ShahrvandProfileScreen(
                     language = language,
                     firstName = accountFirstName,
@@ -796,6 +809,7 @@ private fun HomeScreen(
     onOpenNotes: () -> Unit,
     onOpenSleep: () -> Unit,
     onOpenHealth: () -> Unit,
+    onOpenCommunity: () -> Unit,
     onOpenProfile: () -> Unit,
     onOpenSettings: () -> Unit,
     onToggleTheme: () -> Unit
@@ -928,6 +942,13 @@ private fun HomeScreen(
             DashboardShortcut(Modifier.weight(1f), "🌙", tr(language, "Хоб", "Сон", "Sleep"), palette, onOpenSleep)
             DashboardShortcut(Modifier.weight(1f), "♥", tr(language, "Саломатӣ", "Здоровье", "Health"), palette, onOpenHealth)
         }
+        DashboardPrimaryAction(
+            title = tr(language, "Ҷомеаи сабз", "Зелёное сообщество", "Green community"),
+            subtitle = tr(language, "Тозагии маҳалла ва ташаббусҳои экологӣ", "Чистота района и экологические инициативы", "Neighbourhood clean-ups and local eco actions"),
+            icon = "🌱",
+            palette = palette,
+            onClick = onOpenCommunity
+        )
         Spacer(Modifier.height(5.dp))
     }
 }
