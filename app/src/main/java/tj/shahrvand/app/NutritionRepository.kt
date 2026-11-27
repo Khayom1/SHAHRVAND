@@ -95,13 +95,17 @@ object NutritionRepository {
     suspend fun addFoodMeal(
         food: FoodCatalogItem,
         portionGrams: Double,
+        displayName: String,
         accessToken: String
     ): MealLogRecord = withContext(Dispatchers.IO) {
         requireValidSession(accessToken)
+        require(displayName.trim().isNotEmpty() && displayName.trim().length <= 160) {
+            "Номи хӯрок нодуруст аст."
+        }
         val nutrients = NutritionCalculator.forFoodPortion(food, portionGrams)
             ?: throw IllegalArgumentException("Миқдор ё маълумоти ғизоӣ нодуруст аст.")
         val body = JSONObject()
-            .put("item_name_snapshot", food.nameTg)
+            .put("item_name_snapshot", displayName.trim())
             .put("catalog_item_id", food.id)
             .put("recipe_slug_snapshot", JSONObject.NULL)
             .put("portion_g", portionGrams)
