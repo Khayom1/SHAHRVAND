@@ -9,7 +9,7 @@ create table if not exists public.shahrvand_health_profiles (
   activity_level text not null default 'light'
     check (activity_level in ('sedentary', 'light', 'moderate', 'high')),
   health_goal text not null default 'build_habit'
-    check (health_goal in ('maintain', 'build_strength', 'improve_endurance', 'build_habit', 'gain_weight', 'weight_management')),
+    check (health_goal in ('maintain', 'build_strength', 'improve_endurance', 'build_habit')),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -20,7 +20,7 @@ create table if not exists public.shahrvand_body_measurements (
   weight_kg numeric(6,2) not null check (weight_kg between 5 and 500),
   measured_at timestamptz not null default now(),
   source text not null default 'manual'
-    check (source in ('manual', 'health_connect', 'connected_device')),
+    check (source = 'manual'),
   created_at timestamptz not null default now()
 );
 
