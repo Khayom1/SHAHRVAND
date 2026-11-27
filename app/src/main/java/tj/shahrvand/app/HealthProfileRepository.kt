@@ -13,7 +13,13 @@ data class HealthProfileRecord(
     val heightCm: Double,
     val sexAtBirth: String,
     val activityLevel: String,
-    val healthGoal: String
+    val healthGoal: String,
+    val waistCm: Double?,
+    val restingHeartRateBpm: Int?,
+    val bloodPressureSystolicMmhg: Int?,
+    val bloodPressureDiastolicMmhg: Int?,
+    val allergies: String,
+    val healthConditions: String
 )
 
 data class BodyMeasurementRecord(
@@ -37,7 +43,7 @@ object HealthProfileRepository {
             val encodedUserId = URLEncoder.encode(userId, Charsets.UTF_8.name())
             val profileRows = requestArray(
                 "/rest/v1/shahrvand_health_profiles" +
-                    "?select=height_cm,sex_at_birth,activity_level,health_goal" +
+                    "?select=height_cm,sex_at_birth,activity_level,health_goal,waist_cm,resting_heart_rate_bpm,blood_pressure_systolic_mmhg,blood_pressure_diastolic_mmhg,allergies,health_conditions" +
                     "&user_id=eq." + encodedUserId + "&limit=1",
                 "GET",
                 accessToken
@@ -55,7 +61,13 @@ object HealthProfileRepository {
                     heightCm = row.optDouble("height_cm"),
                     sexAtBirth = row.optString("sex_at_birth", "not_specified"),
                     activityLevel = row.optString("activity_level", "light"),
-                    healthGoal = row.optString("health_goal", "build_habit")
+                    healthGoal = row.optString("health_goal", "build_habit"),
+                    waistCm = if (row.isNull("waist_cm")) null else row.optDouble("waist_cm"),
+                    restingHeartRateBpm = if (row.isNull("resting_heart_rate_bpm")) null else row.optInt("resting_heart_rate_bpm"),
+                    bloodPressureSystolicMmhg = if (row.isNull("blood_pressure_systolic_mmhg")) null else row.optInt("blood_pressure_systolic_mmhg"),
+                    bloodPressureDiastolicMmhg = if (row.isNull("blood_pressure_diastolic_mmhg")) null else row.optInt("blood_pressure_diastolic_mmhg"),
+                    allergies = row.optString("allergies", ""),
+                    healthConditions = row.optString("health_conditions", "")
                 )
             }
             val measurement = measurementRows.optJSONObject(0)?.let { row ->
@@ -76,7 +88,13 @@ object HealthProfileRepository {
         sexAtBirth: String,
         activityLevel: String,
         healthGoal: String,
-        previousWeightKg: Double?
+        previousWeightKg: Double?,
+        waistCm: Double?,
+        restingHeartRateBpm: Int?,
+        bloodPressureSystolicMmhg: Int?,
+        bloodPressureDiastolicMmhg: Int?,
+        allergies: String,
+        healthConditions: String
     ): Boolean = withContext(Dispatchers.IO) {
         requireValidSession(userId, accessToken)
         require(heightCm.isFinite() && heightCm in 80.0..250.0) {
@@ -94,6 +112,24 @@ object HealthProfileRepository {
         require(healthGoal in setOf(
             "maintain", "build_strength", "improve_endurance", "build_habit"
         )) { "Ҳадафи саломатӣ нодуруст аст." }
+        require(waistCm == null || (waistCm.isFinite() && waistCm in 30.0..250.0)) {
+            "Даври миён бояд аз 30 то 250 см бошад."
+        }
+        require(restingHeartRateBpm == null || restingHeartRateBpm in 25..240) {
+            "Набз бояд аз 25 то 240 зарба дар дақиқа бошад."
+        }
+        require(
+            (bloodPressureSystolicMmhg == null && bloodPressureDiastolicMmhg == null) ||
+                (bloodPressureSystolicMmhg != null && bloodPressureDiastolicMmhg != null &&
+                    bloodPressureSystolicMmhg in 60..260 &&
+                    bloodPressureDiastolicMmhg in 30..180 &&
+                    bloodPressureSystolicMmhg > bloodPressureDiastolicMmhg)
+        ) {
+            "Фишори хунро дуруст ворид кун: систолӣ бояд аз диастолӣ баланд бошад."
+        }
+        require(allergies.length <= 1000 && healthConditions.length <= 1000) {
+            "Матни аллергия ва ҳолатҳои саломатӣ набояд аз 1000 аломат зиёд бошад."
+        }
 
         val profileBody = JSONObject()
             .put("user_id", userId)
@@ -101,6 +137,12 @@ object HealthProfileRepository {
             .put("sex_at_birth", sexAtBirth)
             .put("activity_level", activityLevel)
             .put("health_goal", healthGoal)
+            .put("waist_cm", waistCm ?: JSONObject.NULL)
+            .put("resting_heart_rate_bpm", restingHeartRateBpm ?: JSONObject.NULL)
+            .put("blood_pressure_systolic_mmhg", bloodPressureSystolicMmhg ?: JSONObject.NULL)
+            .put("blood_pressure_diastolic_mmhg", bloodPressureDiastolicMmhg ?: JSONObject.NULL)
+            .put("allergies", allergies.trim())
+            .put("health_conditions", healthConditions.trim())
             .put("updated_at", Instant.now().toString())
 
         request(
