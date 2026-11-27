@@ -50,10 +50,12 @@ create table if not exists public.shahrvand_recipe_catalog (
 );
 
 create table if not exists public.shahrvand_recipe_ingredients (
+  id uuid primary key default gen_random_uuid(),
   recipe_id uuid not null references public.shahrvand_recipe_catalog(id) on delete cascade,
   food_id text not null references public.shahrvand_food_catalog(id) on delete restrict,
   amount_g numeric(9,2) not null check (amount_g > 0),
-  primary key (recipe_id, food_id)
+  sort_order integer not null default 0 check (sort_order >= 0),
+  unique (recipe_id, sort_order)
 );
 
 create table if not exists public.shahrvand_meal_logs (
