@@ -503,6 +503,8 @@ private fun ShahrvandApp() {
                 4 -> if (healthSection == "nutrition") {
                     NutritionScreen(
                         language = language,
+                        userId = prefs.getString("auth_user_id", "") ?: "",
+                        age = accountAge,
                         getAccessToken = ::getValidAccessToken,
                         onBack = { healthSection = "profile" }
                     )
