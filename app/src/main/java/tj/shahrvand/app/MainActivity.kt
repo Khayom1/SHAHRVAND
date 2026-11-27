@@ -363,7 +363,7 @@ private fun ShahrvandApp() {
         modifier = Modifier.fillMaxSize().shahrvandCanvas(),
         containerColor = Color.Transparent,
         bottomBar = {
-            val navTabs = listOf(0, 1, 4, 2, 3)
+            val navTabs = listOf(0, 1, 2, 3)
             val labels = listOf(
                 tr(language, "Асосӣ", "Главная", "Home"),
                 tr(language, "Вазифаҳо", "Задания", "Tasks"),
