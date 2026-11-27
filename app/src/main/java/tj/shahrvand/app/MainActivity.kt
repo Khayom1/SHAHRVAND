@@ -488,7 +488,7 @@ private fun ShahrvandApp() {
                             homeDestination = "personal"
                         },
                         onOpenSleep = { homeDestination = "sleep" },
-                        onOpenHealth = { tab = 3 },
+                        onOpenHealth = { tab = 4 },
                         onOpenProfile = { tab = 3 },
                         onOpenSettings = { settingsOpen = true },
                         onToggleTheme = {
@@ -547,7 +547,7 @@ private fun ShahrvandApp() {
                         homeDestination = "personal"
                     },
                     onOpenSleep = { homeDestination = "sleep" },
-                    onOpenHealth = { tab = 3 },
+                    onOpenHealth = { tab = 4 },
                     onOpenProfile = { tab = 3 },
                     onOpenSettings = { settingsOpen = true },
                     onToggleTheme = {
