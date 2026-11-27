@@ -390,9 +390,9 @@ internal fun HealthProfileScreen(
                     Text(
                         healthTr(
                             language,
-                            "Қад, вазн ва таърихи ченкуниҳои саломатии ту аз сервер нест мешаванд. Ин амалро баргардондан мумкин нест.",
-                            "Рост, вес и история измерений будут удалены с сервера. Это действие нельзя отменить.",
-                            "Your height, weight and measurement history will be deleted from the server. This action cannot be undone."
+                            "Қад, вазн, таърихи ченкуниҳо ва сабтҳои ғизову обнӯшӣ аз сервер нест мешаванд. Ин амалро баргардондан мумкин нест.",
+                            "Рост, вес, история измерений, записи питания и воды будут удалены с сервера. Это действие нельзя отменить.",
+                            "Your height, weight, measurement history, food diary and water logs will be deleted from the server. This action cannot be undone."
                         )
                     )
                 },
