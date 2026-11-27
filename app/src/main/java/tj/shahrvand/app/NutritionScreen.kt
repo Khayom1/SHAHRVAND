@@ -101,6 +101,8 @@ internal fun nutritionSourceLabel(language: String, source: NutritionDataSource)
         nutritionTr(language, "Ҳисоби дорухат", "Расчёт по рецепту", "Recipe calculation")
     NutritionDataSource.USER_ENTERED ->
         nutritionTr(language, "Маълумоти воридкардаи корбар", "Данные пользователя", "User-entered data")
+    NutritionDataSource.UNKNOWN ->
+        nutritionTr(language, "Манбаъ муайян нест", "Источник не определён", "Unknown source")
 }
 
 @Composable
