@@ -131,7 +131,7 @@ object HealthProfileRepository {
     }
 
     private fun requireValidSession(userId: String, accessToken: String) {
-        require(userId.matches(Regex("^[0-9a-fA-F-]{36}$"))) {
+        require(userId.matches(Regex("^[0-9a-fA-F]{8}-(?:[0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$"))) {
             "Идентификатори корбар нодуруст аст."
         }
         require(accessToken.isNotBlank()) {
