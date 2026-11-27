@@ -483,6 +483,7 @@ private fun ShahrvandApp() {
                         summary = achievementSummary,
                         summaryLoading = achievementSummaryLoading,
                         onOpenMissions = { tab = 1 },
+                        onOpenActivity = { tab = 1 },
                         onOpenLeaderboard = { tab = 2 },
                         onOpenNotes = {
                             personalSection = "notes"
@@ -792,6 +793,7 @@ private fun HomeScreen(
     summary: AchievementSummary?,
     summaryLoading: Boolean,
     onOpenMissions: () -> Unit,
+    onOpenActivity: () -> Unit,
     onOpenLeaderboard: () -> Unit,
     onOpenNotes: () -> Unit,
     onOpenSleep: () -> Unit,
@@ -837,6 +839,11 @@ private fun HomeScreen(
                 Icon(Icons.Filled.AccountCircle, contentDescription = tr(language, "Профил", "Профиль", "Profile"), tint = palette.ink)
             }
         }
+
+        HealthActivityDashboard(
+            language = language,
+            onOpenActivity = onOpenActivity
+        )
 
         Card(
             modifier = Modifier.fillMaxWidth().animateContentSize(),
