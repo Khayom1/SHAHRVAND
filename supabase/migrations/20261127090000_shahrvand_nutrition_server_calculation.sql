@@ -72,5 +72,6 @@ begin
 end;
 $$;
 
+revoke insert on table public.shahrvand_meal_logs from authenticated;
 revoke all on function public.shahrvand_add_food_meal(text, numeric, text) from public, anon;
 grant execute on function public.shahrvand_add_food_meal(text, numeric, text) to authenticated;
