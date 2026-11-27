@@ -61,7 +61,7 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-private fun nutritionTr(language: String, tg: String, ru: String, en: String): String =
+internal fun nutritionTr(language: String, tg: String, ru: String, en: String): String =
     when (language) {
         "ru" -> ru
         "en" -> en
@@ -74,7 +74,7 @@ private fun FoodCatalogItem.localizedName(language: String): String = when (lang
     else -> nameTg
 }
 
-private fun foodPreparationLabel(language: String, state: FoodPreparationState): String = when (state) {
+internal fun foodPreparationLabel(language: String, state: FoodPreparationState): String = when (state) {
     FoodPreparationState.RAW -> nutritionTr(language, "хом", "сырой", "raw")
     FoodPreparationState.COOKED -> nutritionTr(language, "пухта", "приготовленный", "cooked")
     FoodPreparationState.DRIED -> nutritionTr(language, "хушк", "сушёный", "dried")
