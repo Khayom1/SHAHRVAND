@@ -805,132 +805,331 @@ private fun HomeScreen(
     val tasks = summary?.verifiedTasks ?: 0
     val badgeCount = summary?.unlockedCodes?.size ?: 0
     val nextTarget = summary?.nextThreshold ?: 10
+    val progressTarget = (summary?.progress ?: 0f).coerceIn(0f, 1f)
+    val badgeProgressTarget = (badgeCount / 6f).coerceIn(0f, 1f)
     val animatedXp by animateIntAsState(xp, tween(650), label = "home_xp_count")
     val animatedTasks by animateIntAsState(tasks, tween(650), label = "home_task_count")
-    val animatedProgress by animateFloatAsState(summary?.progress ?: 0f, tween(800), label = "home_title_progress")
+    val animatedProgress by animateFloatAsState(progressTarget, tween(850), label = "home_level_progress")
+    val animatedBadgeProgress by animateFloatAsState(badgeProgressTarget, tween(850), label = "home_badge_progress")
     val citizenName = nickname.ifBlank { tr(language, "Шаҳрванд", "Гражданин", "Citizen") }
 
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 13.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+            .padding(horizontal = 17.dp, vertical = 13.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(5.dp)
+        ) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text("ШАҲРВАНД", color = palette.navyLight, fontSize = 10.sp,
-                    fontWeight = FontWeight.ExtraBold, letterSpacing = 1.1.sp)
+                Text(
+                    "ШАҲРВАНД",
+                    color = palette.navyLight,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = 1.3.sp
+                )
                 Text(
                     tr(language, "Салом, ", "Привет, ", "Hello, ") + citizenName,
-                    color = palette.ink, fontSize = 22.sp, fontWeight = FontWeight.Bold, maxLines = 1
+                    color = palette.ink,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1
                 )
-                Text(ageBandLabel(language, ageBand), color = palette.muted, fontSize = 11.sp)
+                Text(
+                    tr(language, "Ҳар рӯз як қадами нав", "Каждый день — новый шаг", "A new step every day"),
+                    color = palette.muted,
+                    fontSize = 10.sp
+                )
             }
             IconButton(onClick = onToggleTheme) {
-                Icon(if (palette.isDark) Icons.Filled.LightMode else Icons.Filled.DarkMode,
+                Icon(
+                    if (palette.isDark) Icons.Filled.LightMode else Icons.Filled.DarkMode,
                     contentDescription = tr(language, "Иваз кардани мавзӯъ", "Сменить тему", "Switch theme"),
-                    tint = palette.ink)
+                    tint = palette.ink,
+                    modifier = Modifier.size(20.dp)
+                )
             }
             IconButton(onClick = onOpenSettings) {
-                Icon(Icons.Filled.Settings, contentDescription = tr(language, "Танзимот", "Настройки", "Settings"), tint = palette.ink)
+                Icon(
+                    Icons.Filled.Settings,
+                    contentDescription = tr(language, "Танзимот", "Настройки", "Settings"),
+                    tint = palette.ink,
+                    modifier = Modifier.size(20.dp)
+                )
             }
-            IconButton(onClick = onOpenProfile) {
-                Icon(Icons.Filled.AccountCircle, contentDescription = tr(language, "Профил", "Профиль", "Profile"), tint = palette.ink)
+            Surface(
+                modifier = Modifier.size(38.dp).clickable(onClick = onOpenProfile),
+                shape = CircleShape,
+                color = palette.surfaceVariant
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        citizenName.take(1).uppercase(),
+                        color = palette.navyLight,
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                }
             }
         }
 
         Card(
             modifier = Modifier.fillMaxWidth().animateContentSize(),
             colors = CardDefaults.cardColors(containerColor = palette.surface),
-            shape = RoundedCornerShape(25.dp),
+            shape = RoundedCornerShape(27.dp),
             border = BorderStroke(1.dp, palette.border),
-            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
-            Column(Modifier.fillMaxWidth().padding(17.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(
+                Modifier.fillMaxWidth().padding(17.dp),
+                verticalArrangement = Arrangement.spacedBy(13.dp)
+            ) {
+                Row(
+                    Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text(tr(language, "ПЕШРАФТИ ШАХСӢ", "ЛИЧНЫЙ ПРОГРЕСС", "PERSONAL PROGRESS"),
-                            color = palette.muted, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp)
-                        Text(tr(language, "Натиҷаи ту", "Твой результат", "Your progress"),
-                            color = palette.ink, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                        Text(
+                            tr(language, "ПЕШРАФТИ ШАХСӢ", "ЛИЧНЫЙ ПРОГРЕСС", "YOUR PROGRESS"),
+                            color = palette.muted,
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            letterSpacing = 0.9.sp
+                        )
+                        Text(
+                            tr(language, "Натиҷаи ту", "Твой результат", "Your progress"),
+                            color = palette.ink,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
-                    Surface(color = palette.goldSurface, shape = RoundedCornerShape(13.dp)) {
-                        Row(Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
-                            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-                            Text("🏅", fontSize = 14.sp)
-                            Text(if (summaryLoading) "…" else if (summary == null) "—" else badgeCount.toString(),
-                                color = palette.ink, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    Surface(
+                        color = palette.goldSurface,
+                        shape = RoundedCornerShape(13.dp)
+                    ) {
+                        Row(
+                            Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(5.dp)
+                        ) {
+                            Text("🏅", fontSize = 13.sp)
+                            Text(
+                                if (summaryLoading) "…" else if (summary == null) "—" else "$badgeCount/6",
+                                color = palette.ink,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
                     }
                 }
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
-                        Text(if (summaryLoading) "…" else if (summary == null) "—" else animatedXp.toString(),
-                            color = palette.ink, fontSize = 35.sp, fontWeight = FontWeight.Black)
-                        Text("XP · " + tr(language, "холҳои ҷамъшуда", "всего очков", "total points"),
-                            color = palette.muted, fontSize = 11.sp)
-                    }
-                    Column(
-                        Modifier.clip(RoundedCornerShape(15.dp)).background(palette.surfaceVariant)
-                            .padding(horizontal = 13.dp, vertical = 10.dp),
-                        horizontalAlignment = Alignment.Start, verticalArrangement = Arrangement.spacedBy(1.dp)
+
+                Row(
+                    Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(15.dp)
+                ) {
+                    Box(
+                        Modifier.size(122.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Text(if (summaryLoading) "…" else if (summary == null) "—" else animatedTasks.toString(),
-                            color = palette.ink, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-                        Text(tr(language, "вазифаи тасдиқшуда", "подтверждено", "verified tasks"),
-                            color = palette.muted, fontSize = 9.sp, maxLines = 1)
+                        CircularProgressIndicator(
+                            progress = { animatedProgress },
+                            modifier = Modifier.size(116.dp),
+                            color = palette.navyLight,
+                            trackColor = palette.surfaceVariant,
+                            strokeWidth = 8.dp
+                        )
+                        CircularProgressIndicator(
+                            progress = { animatedBadgeProgress },
+                            modifier = Modifier.size(91.dp),
+                            color = palette.green,
+                            trackColor = palette.surfaceVariant.copy(alpha = 0.65f),
+                            strokeWidth = 7.dp
+                        )
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                if (summaryLoading) "…" else if (summary == null) "—" else (animatedProgress * 100).toInt().toString() + "%",
+                                color = palette.ink,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Black
+                            )
+                            Text(
+                                tr(language, "пешрафт", "прогресс", "progress"),
+                                color = palette.muted,
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    }
+
+                    Column(
+                        Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(7.dp)
+                    ) {
+                        Text(
+                            tr(language, "МАРҲИЛАИ НАВБАТӢ", "СЛЕДУЮЩИЙ ЭТАП", "NEXT MILESTONE"),
+                            color = palette.muted,
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            letterSpacing = 0.45.sp
+                        )
+                        Text(
+                            if (summaryLoading) "…" else if (summary == null) "—" else "$animatedTasks / $nextTarget",
+                            color = palette.ink,
+                            fontSize = 25.sp,
+                            fontWeight = FontWeight.Black
+                        )
+                        LinearProgressIndicator(
+                            progress = { if (summary == null) 0f else animatedProgress },
+                            modifier = Modifier.fillMaxWidth().height(8.dp).clip(CircleShape),
+                            color = palette.navyLight,
+                            trackColor = palette.surfaceVariant
+                        )
+                        Text(
+                            tr(language, "вазифаи тасдиқшуда то марҳилаи нав", "подтверждённых заданий до этапа", "verified tasks toward the milestone"),
+                            color = palette.muted,
+                            fontSize = 9.sp,
+                            lineHeight = 13.sp
+                        )
+                        Text(
+                            tr(language, "Нишонҳои кушода: ", "Открытые значки: ", "Badges unlocked: ") +
+                                (if (summaryLoading) "…" else if (summary == null) "—" else "$badgeCount/6"),
+                            color = palette.green,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
-                LinearProgressIndicator(
-                    progress = { if (summary == null) 0f else animatedProgress },
-                    modifier = Modifier.fillMaxWidth().height(8.dp).clip(CircleShape),
-                    color = palette.green, trackColor = palette.surfaceVariant
-                )
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(tr(language, "То унвони навбатӣ", "До следующего титула", "Next title"),
-                        color = palette.muted, fontSize = 11.sp, modifier = Modifier.weight(1f))
-                    Text(if (summaryLoading) "…" else if (summary == null) "—" else "$tasks/$nextTarget",
-                        color = palette.ink, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                }
+
                 if (!summaryLoading && summary == null) {
-                    Text(tr(language,
-                        "Маълумоти сервер дастрас нест. Пайвастро санҷ ва саҳифаро аз нав кушо.",
-                        "Данные сервера недоступны. Проверь подключение и открой страницу снова.",
-                        "Server data is unavailable. Check your connection and reopen the page."),
-                        color = palette.danger, fontSize = 10.sp, lineHeight = 14.sp)
+                    Text(
+                        tr(
+                            language,
+                            "Маълумоти сервер дастрас нест. Пайвастро санҷ ва дубора кӯшиш кун.",
+                            "Данные сервера недоступны. Проверь подключение и попробуй снова.",
+                            "Server data is unavailable. Check your connection and try again."
+                        ),
+                        color = palette.danger,
+                        fontSize = 10.sp,
+                        lineHeight = 14.sp
+                    )
                 }
             }
         }
 
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            DashboardStatPill(
+                Modifier.weight(1f),
+                "⚡",
+                if (summaryLoading) "…" else if (summary == null) "—" else animatedXp.toString(),
+                "XP",
+                palette
+            )
+            DashboardStatPill(
+                Modifier.weight(1f),
+                "✓",
+                if (summaryLoading) "…" else if (summary == null) "—" else animatedTasks.toString(),
+                tr(language, "Вазифа", "Задания", "Tasks"),
+                palette
+            )
+            DashboardStatPill(
+                Modifier.weight(1f),
+                "🏅",
+                if (summaryLoading) "…" else if (summary == null) "—" else badgeCount.toString(),
+                tr(language, "Нишон", "Значки", "Badges"),
+                palette
+            )
+        }
+
         Surface(
             modifier = Modifier.fillMaxWidth().clickable(onClick = onOpenMissions),
-            color = palette.navy, contentColor = Color.White,
-            shape = RoundedCornerShape(19.dp), shadowElevation = 1.dp
+            color = palette.navy,
+            contentColor = Color.White,
+            shape = RoundedCornerShape(22.dp),
+            shadowElevation = 2.dp
         ) {
-            Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
-                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Icon(Icons.Filled.TaskAlt, contentDescription = null, modifier = Modifier.size(23.dp))
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text(tr(language, "Вазифаҳои имрӯз", "Задания на сегодня", "Today's tasks"),
-                        fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                    Text(tr(language, "Қадами навбатии худро интихоб кун", "Выбери следующий шаг", "Choose your next step"),
-                        color = Color.White.copy(alpha = 0.82f), fontSize = 10.sp)
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 17.dp, vertical = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(13.dp)
+            ) {
+                Box(
+                    Modifier.size(43.dp).clip(RoundedCornerShape(14.dp))
+                        .background(Color.White.copy(alpha = 0.15f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Filled.TaskAlt, contentDescription = null, tint = Color.White, modifier = Modifier.size(23.dp))
+                }
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Text(
+                        tr(language, "Вазифаҳои имрӯз", "Задания на сегодня", "Today's tasks"),
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        tr(language, "Қадами навбатии худро интихоб кун", "Выбери следующий шаг", "Choose your next step"),
+                        color = Color.White.copy(alpha = 0.82f),
+                        fontSize = 10.sp
+                    )
                 }
                 Text("›", fontSize = 27.sp, fontWeight = FontWeight.Light)
             }
         }
 
-        Text(tr(language, "ҚИСМҲОИ ШАҲРВАНД", "РАЗДЕЛЫ SHAHRVAND", "EXPLORE SHAHRVAND"),
-            color = palette.muted, fontSize = 10.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 0.7.sp)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            DashboardShortcut(Modifier.weight(1f), "🏆", tr(language, "Рейтинг", "Рейтинг", "Ranking"), palette, onOpenLeaderboard)
-            DashboardShortcut(Modifier.weight(1f), "🗒", tr(language, "Ёддошт", "Заметки", "Notes"), palette, onOpenNotes)
-            DashboardShortcut(Modifier.weight(1f), "🌙", tr(language, "Хоб", "Сон", "Sleep"), palette, onOpenSleep)
-            DashboardShortcut(Modifier.weight(1f), "♥", tr(language, "Саломатӣ", "Здоровье", "Health"), palette, onOpenHealth)
+        Row(
+            Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                tr(language, "БАХШҲОИ ШАҲРВАНД", "РАЗДЕЛЫ SHAHRVAND", "EXPLORE SHAHRVAND"),
+                color = palette.muted,
+                fontSize = 10.sp,
+                fontWeight = FontWeight.ExtraBold,
+                letterSpacing = 0.8.sp
+            )
         }
-        Spacer(Modifier.height(5.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            DashboardShortcut(
+                Modifier.weight(1f),
+                "♥",
+                tr(language, "Саломатӣ", "Здоровье", "Health"),
+                palette,
+                onOpenHealth
+            )
+            DashboardShortcut(
+                Modifier.weight(1f),
+                "🌙",
+                tr(language, "Хоб", "Сон", "Sleep"),
+                palette,
+                onOpenSleep
+            )
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            DashboardShortcut(
+                Modifier.weight(1f),
+                "🏆",
+                tr(language, "Рейтинг", "Рейтинг", "Ranking"),
+                palette,
+                onOpenLeaderboard
+            )
+            DashboardShortcut(
+                Modifier.weight(1f),
+                "🗒",
+                tr(language, "Ёддоштҳо", "Заметки", "Notes"),
+                palette,
+                onOpenNotes
+            )
+        }
+        Spacer(Modifier.height(7.dp))
     }
 }
+
 @Composable
 private fun DashboardStatPill(
     modifier: Modifier,

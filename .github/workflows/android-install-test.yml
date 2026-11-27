@@ -1,0 +1,43 @@
+name: SHAHRVAND installable Android test APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "feature/shahrvand-fitquest-ui-v1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: shahrvand-install-test-apk
+  cancel-in-progress: true
+
+jobs:
+  build-arm64-test-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Set up JDK 17
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6.4.1
+        with:
+          gradle-version: "8.13"
+      - name: Run Android unit tests and build ARM64 APK
+        run: gradle :app:testPlayDebugUnitTest :app:assembleDirectOptimized
+      - name: Verify APK output
+        run: |
+          test -s app/build/outputs/apk/direct/optimized/app-direct-optimized.apk
+          file app/build/outputs/apk/direct/optimized/app-direct-optimized.apk
+          sha256sum app/build/outputs/apk/direct/optimized/app-direct-optimized.apk
+      - name: Upload installable ARM64 APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: shahrvand-fitquest-arm64-test-apk
+          path: app/build/outputs/apk/direct/optimized/app-direct-optimized.apk
+          if-no-files-found: error

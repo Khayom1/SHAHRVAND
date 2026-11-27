@@ -22,20 +22,20 @@ internal data class ShahrvandPalette(
 )
 
 private val LightPalette = ShahrvandPalette(
-    background = Color(0xFFF0F5FC),
+    background = Color(0xFFF4F7FC),
     surface = Color(0xFFFFFFFF),
-    surfaceVariant = Color(0xFFE8F0FA),
-    ink = Color(0xFF172638),
-    muted = Color(0xFF66788D),
-    border = Color(0xFFE1E9F2),
-    navy = Color(0xFF315A91),
-    navyText = Color(0xFF1C2F46),
-    navyLight = Color(0xFF477FC2),
-    gold = Color(0xFF9268D8),
-    green = Color(0xFF31A969),
+    surfaceVariant = Color(0xFFEDF2FB),
+    ink = Color(0xFF1D2941),
+    muted = Color(0xFF6D7C95),
+    border = Color(0xFFE5EBF5),
+    navy = Color(0xFF3559E8),
+    navyText = Color(0xFF192746),
+    navyLight = Color(0xFF5678F5),
+    gold = Color(0xFF8F78EC),
+    green = Color(0xFF50D6BA),
     danger = Color(0xFFC65E58),
-    selected = Color(0xFFE9E2FA),
-    goldSurface = Color(0xFFF3EEFF),
+    selected = Color(0xFFE9EEFF),
+    goldSurface = Color(0xFFF3F0FF),
     successSurface = Color(0xFFEAF7EF),
     successBorder = Color(0xFFCBE8D5),
     dangerSurface = Color(0xFFFFF0EE),
@@ -98,9 +98,9 @@ internal fun Modifier.shahrvandCanvas(): Modifier {
         this.background(
             Brush.verticalGradient(
                 colors = listOf(
-                    Color(0xFFDCEBFF),
-                    Color(0xFFFFE8CB),
-                    Color(0xFFEAF2FF)
+                    Color(0xFFF4F7FC),
+                    Color(0xFFEEF3FB),
+                    Color(0xFFF8FAFF)
                 )
             )
         )
