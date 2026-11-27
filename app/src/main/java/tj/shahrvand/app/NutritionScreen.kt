@@ -307,7 +307,7 @@ internal fun NutritionScreen(
                 ) {
                     Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text(
-                            nutritionTr(language, "АРЗЁБИИ ЭНЕРГИЯ ДАР ҲОЛАТИ ОРОМӢ", "РАСХОД ЭНЕРГИИ В ПОКОЕ", "RESTING ENERGY EXPENDITURE"),
+                            nutritionTr(language, "АРЗЁБИИ ЭНЕРГИЯИ РӮЗОНА", "ОЦЕНКА СУТОЧНОЙ ЭНЕРГИИ", "DAILY ENERGY ESTIMATE"),
                             color = palette.muted, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold
                         )
                         if (restingEnergyKcal != null) {
