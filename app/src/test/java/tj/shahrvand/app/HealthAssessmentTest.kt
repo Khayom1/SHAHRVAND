@@ -41,7 +41,7 @@ class HealthAssessmentTest {
 
     @Test
     fun bmiIsRoundedToOneDecimalForDisplay() {
-        assertEquals(22.9, HealthAssessment.assessBmi(25, 170.0, 66.0)?.bmi ?: 0.0, 0.0001)
+        assertEquals(22.8, HealthAssessment.assessBmi(25, 170.0, 66.0)?.bmi ?: 0.0, 0.0001)
     }
 
     @Test
