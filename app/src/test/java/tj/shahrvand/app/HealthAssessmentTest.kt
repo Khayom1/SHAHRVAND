@@ -30,6 +30,30 @@ class HealthAssessmentTest {
         assertNull(HealthAssessment.estimateRestingEnergyKcalPerDay(30, 170.0, Double.POSITIVE_INFINITY, "female"))
     }
 
+
+    @Test
+    fun maintenanceEnergyUsesPersonalActivityLevel() {
+        val sedentary = HealthAssessment.estimateMaintenanceEnergyKcalPerDay(
+            30, 175.0, 70.0, "male", "sedentary"
+        )
+        val moderate = HealthAssessment.estimateMaintenanceEnergyKcalPerDay(
+            30, 175.0, 70.0, "male", "moderate"
+        )
+        assertEquals(1978.5, sedentary ?: 0.0, 0.001)
+        assertEquals(2559.5625, moderate ?: 0.0, 0.001)
+        assertTrue((moderate ?: 0.0) > (sedentary ?: 0.0))
+    }
+
+    @Test
+    fun maintenanceEnergyRejectsUnsupportedAgeAndActivity() {
+        assertNull(HealthAssessment.estimateMaintenanceEnergyKcalPerDay(
+            19, 170.0, 60.0, "male", "light"
+        ))
+        assertNull(HealthAssessment.estimateMaintenanceEnergyKcalPerDay(
+            30, 170.0, 60.0, "male", "unknown"
+        ))
+    }
+
     @Test
     fun adultBmiUsesAdultScreeningRanges() {
         assertEquals(
