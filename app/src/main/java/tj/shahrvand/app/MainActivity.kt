@@ -480,6 +480,7 @@ private fun ShahrvandApp() {
                         language = language,
                         nickname = nickname,
                         ageBand = ageBand ?: "7_12",
+                        age = accountAge,
                         summary = achievementSummary,
                         summaryLoading = achievementSummaryLoading,
                         onOpenMissions = { tab = 1 },
@@ -553,6 +554,7 @@ private fun ShahrvandApp() {
                     language = language,
                     nickname = nickname,
                     ageBand = ageBand ?: "7_12",
+                    age = accountAge,
                     summary = achievementSummary,
                     summaryLoading = achievementSummaryLoading,
                     onOpenMissions = { tab = 1 },
@@ -795,6 +797,7 @@ private fun HomeScreen(
     language: String,
     nickname: String,
     ageBand: String,
+    age: Int,
     summary: AchievementSummary?,
     summaryLoading: Boolean,
     onOpenMissions: () -> Unit,
@@ -855,6 +858,11 @@ private fun HomeScreen(
             language = language,
             getAccessToken = getAccessToken,
             onOpenNutrition = onOpenNutrition
+        )
+        SleepRecoveryDashboardCard(
+            language = language,
+            age = age,
+            onOpenSleep = onOpenSleep
         )
 
         Card(
