@@ -210,6 +210,9 @@ fun SleepTrackingScreen(
 
     val latest = nights.firstOrNull()
     val targetMinutes = SleepRules.minimumTargetMinutes(age)
+    val sleepInsight = remember(nights, targetMinutes) {
+        SleepRules.analyzeRecentNights(nights.map { it.minutes }, targetMinutes)
+    }
 
     Column(
         modifier = Modifier.fillMaxSize().shahrvandCanvas().verticalScroll(rememberScrollState()).padding(16.dp),
@@ -378,47 +381,119 @@ fun SleepTrackingScreen(
             }
         }
 
-        if (latest != null && latest.minutes < targetMinutes) {
+        if (sleepInsight != null && sleepInsight.pattern != SleepPattern.ADEQUATE) {
+            val insight = sleepInsight
+            val averageLabel = "" + (insight.averageMinutes / 60L) + " " +
+                sleepTr(language, "соат", "ч", "h") + " " +
+                (insight.averageMinutes % 60L) + " " +
+                sleepTr(language, "дақ", "мин", "min")
+            val title = when (insight.pattern) {
+                SleepPattern.REPEATED_SHORT_SLEEP -> sleepTr(
+                    language,
+                    "КАМХОБИИ ТАКРОРШАВАНДА",
+                    "ПОВТОРЯЮЩИЙСЯ НЕДОСЫП",
+                    "REPEATED SHORT SLEEP"
+                )
+                SleepPattern.LAST_NIGHT_SHORT -> sleepTr(
+                    language,
+                    "ХОБИ ШАБИ ОХИР КАМ БУД",
+                    "ПОСЛЕДНЯЯ НОЧЬ БЫЛА КОРОТКОЙ",
+                    "LAST NIGHT'S SLEEP WAS SHORT"
+                )
+                SleepPattern.MIXED_RECENT_SLEEP -> sleepTr(
+                    language,
+                    "РЕҶАИ ХОБ НОМУНТАЗАМ АСТ",
+                    "РЕЖИМ СНА НЕСТАБИЛЕН",
+                    "RECENT SLEEP IS INCONSISTENT"
+                )
+                SleepPattern.ADEQUATE -> ""
+            }
+            val summary = when (insight.pattern) {
+                SleepPattern.REPEATED_SHORT_SLEEP -> sleepTr(
+                    language,
+                    "Дар 7 сабти охир ${insight.belowTargetCount} аз ${insight.recentNightCount} шаб аз ҳадафи синну сол камтар хоб рафтӣ. Давомнокии миёна: ",
+                    "В последних 7 записях ${insight.belowTargetCount} из ${insight.recentNightCount} ночей были короче возрастной цели. Средняя длительность: ",
+                    "In the latest 7 records, ${insight.belowTargetCount} of ${insight.recentNightCount} nights were below your age-based target. Average duration: "
+                ) + averageLabel + "."
+                SleepPattern.LAST_NIGHT_SHORT -> sleepTr(
+                    language,
+                    "Сабти охирин аз ҳадафи синну сол камтар аст. Аз рӯи сабтҳои дастрас ҳоло камхобии такроршаванда муайян нашудааст.",
+                    "Последняя запись ниже возрастной цели. По доступным записям повторяющийся недосып пока не выявлен.",
+                    "The latest record is below your age-based target. The available records do not yet show a repeated pattern."
+                )
+                SleepPattern.MIXED_RECENT_SLEEP -> sleepTr(
+                    language,
+                    "Шаби охир ба ҳадаф расид, аммо дар ${insight.belowTargetCount} аз ${insight.recentNightCount} сабти охир хоб кам буд. Давомнокии миёна: ",
+                    "Последняя ночь достигла цели, но в ${insight.belowTargetCount} из ${insight.recentNightCount} последних записей сна было недостаточно. Средняя длительность: ",
+                    "The latest night met the target, but ${insight.belowTargetCount} of the latest ${insight.recentNightCount} records were short. Average duration: "
+                ) + averageLabel + "."
+                SleepPattern.ADEQUATE -> ""
+            }
+            val tips = when (insight.pattern) {
+                SleepPattern.REPEATED_SHORT_SLEEP -> listOf(
+                    sleepTr(language,
+                        "Барои 7 шаби оянда вақти кофии хобро пешакӣ дар тақвим ҷудо кун; вақти бедоршавиро ҳар рӯз тақрибан яксон нигоҳ дор.",
+                        "На ближайшие 7 ночей заранее выдели достаточно времени для сна и старайся вставать примерно в одно время.",
+                        "For the next 7 nights, protect enough time for sleep and keep your wake-up time consistent."),
+                    sleepTr(language,
+                        "Қаҳва, чойи сиёҳи сахт ва энергетикро дар 8 соати пеш аз хоб истеъмол накун; кофеин метавонад таъсири дароз дошта бошад.",
+                        "Не употребляй кофе, крепкий чёрный чай и энергетики в течение 8 часов перед сном: действие кофеина может быть длительным.",
+                        "Avoid coffee, strong black tea and energy drinks during the 8 hours before bedtime; caffeine can have lasting effects."),
+                    sleepTr(language,
+                        "30–60 дақиқа пеш аз хоб телефонро канор гузор, равшаниро кам кун ва кори ором интихоб намо.",
+                        "За 30–60 минут до сна отложи телефон, приглуши свет и выбери спокойное занятие.",
+                        "Put your phone away, dim the lights and choose a quiet activity 30–60 minutes before bed."),
+                    sleepTr(language,
+                        "Ҷои хобро ором, торик ва каме салқин нигоҳ дор; рӯзона дар рӯшноии табиӣ сайр кун.",
+                        "Сделай спальню тихой, тёмной и прохладной; днём выходи на естественный свет.",
+                        "Keep the bedroom quiet, dark and comfortably cool; get natural daylight during the day.")
+                )
+                SleepPattern.LAST_NIGHT_SHORT -> buildList {
+                    add(sleepTr(language,
+                        "Имрӯз вақти иловагӣ барои хоби шаби оянда ҷудо кун; кӯшиш кун вақти бедоршавӣ доимӣ монад.",
+                        "Сегодня заранее выдели больше времени для сна следующей ночью и сохрани привычное время подъёма.",
+                        "Set aside enough opportunity for a longer night of sleep, while keeping your usual wake-up time."))
+                    add(sleepTr(language,
+                        "Агар хоболуд бошӣ, ронандагӣ ё кори хатарнокро анҷом надеҳ; аввал бехатариро интихоб кун.",
+                        "При сонливости не садись за руль и не выполняй опасную работу; сначала позаботься о безопасности.",
+                        "Do not drive or do hazardous tasks when sleepy; put safety first."))
+                    if (age >= 18) add(sleepTr(language,
+                        "Агар рӯзона сахт хоболуд бошӣ, хоби кӯтоҳи то 20 дақиқа дар аввали нисфирӯзӣ метавонад ҳушёриро беҳтар кунад; дер хоб накун.",
+                        "Если днём сильно хочется спать, короткий сон до 20 минут в первой половине дня может повысить бодрость; не спи поздно.",
+                        "If needed, an early-afternoon nap of up to 20 minutes may improve alertness; avoid napping late."))
+                    add(sleepTr(language,
+                        "Чойи сиёҳи сахт, қаҳва ва энергетикро наздики вақти хоб нанӯш.",
+                        "Не пей крепкий чёрный чай, кофе и энергетики близко ко времени сна.",
+                        "Avoid strong tea, coffee and energy drinks close to bedtime."))
+                }
+                SleepPattern.MIXED_RECENT_SLEEP -> listOf(
+                    sleepTr(language,
+                        "Шаби охир хубтар буд — ҳамин реҷаро нигоҳ дор: вақти хоб ва бедоршавиро ҳар рӯз тақрибан яксон интихоб кун.",
+                        "Последняя ночь была лучше — закрепи результат: ложись и вставай примерно в одно время каждый день.",
+                        "The latest night was better. Build on it by keeping bedtime and wake time consistent."),
+                    sleepTr(language,
+                        "Рӯзҳои дарсӣ ё кориро пешакӣ ба нақша гир, то вазифаҳо вақти хобро кам накунанд.",
+                        "Планируй учёбу и работу заранее, чтобы дела не сокращали время сна.",
+                        "Plan study and work ahead so they do not keep cutting into your sleep window."),
+                    sleepTr(language,
+                        "Пеш аз хоб экран ва равшании зиёдро кам кун; чойи сахт ва кофеинро дер нанӯш.",
+                        "Перед сном сократи экранное время и яркий свет; не пей крепкий чай и кофеин поздно.",
+                        "Reduce screen time and bright light before bed; avoid late caffeine.")
+                )
+                SleepPattern.ADEQUATE -> emptyList()
+            }
             Card(
                 colors = CardDefaults.cardColors(containerColor = LocalShahrvandPalette.current.goldSurface),
                 border = BorderStroke(1.dp, SLEEP_BORDER),
                 shape = RoundedCornerShape(20.dp)
             ) {
-                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
+                    Text(title, color = SLEEP_NAVY_TEXT, fontWeight = FontWeight.ExtraBold, fontSize = 12.sp)
+                    Text(summary, color = SLEEP_NAVY_TEXT, fontSize = 12.sp, lineHeight = 18.sp)
                     Text(
-                        sleepTr(language, "ЧӢ КОР КУНӢ, ТО ХОБ БЕҲТАР ШАВАД", "КАК УЛУЧШИТЬ СОН", "HOW TO IMPROVE YOUR SLEEP"),
-                        color = SLEEP_NAVY_TEXT, fontWeight = FontWeight.ExtraBold, fontSize = 12.sp
+                        sleepTr(language, "ПЕШНИҲОДҲОИ МУВОФИҚ БА САБТҲОИ ТУ", "РЕКОМЕНДАЦИИ ПО ТВОИМ ЗАПИСЯМ", "RECOMMENDATIONS BASED ON YOUR RECORDS"),
+                        color = SLEEP_GOLD, fontWeight = FontWeight.ExtraBold, fontSize = 10.sp
                     )
-                    Text(
-                        sleepTr(language,
-                            "Хоби сабтшуда аз ҳадафи синну соли ту камтар аст. Ин тавсияҳо одатҳои дастгиришудаи илмӣ мебошанд:",
-                            "Записанный сон короче возрастной нормы. Вот научно обоснованные привычки:",
-                            "Your recorded sleep is below the age-based target. These are evidence-based habits:"
-                        ), color = SLEEP_NAVY_TEXT, fontSize = 12.sp, lineHeight = 18.sp
-                    )
-                    val tips = when (language) {
-                        "ru" -> listOf(
-                            "Ложись и вставай примерно в одно время, включая выходные.",
-                            "Не пей чай с кофеином, кофе и энергетики во второй половине дня.",
-                            "Не ешь тяжёлую пищу непосредственно перед сном; выбирай обычный сбалансированный ужин за 2–3 часа.",
-                            "За 30–60 минут до сна убери телефон и приглуши свет.",
-                            "Днём гуляй или занимайся физической активностью; интенсивную тренировку закончи заранее."
-                        )
-                        "en" -> listOf(
-                            "Keep a consistent bedtime and wake time, including weekends.",
-                            "Avoid caffeinated tea, coffee and energy drinks in the afternoon and evening.",
-                            "Avoid heavy meals right before bed; have a balanced, familiar dinner 2–3 hours earlier.",
-                            "Put the phone away and dim lights 30–60 minutes before bedtime.",
-                            "Get daylight and physical activity during the day; finish intense exercise well before bed."
-                        )
-                        else -> listOf(
-                            "Ҳар рӯз, ҳатто рӯзҳои истироҳат, тақрибан дар як вақт хоб раву бедор шав.",
-                            "Нимаи дуюми рӯз чойи сиёҳи сахт, қаҳва ва энергетик нанӯш.",
-                            "Пеш аз хоб хӯроки вазнин нахӯр; 2–3 соат пештар шоми муътадилу гуногун истеъмол кун.",
-                            "30–60 дақиқа пеш аз хоб телефонро канор гузор ва чароғро кам кун.",
-                            "Рӯзона каме дар рӯшноии рӯз сайр ё машқ кун; машқи шадидро хеле дер анҷом надеҳ."
-                        )
-                    }
                     tips.forEach { tip ->
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Top) {
                             Text("•", color = SLEEP_GOLD, fontWeight = FontWeight.Black)
@@ -427,9 +502,16 @@ fun SleepTrackingScreen(
                     }
                     Text(
                         sleepTr(language,
-                            "Ғизои махсусе нест, ки камхобиро ҷуброн кунад. Агар мушкили хоб чанд ҳафта давом кунад ё рӯзона сахт хоболуд бошӣ, ба духтур муроҷиат кун.",
-                            "Нет продукта, который компенсирует недостаток сна. Если проблемы длятся несколько недель или есть сильная дневная сонливость, обратись к врачу.",
-                            "No food can compensate for insufficient sleep. If sleep problems persist for weeks or you have severe daytime sleepiness, consult a clinician."
+                            "Агар камхобӣ чанд ҳафта давом кунад, ё бо вуҷуди вақти кофӣ хоб рафтан рӯзона сахт хоболуд бошӣ, ба духтур муроҷиат кун. Агар нишонаҳо ногаҳон сахт бошанд, зудтар ёрии тиббӣ гир.",
+                            "Если недосып продолжается несколько недель или сильная сонливость сохраняется даже при достаточном времени для сна, обратись к врачу. При внезапных выраженных симптомах обратись за медицинской помощью раньше.",
+                            "If short sleep continues for several weeks, or you remain very sleepy despite allowing enough time for sleep, consult a clinician. Seek care sooner for sudden or severe symptoms."
+                        ), color = SLEEP_MUTED, fontSize = 10.sp, lineHeight = 15.sp
+                    )
+                    Text(
+                        sleepTr(language,
+                            "Ин таҳлил танҳо давомнокии сабтшудаи хобро истифода мебарад; он сифати хоб ё сабаби камхобиро муайян намекунад.",
+                            "Анализ учитывает только записанную продолжительность сна; он не определяет качество сна или причину недосыпа.",
+                            "This analysis uses recorded sleep duration only; it does not determine sleep quality or the cause of short sleep."
                         ), color = SLEEP_MUTED, fontSize = 10.sp, lineHeight = 15.sp
                     )
                 }
