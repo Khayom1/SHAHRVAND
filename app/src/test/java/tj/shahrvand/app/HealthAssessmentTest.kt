@@ -40,7 +40,7 @@ class HealthAssessmentTest {
             30, 175.0, 70.0, "male", "moderate"
         )
         assertEquals(1978.5, sedentary ?: 0.0, 0.001)
-        assertEquals(2559.5625, moderate ?: 0.0, 0.001)
+        assertEquals(2555.5625, moderate ?: 0.0, 0.001)
         assertTrue((moderate ?: 0.0) > (sedentary ?: 0.0))
     }
 
