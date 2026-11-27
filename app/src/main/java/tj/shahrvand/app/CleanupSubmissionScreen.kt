@@ -141,7 +141,6 @@ internal fun CleanupSubmissionScreen(
     var error by remember { mutableStateOf("") }
     var status by remember { mutableStateOf("") }
     var history by remember { mutableStateOf(emptyList<CleanupSubmissionRecord>()) }
-    var busyPicker by remember { mutableStateOf("") }
 
     suspend fun refreshHistory() {
         history = CleanupSubmissionRepository.loadMySubmissions(getAccessToken())
@@ -166,7 +165,6 @@ internal fun CleanupSubmissionScreen(
                 .onSuccess { beforePhoto = it; error = "" }
                 .onFailure { error = it.message ?: "Файл қабул нашуд." }
         }
-        busyPicker = ""
     }
     val beforeVideoPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         if (uri != null) {
@@ -374,7 +372,7 @@ internal fun CleanupSubmissionScreen(
                             error = ""
                             status = ""
                             try {
-                                progress = nutritionTr(language, "Боркунии 1 аз 4…", "Загрузка 1 из 4…", "Uploading 1 of 4…")
+                                progress = nutritionTr(language, "Боркунии 4 далел…", "Загрузка 4 доказательств…", "Uploading four evidence files…")
                                 val submitted = CleanupSubmissionRepository.submit(
                                     context = context.applicationContext,
                                     userId = userId,
@@ -395,7 +393,10 @@ internal fun CleanupSubmissionScreen(
                                     "Заявка отправлена. Статус обновится после проверки администратором.",
                                     "Submission sent. Its status will update after administrator review."
                                 )
-                                refreshHistory()
+                                runCatching { refreshHistory() }
+                                    .onFailure {
+                                        error = nutritionTr(language, "Дархост фиристода шуд, аммо таърих нав нашуд. Барои санҷиш навсозиро пахш кун.", "Заявка отправлена, но история не обновилась. Нажми обновить для проверки.", "Submission was sent, but history did not refresh. Refresh to verify its status.")
+                                    }
                             } catch (e: Exception) {
                                 error = e.message ?: nutritionTr(language, "Дархост фиристода нашуд.", "Не удалось отправить заявку.", "Could not submit the evidence.")
                             } finally {
