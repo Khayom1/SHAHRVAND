@@ -187,6 +187,7 @@ private fun ShahrvandApp() {
     val currentThemeIsDark = LocalShahrvandPalette.current.isDark
     var financeEntries by remember { mutableStateOf(emptyList<MoneyEntry>()) }
     var tab by remember { mutableIntStateOf(0) }
+    var healthSection by remember { mutableStateOf("profile") }
     var totalXp by remember { mutableIntStateOf(prefs.getInt("total_xp", 0)) }
     var totalCompleted by remember { mutableIntStateOf(0) }
     var achievementSummary by remember { mutableStateOf<AchievementSummary?>(null) }
@@ -488,7 +489,7 @@ private fun ShahrvandApp() {
                             homeDestination = "personal"
                         },
                         onOpenSleep = { homeDestination = "sleep" },
-                        onOpenHealth = { tab = 4 },
+                        onOpenHealth = { healthSection = "profile"; tab = 4 },
                         onOpenProfile = { tab = 3 },
                         onOpenSettings = { settingsOpen = true },
                         onToggleTheme = {
@@ -499,16 +500,27 @@ private fun ShahrvandApp() {
                 }
                 1 -> DailyActivitiesScreen(language, ::getValidAccessToken)
                 2 -> LeaderboardScreen(language, ageBand ?: "18_plus", ::getValidAccessToken)
-                4 -> HealthProfileScreen(
-                    language = language,
-                    userId = prefs.getString("auth_user_id", "") ?: "",
-                    age = accountAge,
-                    getAccessToken = ::getValidAccessToken,
-                    onBack = {
-                        tab = 0
-                        homeDestination = "dashboard"
-                    }
-                )
+                4 -> if (healthSection == "nutrition") {
+                    NutritionScreen(
+                        language = language,
+                        userId = prefs.getString("auth_user_id", "") ?: "",
+                        age = accountAge,
+                        getAccessToken = ::getValidAccessToken,
+                        onBack = { healthSection = "profile" }
+                    )
+                } else {
+                    HealthProfileScreen(
+                        language = language,
+                        userId = prefs.getString("auth_user_id", "") ?: "",
+                        age = accountAge,
+                        getAccessToken = ::getValidAccessToken,
+                        onOpenNutrition = { healthSection = "nutrition" },
+                        onBack = {
+                            tab = 0
+                            homeDestination = "dashboard"
+                        }
+                    )
+                }
                 3 -> ShahrvandProfileScreen(
                     language = language,
                     firstName = accountFirstName,

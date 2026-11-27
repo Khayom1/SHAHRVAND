@@ -20,6 +20,9 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -34,6 +37,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -66,6 +70,7 @@ internal fun HealthProfileScreen(
     userId: String,
     age: Int,
     getAccessToken: suspend () -> String,
+    onOpenNutrition: () -> Unit,
     onBack: () -> Unit
 ) {
     val palette = LocalShahrvandPalette.current
@@ -80,6 +85,7 @@ internal fun HealthProfileScreen(
     var activityLevel by remember(userId) { mutableStateOf("light") }
     var healthGoal by remember(userId) { mutableStateOf("build_habit") }
     var previousWeightKg by remember(userId) { mutableStateOf<Double?>(null) }
+    var confirmDelete by remember { mutableStateOf(false) }
 
     LaunchedEffect(userId) {
         loading = true
@@ -129,7 +135,14 @@ internal fun HealthProfileScreen(
                     color = palette.ink, fontSize = 21.sp, fontWeight = FontWeight.Bold
                 )
             }
-            Icon(Icons.Filled.Favorite, contentDescription = null, tint = palette.navyLight, modifier = Modifier.size(24.dp))
+            IconButton(onClick = onOpenNutrition) {
+                Icon(
+                    Icons.Filled.Restaurant,
+                    contentDescription = healthTr(language, "Ғизо", "Питание", "Nutrition"),
+                    tint = palette.navyLight,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
         }
 
         Card(
@@ -359,6 +372,79 @@ internal fun HealthProfileScreen(
                 Spacer(Modifier.size(8.dp))
             }
             Text(healthTr(language, "Сабти маълумот", "Сохранить данные", "Save health profile"), fontWeight = FontWeight.Bold)
+        }
+
+        OutlinedButton(
+            onClick = { confirmDelete = true },
+            enabled = !loading && !saving && userId.isNotBlank(),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 46.dp),
+            shape = RoundedCornerShape(14.dp)
+        ) {
+            Icon(Icons.Filled.Delete, contentDescription = null, tint = palette.danger)
+            Spacer(Modifier.size(8.dp))
+            Text(
+                healthTr(language, "Нест кардани маълумоти саломатӣ", "Удалить данные о здоровье", "Delete health data"),
+                color = palette.danger,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+
+        if (confirmDelete) {
+            AlertDialog(
+                onDismissRequest = { if (!saving) confirmDelete = false },
+                title = {
+                    Text(healthTr(language, "Ҳамаи маълумоти саломатӣ нест карда шавад?", "Удалить все данные о здоровье?", "Delete all health data?"))
+                },
+                text = {
+                    Text(
+                        healthTr(
+                            language,
+                            "Қад, вазн, таърихи ченкуниҳо ва сабтҳои ғизову обнӯшӣ аз сервер нест мешаванд. Ин амалро баргардондан мумкин нест.",
+                            "Рост, вес, история измерений, записи питания и воды будут удалены с сервера. Это действие нельзя отменить.",
+                            "Your height, weight, measurement history, food diary and water logs will be deleted from the server. This action cannot be undone."
+                        )
+                    )
+                },
+                confirmButton = {
+                    TextButton(
+                        enabled = !saving,
+                        onClick = {
+                            confirmDelete = false
+                            scope.launch {
+                                saving = true
+                                error = ""
+                                status = ""
+                                try {
+                                    HealthProfileRepository.deleteMyHealthData(userId, getAccessToken())
+                                    heightText = ""
+                                    weightText = ""
+                                    previousWeightKg = null
+                                    sexAtBirth = "not_specified"
+                                    activityLevel = "light"
+                                    healthGoal = "build_habit"
+                                    status = healthTr(
+                                        language,
+                                        "Маълумоти саломатӣ нест карда шуд.",
+                                        "Данные о здоровье удалены.",
+                                        "Health data deleted."
+                                    )
+                                } catch (e: Exception) {
+                                    error = e.message ?: healthTr(language, "Несткунӣ иҷро нашуд.", "Не удалось удалить данные.", "Could not delete health data.")
+                                } finally {
+                                    saving = false
+                                }
+                            }
+                        }
+                    ) {
+                        Text(healthTr(language, "Нест кардан", "Удалить", "Delete"), color = palette.danger)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { confirmDelete = false }, enabled = !saving) {
+                        Text(healthTr(language, "Бекор кардан", "Отмена", "Cancel"))
+                    }
+                }
+            )
         }
 
         if (loading) {
