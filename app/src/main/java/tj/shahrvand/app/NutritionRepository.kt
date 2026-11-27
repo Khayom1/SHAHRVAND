@@ -208,6 +208,7 @@ object NutritionRepository {
             "cooked" -> FoodPreparationState.COOKED
             "dried" -> FoodPreparationState.DRIED
             "baked" -> FoodPreparationState.BAKED
+            "fermented" -> FoodPreparationState.FERMENTED
             else -> FoodPreparationState.UNKNOWN
         },
         nutrientsPer100g = FoodNutrients(
