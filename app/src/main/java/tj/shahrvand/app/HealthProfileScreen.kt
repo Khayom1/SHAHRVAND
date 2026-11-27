@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -69,6 +70,7 @@ internal fun HealthProfileScreen(
     userId: String,
     age: Int,
     getAccessToken: suspend () -> String,
+    onOpenNutrition: () -> Unit,
     onBack: () -> Unit
 ) {
     val palette = LocalShahrvandPalette.current
@@ -133,7 +135,14 @@ internal fun HealthProfileScreen(
                     color = palette.ink, fontSize = 21.sp, fontWeight = FontWeight.Bold
                 )
             }
-            Icon(Icons.Filled.Favorite, contentDescription = null, tint = palette.navyLight, modifier = Modifier.size(24.dp))
+            IconButton(onClick = onOpenNutrition) {
+                Icon(
+                    Icons.Filled.Restaurant,
+                    contentDescription = healthTr(language, "Ғизо", "Питание", "Nutrition"),
+                    tint = palette.navyLight,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
         }
 
         Card(
