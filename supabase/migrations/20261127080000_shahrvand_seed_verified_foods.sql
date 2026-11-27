@@ -43,7 +43,7 @@ insert into public.shahrvand_food_catalog (
   'Ҷурғоти одии шири пурравған',
   'Йогурт натуральный из цельного молока',
   'Plain whole-milk yogurt',
-  'dairy', 'raw',
+  'dairy', 'fermented',
   61, 3.47, 4.66, 3.25, 0, 46,
   'usda_fdc', 'https://fdc.nal.usda.gov/fdc-app.html#/food-details/171284/nutrients',
   '2026-11-27', false, true
