@@ -502,6 +502,13 @@ fun SleepTrackingScreen(
                     }
                     Text(
                         sleepTr(language,
+                            "Ғизои одии мутавозин бихӯр ва об нӯш; ягон хӯрок камбуди хобро ҷуброн намекунад. Энергетикро роҳи ислоҳи камхобӣ нашумор.",
+                            "Выбирай обычное сбалансированное питание и пей воду; еда не компенсирует недосып. Не используй энергетики как способ исправить нехватку сна.",
+                            "Choose regular balanced meals and drink water; food cannot replace lost sleep. Do not use energy drinks to make up for insufficient sleep."
+                        ), color = SLEEP_MUTED, fontSize = 10.sp, lineHeight = 15.sp
+                    )
+                    Text(
+                        sleepTr(language,
                             "Агар камхобӣ чанд ҳафта давом кунад, ё бо вуҷуди вақти кофӣ хоб рафтан рӯзона сахт хоболуд бошӣ, ба духтур муроҷиат кун. Агар нишонаҳо ногаҳон сахт бошанд, зудтар ёрии тиббӣ гир.",
                             "Если недосып продолжается несколько недель или сильная сонливость сохраняется даже при достаточном времени для сна, обратись к врачу. При внезапных выраженных симптомах обратись за медицинской помощью раньше.",
                             "If short sleep continues for several weeks, or you remain very sleepy despite allowing enough time for sleep, consult a clinician. Seek care sooner for sudden or severe symptoms."
