@@ -439,29 +439,7 @@ private fun ShahrvandApp() {
                         Box(Modifier.weight(1f)) {
                             SleepTrackingScreen(
                                 language = language,
-                                age = accountAge,
-                                onReward = { date, startedAt, endedAt, sourcePackage, isManual ->
-                                    val awarded = SupabaseSleepRepository.award(
-                                        token = getValidAccessToken(),
-                                        wakeDate = date,
-                                        startedAt = startedAt,
-                                        endedAt = endedAt,
-                                        sourcePackage = sourcePackage,
-                                        isManual = isManual
-                                    )
-                                    if (awarded) {
-                                        val summary = SupabaseCompetitionRepository.myAchievements(getValidAccessToken())
-                                        totalXp = summary.totalXp
-                                        totalCompleted = summary.verifiedTasks
-                                        achievementSummary = summary
-                                        achievementSummaryLoading = false
-                                        prefs.edit()
-                                            .putInt("total_xp", summary.totalXp)
-                                            .putInt("total_completed", summary.verifiedTasks)
-                                            .apply()
-                                    }
-                                    awarded
-                                }
+                                age = accountAge
                             )
                         }
                     }
