@@ -65,6 +65,29 @@ class HealthAssessmentTest {
     }
 
     @Test
+    fun hydrationReferenceUsesAgeAndSexAndSeparatesBeveragesFromTotalWater() {
+        assertEquals(DailyHydrationReference(3700, 3000),
+            HealthAssessment.estimateDailyHydrationReference(20, "male"))
+        assertEquals(DailyHydrationReference(2700, 2200),
+            HealthAssessment.estimateDailyHydrationReference(35, "female"))
+        assertEquals(DailyHydrationReference(3300, 2600),
+            HealthAssessment.estimateDailyHydrationReference(17, "male"))
+        assertEquals(DailyHydrationReference(2300, 1800),
+            HealthAssessment.estimateDailyHydrationReference(17, "female"))
+        assertEquals(DailyHydrationReference(2400, 1800),
+            HealthAssessment.estimateDailyHydrationReference(13, "male"))
+        assertEquals(DailyHydrationReference(2100, 1600),
+            HealthAssessment.estimateDailyHydrationReference(13, "female"))
+    }
+
+    @Test
+    fun hydrationReferenceRejectsUnknownSexAndUnsupportedAge() {
+        assertNull(HealthAssessment.estimateDailyHydrationReference(20, "not_specified"))
+        assertNull(HealthAssessment.estimateDailyHydrationReference(8, "male"))
+        assertNull(HealthAssessment.estimateDailyHydrationReference(121, "female"))
+    }
+
+    @Test
     fun adultBmiUsesAdultScreeningRanges() {
         assertEquals(
             AdultBmiCategory.UNDERWEIGHT,
