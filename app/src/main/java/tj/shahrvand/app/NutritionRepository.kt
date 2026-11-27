@@ -102,34 +102,25 @@ object NutritionRepository {
         require(displayName.trim().isNotEmpty() && displayName.trim().length <= 160) {
             "Номи хӯрок нодуруст аст."
         }
-        val nutrients = NutritionCalculator.forFoodPortion(food, portionGrams)
-            ?: throw IllegalArgumentException("Миқдор ё маълумоти ғизоӣ нодуруст аст.")
-        val body = JSONObject()
-            .put("item_name_snapshot", displayName.trim())
-            .put("catalog_item_id", food.id)
-            .put("recipe_slug_snapshot", JSONObject.NULL)
-            .put("portion_g", portionGrams)
-            .put("energy_kcal", nutrients.energyKcal)
-            .put("protein_g", nutrients.proteinG)
-            .put("carbohydrate_g", nutrients.carbohydrateG)
-            .put("fat_g", nutrients.fatG)
-            .put("fiber_g", nutrients.fiberG)
-            .put("sodium_mg", nutrients.sodiumMg)
-            .put("source_snapshot", "${food.source.name}:${food.sourceReference}")
+        require(NutritionCalculator.forFoodPortion(food, portionGrams) != null) {
+            "Миқдор ё маълумоти ғизоӣ нодуруст аст."
+        }
         val returned = JSONArray(
             request(
-                "/rest/v1/shahrvand_meal_logs?select=id,item_name_snapshot,portion_g,energy_kcal,protein_g,carbohydrate_g,fat_g,fiber_g,sodium_mg,source_snapshot,logged_at",
+                "/rest/v1/rpc/shahrvand_add_food_meal",
                 "POST",
                 accessToken,
-                body,
-                "return=representation"
+                JSONObject()
+                    .put("p_food_id", food.id)
+                    .put("p_portion_g", portionGrams),
+                null
             )
         )
         val row = returned.optJSONObject(0)
             ?: throw IllegalStateException("Сервер сабти хӯрокро барнагардонд.")
         MealLogRecord(
             id = row.optString("id"),
-            itemName = row.optString("item_name_snapshot"),
+            itemName = displayName.trim(),
             portionGrams = row.optDouble("portion_g"),
             nutrients = NutritionTotals(
                 row.optDouble("energy_kcal"),
