@@ -862,6 +862,7 @@ private fun HomeScreen(
             age = age,
             onOpenSleep = onOpenSleep
         )
+        HealthVitalsDashboardCard(language = language)
 
         Card(
             modifier = Modifier.fillMaxWidth().animateContentSize(),
