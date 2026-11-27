@@ -8,7 +8,7 @@ create or replace function public.shahrvand_add_food_meal(
 )
 returns setof public.shahrvand_meal_logs
 language plpgsql
-security invoker
+security definer
 set search_path = ''
 as $$
 declare
@@ -42,6 +42,7 @@ begin
 
   return query
   insert into public.shahrvand_meal_logs (
+    user_id,
     item_name_snapshot,
     catalog_item_id,
     recipe_slug_snapshot,
@@ -54,6 +55,7 @@ begin
     sodium_mg,
     source_snapshot
   ) values (
+    auth.uid(),
     trim(p_display_name),
     v_food.id,
     null,
