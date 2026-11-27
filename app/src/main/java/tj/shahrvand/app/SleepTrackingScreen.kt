@@ -132,9 +132,7 @@ private object SleepHealthConnectRepository {
         val candidates = response.records.mapNotNull { record ->
             if (record.endTime.isAfter(now)) return@mapNotNull null
 
-            // The server validates the full recorded session interval (end - start).
-            // Use the same duration here; summing sleep stages can be shorter and
-            // avoid excluding a valid recorded sleep session.
+            // Use the full session interval; summing sleep stages can be shorter.
             val minutes = Duration.between(record.startTime, record.endTime).toMinutes()
             if (minutes !in 120L..960L) return@mapNotNull null
 
@@ -210,9 +208,7 @@ fun SleepTrackingScreen(
         }
     }
 
-    val today = remember { LocalDate.now(SLEEP_ZONE) }
     val latest = nights.firstOrNull()
-    val todaysNight = nights.firstOrNull { it.wakeDate == today }
     val targetMinutes = SleepRules.minimumTargetMinutes(age)
 
     Column(
@@ -220,7 +216,7 @@ fun SleepTrackingScreen(
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
-            Text(sleepTr(language, "ОДАТИ ХОБ", "ПРИВЫЧКА СНА", "SLEEP HABIT"),
+            Text(sleepTr(language, "САЛОМАТИИ ХОБ", "ЗДОРОВЫЙ СОН", "SLEEP HEALTH"),
                 color = SLEEP_GOLD, fontSize = 10.sp, fontWeight = FontWeight.ExtraBold)
             Text(sleepTr(language, "Хоб барои саломатӣ ва барқароршавии организм муҳим аст.", "Сон важен для здоровья и восстановления организма.", "Sleep is essential for health and recovery."),
                 color = SLEEP_NAVY_TEXT, fontSize = 22.sp, fontWeight = FontWeight.Black)
