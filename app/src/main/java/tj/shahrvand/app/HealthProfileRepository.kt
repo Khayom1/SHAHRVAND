@@ -118,9 +118,13 @@ object HealthProfileRepository {
         require(restingHeartRateBpm == null || restingHeartRateBpm in 25..240) {
             "Набз бояд аз 25 то 240 зарба дар дақиқа бошад."
         }
-        require((bloodPressureSystolicMmhg == null && bloodPressureDiastolicMmhg == null) ||
-            (bloodPressureSystolicMmhg in 60..260 && bloodPressureDiastolicMmhg in 30..180 &&
-                bloodPressureSystolicMmhg > bloodPressureDiastolicMmhg)) {
+        require(
+            (bloodPressureSystolicMmhg == null && bloodPressureDiastolicMmhg == null) ||
+                (bloodPressureSystolicMmhg != null && bloodPressureDiastolicMmhg != null &&
+                    bloodPressureSystolicMmhg in 60..260 &&
+                    bloodPressureDiastolicMmhg in 30..180 &&
+                    bloodPressureSystolicMmhg > bloodPressureDiastolicMmhg)
+        ) {
             "Фишори хунро дуруст ворид кун: систолӣ бояд аз диастолӣ баланд бошад."
         }
         require(allergies.length <= 1000 && healthConditions.length <= 1000) {
