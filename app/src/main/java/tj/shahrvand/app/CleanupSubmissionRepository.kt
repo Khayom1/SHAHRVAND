@@ -41,7 +41,10 @@ object CleanupSubmissionRepository {
         afterPhoto: Uri,
         afterVideo: Uri
     ): CleanupSubmissionRecord = withContext(Dispatchers.IO) {
-        requireValidSession(userId, accessToken)
+        requireValidSession(accessToken)
+        require(userId.matches(Regex("^[0-9a-fA-F-]{36}$"))) {
+            "Сессияи корбар нодуруст аст."
+        }
         val specs = listOf(
             UploadSpec("before_photo", "image/"),
             UploadSpec("before_video", "video/"),
@@ -98,7 +101,7 @@ object CleanupSubmissionRepository {
 
     suspend fun loadMySubmissions(accessToken: String): List<CleanupSubmissionRecord> =
         withContext(Dispatchers.IO) {
-            requireValidSession("read-only", accessToken, requireUserId = false)
+            requireValidSession(accessToken)
             val response = org.json.JSONArray(
                 request(
                     path = "/rest/v1/shahrvand_cleanup_submissions" +
@@ -228,16 +231,7 @@ object CleanupSubmissionRepository {
         )
     }
 
-    private fun requireValidSession(
-        userId: String,
-        accessToken: String,
-        requireUserId: Boolean = true
-    ) {
-        if (requireUserId) {
-            require(userId.matches(Regex("^[0-9a-fA-F-]{36}$"))) {
-                "Сессияи корбар нодуруст аст."
-            }
-        }
+    private fun requireValidSession(accessToken: String) {
         require(accessToken.isNotBlank()) {
             "Сессия ба охир расид. Дубора ворид шавед."
         }
