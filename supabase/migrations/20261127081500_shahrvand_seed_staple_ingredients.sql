@@ -43,7 +43,7 @@ insert into public.shahrvand_food_catalog (
   'Орди гандуми сафед, навъи умумӣ, ғанигардонданашуда',
   'Пшеничная мука высшего сорта, не обогащённая',
   'Wheat flour, white, all-purpose, unenriched',
-  'grains', 'raw',
+  'grains', 'as_sold',
   364, 10.30, 76.30, 0.98, 2.7, 2,
   'usda_fdc', 'https://fdc.nal.usda.gov/fdc-app.html#/food-details/169761/nutrients',
   '2026-11-27', false, true
