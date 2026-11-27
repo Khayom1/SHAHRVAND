@@ -92,8 +92,7 @@ object HealthProfileRepository {
             "Сатҳи фаъолият нодуруст аст."
         }
         require(healthGoal in setOf(
-            "maintain", "build_strength", "improve_endurance",
-            "build_habit", "gain_weight", "weight_management"
+            "maintain", "build_strength", "improve_endurance", "build_habit"
         )) { "Ҳадафи саломатӣ нодуруст аст." }
 
         val profileBody = JSONObject()
