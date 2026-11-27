@@ -484,6 +484,8 @@ private fun ShahrvandApp() {
                         summaryLoading = achievementSummaryLoading,
                         onOpenMissions = { tab = 1 },
                         onOpenActivity = { tab = 1 },
+                        onOpenNutrition = { healthSection = "nutrition"; tab = 4 },
+                        getAccessToken = ::getValidAccessToken,
                         onOpenLeaderboard = { tab = 2 },
                         onOpenNotes = {
                             personalSection = "notes"
@@ -555,6 +557,8 @@ private fun ShahrvandApp() {
                     summaryLoading = achievementSummaryLoading,
                     onOpenMissions = { tab = 1 },
                     onOpenActivity = { tab = 1 },
+                    onOpenNutrition = { healthSection = "nutrition"; tab = 4 },
+                    getAccessToken = ::getValidAccessToken,
                     onOpenLeaderboard = { tab = 2 },
                     onOpenNotes = {
                         personalSection = "notes"
@@ -795,6 +799,8 @@ private fun HomeScreen(
     summaryLoading: Boolean,
     onOpenMissions: () -> Unit,
     onOpenActivity: () -> Unit,
+    onOpenNutrition: () -> Unit,
+    getAccessToken: suspend () -> String,
     onOpenLeaderboard: () -> Unit,
     onOpenNotes: () -> Unit,
     onOpenSleep: () -> Unit,
@@ -844,6 +850,11 @@ private fun HomeScreen(
         HealthActivityDashboard(
             language = language,
             onOpenActivity = onOpenActivity
+        )
+        NutritionDashboardCard(
+            language = language,
+            getAccessToken = getAccessToken,
+            onOpenNutrition = onOpenNutrition
         )
 
         Card(
@@ -931,7 +942,7 @@ private fun HomeScreen(
         Text(tr(language, "ҚИСМҲОИ ШАҲРВАНД", "РАЗДЕЛЫ SHAHRVAND", "EXPLORE SHAHRVAND"),
             color = palette.muted, fontSize = 10.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 0.7.sp)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            DashboardShortcut(Modifier.weight(1f), "🏆", tr(language, "Рейтинг", "Рейтинг", "Ranking"), palette, onOpenLeaderboard)
+            DashboardShortcut(Modifier.weight(1f), "🍎", tr(language, "Ғизо", "Питание", "Nutrition"), palette, onOpenNutrition)
             DashboardShortcut(Modifier.weight(1f), "🗒", tr(language, "Ёддошт", "Заметки", "Notes"), palette, onOpenNotes)
             DashboardShortcut(Modifier.weight(1f), "🌙", tr(language, "Хоб", "Сон", "Sleep"), palette, onOpenSleep)
             DashboardShortcut(Modifier.weight(1f), "♥", tr(language, "Саломатӣ", "Здоровье", "Health"), palette, onOpenHealth)
