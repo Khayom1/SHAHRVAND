@@ -39,13 +39,13 @@ class SleepRulesTest {
     @Test
     fun threeShortNightsInRecentSevenRecordsAreFlaggedAsRecurring() {
         val insight = SleepRules.analyzeRecentNights(
-            minutesNewestFirst = listOf(360L, 390L, 430L, 400L, 450L, 420L, 410L, 200L),
+            minutesNewestFirst = listOf(360L, 430L, 400L, 450L, 420L, 410L, 430L),
             targetMinutes = 420L
         )
 
         assertEquals(SleepPattern.REPEATED_SHORT_SLEEP, insight?.pattern)
-        assertEquals(4, insight?.belowTargetCount)
-        assertEquals(2, insight?.consecutiveBelowTarget)
+        assertEquals(3, insight?.belowTargetCount)
+        assertEquals(1, insight?.consecutiveBelowTarget)
         assertEquals(7, insight?.recentNightCount)
     }
 
