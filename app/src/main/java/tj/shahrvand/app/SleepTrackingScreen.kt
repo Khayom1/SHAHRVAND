@@ -86,6 +86,23 @@ private data class SleepNight(
     val isManual: Boolean
 )
 
+/** Human-readable labels for apps that commonly publish sleep records to Health Connect. */
+internal object SleepSourceLabels {
+    fun label(packageName: String): String = when (packageName) {
+        "com.sec.android.app.shealth" -> "Samsung Health"
+        "com.google.android.apps.fitness" -> "Google Fit"
+        "com.fitbit.FitbitMobile" -> "Fitbit"
+        "com.xiaomi.wearable" -> "Mi Fitness"
+        "com.xiaomi.hm.health" -> "Zepp Life"
+        "com.huawei.health" -> "Huawei Health"
+        "com.garmin.android.apps.connectmobile" -> "Garmin Connect"
+        "com.withings.wiscale2" -> "Withings"
+        "com.ouraring.oura" -> "Oura"
+        "fi.polar.polarflow" -> "Polar Flow"
+        else -> packageName.substringAfterLast('.').ifBlank { "Health Connect" }
+    }
+}
+
 
 internal object SupabaseSleepRepository {
     private val base get() = BuildConfig.SUPABASE_URL.trimEnd('/')
@@ -191,8 +208,9 @@ private object SleepHealthConnectRepository {
         return candidates.groupBy { it.wakeDate }
             .values
             .mapNotNull { sameDate ->
-                // Prefer an automatic Samsung Health record over a longer manual estimate.
-                sameDate.filterNot { it.isManual || it.sourcePackage != "com.sec.android.app.shealth" }
+                // Prefer device/app-recorded data over manual estimates. Health Connect
+                // is the common Android bridge; the originating app varies by device.
+                sameDate.filterNot { it.isManual }
                     .maxByOrNull { it.minutes }
                     ?: sameDate.maxByOrNull { it.minutes }
             }
@@ -253,7 +271,7 @@ fun SleepTrackingScreen(
     val targetMinutes = SleepRules.minimumTargetMinutes(age)
     val durationQualifies = todaysNight?.let { SleepRules.qualifies(age, it.minutes) } == true
     val qualifies = todaysNight?.let {
-        !it.isManual && it.sourcePackage == "com.sec.android.app.shealth" &&
+        SleepRules.isEligibleRecord(it.isManual, it.sourcePackage) &&
             SleepRules.qualifies(age, it.minutes)
     } == true
 
@@ -266,9 +284,9 @@ fun SleepTrackingScreen(
                     "Ручная запись не подходит для начисления XP.",
                     "Manual sleep entries are not eligible for XP.")
                 else -> sleepTr(language,
-                    "Барои XP сабти автоматии Samsung Health лозим аст.",
-                    "Для XP нужна автоматическая запись Samsung Health.",
-                    "An automatic Samsung Health record is required for XP.")
+                    "Барои XP сабти хоб аз барномаи пайвастшудаи тандурустӣ лозим аст.",
+                    "Для XP нужна запись сна из подключённого приложения здоровья.",
+                    "A sleep record from a connected health app is required for XP.")
             }
         } else if (qualifies && todaysNight != null) {
             try {
@@ -343,9 +361,9 @@ fun SleepTrackingScreen(
                     sdkStatus != HealthConnectClient.SDK_AVAILABLE -> {
                         Text(
                             sleepTr(language,
-                                "Health Connect дастрас нест. Онро дар телефон насб ё навсозӣ кун ва Samsung Health-ро низ навсозӣ намо.",
-                                "Health Connect недоступен. Установи или обнови его на телефоне и обнови Samsung Health.",
-                                "Health Connect is unavailable. Install or update it on your phone and update Samsung Health."),
+                                "Health Connect дастрас нест. Онро аз Google Play насб ё навсозӣ кун.",
+                                "Health Connect недоступен. Установи или обнови его через Google Play.",
+                                "Health Connect is unavailable. Install or update it from Google Play."),
                             color = SLEEP_MUTED, fontSize = 12.sp, lineHeight = 18.sp
                         )
                     }
@@ -378,9 +396,9 @@ fun SleepTrackingScreen(
                         } else if (nights.isEmpty()) {
                             Text(
                                 sleepTr(language,
-                                    "Сабти хоб ёфт нашуд. Дар Samsung Health ба Settings → Health Connect даромада, дастрасии Sleep-ро фаъол кун. Баъд саҳифаро навсозӣ намо.",
-                                    "Запись сна не найдена. В Samsung Health открой Settings → Health Connect и разреши доступ к Sleep. Затем обнови экран.",
-                                    "No sleep record found. In Samsung Health, open Settings → Health Connect and enable Sleep sharing, then refresh this screen."),
+                                    "Сабти хоб ёфт нашуд. Дар барномаи соат ё тандурустии худ ҳамоҳангсозии Sleep бо Health Connect-ро фаъол кун, иҷозати Sleep-ро деҳ ва боз навсозӣ намо.",
+                                    "Запись сна не найдена. В приложении часов или здоровья включи синхронизацию Sleep с Health Connect, разреши доступ к сну и обнови экран.",
+                                    "No sleep record found. Enable Sleep sync with Health Connect in your watch or health app, grant sleep access, then refresh."),
                                 color = SLEEP_MUTED, fontSize = 12.sp, lineHeight = 18.sp
                             )
                         }
@@ -422,8 +440,7 @@ fun SleepTrackingScreen(
                     Text(dateLabel + " · " + startLabel + " – " + endLabel, color = SLEEP_MUTED, fontSize = 12.sp)
                     Text(
                         sleepTr(language, "Манба: ", "Источник: ", "Source: ") +
-                            if (latest.sourcePackage == "com.sec.android.app.shealth") "Samsung Health"
-                            else latest.sourcePackage.substringAfterLast('.').ifBlank { "Health Connect" },
+                            SleepSourceLabels.label(latest.sourcePackage),
                         color = SLEEP_MUTED, fontSize = 10.sp
                     )
                     Text(
@@ -527,9 +544,9 @@ fun SleepTrackingScreen(
 
         Text(
             sleepTr(language,
-                "Маълумоти хоб метавонад дертар ба Health Connect ҳамоҳанг шавад. Баъди кушодани Samsung Health ин саҳифаро навсозӣ кун. XP-и хоб ба рейтинги ҳафтаинаи серверӣ низ дохил мешавад.",
-                "Данные сна могут синхронизироваться с Health Connect с задержкой. После открытия Samsung Health обнови эту страницу. Очки за сон также входят в недельный серверный рейтинг.",
-                "Sleep data may sync to Health Connect with a delay. After opening Samsung Health, refresh this page. Sleep XP is also included in the server weekly leaderboard."
+                "Маълумоти хоб метавонад бо таъхир ба Health Connect ҳамоҳанг шавад. Барномаи манбаи хобро кушо, баъд ин саҳифаро навсозӣ кун. XP-и хоб ба рейтинги ҳафтаинаи серверӣ дохил мешавад.",
+                "Данные сна могут поступать в Health Connect с задержкой. Открой приложение-источник сна, затем обнови эту страницу. XP за сон входит в недельный рейтинг.",
+                "Sleep data may sync to Health Connect with a delay. Open the app that records your sleep, then refresh this screen. Sleep XP also counts toward the weekly leaderboard."
             ), color = SLEEP_MUTED, fontSize = 10.sp, lineHeight = 15.sp
         )
     }
