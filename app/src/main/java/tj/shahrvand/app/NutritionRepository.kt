@@ -136,6 +136,67 @@ object NutritionRepository {
         )
     }
 
+    suspend fun addRecipeMeal(
+        displayName: String,
+        ingredients: List<RecipeIngredient>,
+        finalCookedWeightGrams: Double,
+        portionGrams: Double,
+        accessToken: String
+    ): MealLogRecord = withContext(Dispatchers.IO) {
+        requireValidSession(accessToken)
+        require(displayName.trim().isNotEmpty() && displayName.trim().length <= 160) {
+            "Номи таом нодуруст аст."
+        }
+        require(ingredients.size in 1..30) {
+            "Шумораи компонентҳо бояд аз 1 то 30 бошад."
+        }
+        require(NutritionCalculator.forRecipe(ingredients, finalCookedWeightGrams) != null) {
+            "Миқдори компонентҳо ё вазни ниҳоии таом нодуруст аст."
+        }
+        require(portionGrams.isFinite() && portionGrams in 0.01..10000.0) {
+            "Миқдори порсия нодуруст аст."
+        }
+
+        val ingredientArray = JSONArray()
+        ingredients.forEach { ingredient ->
+            ingredientArray.put(
+                JSONObject()
+                    .put("food_id", ingredient.food.id)
+                    .put("amount_g", ingredient.amountGrams)
+            )
+        }
+        val returned = JSONArray(
+            request(
+                "/rest/v1/rpc/shahrvand_add_recipe_meal",
+                "POST",
+                accessToken,
+                JSONObject()
+                    .put("p_display_name", displayName.trim())
+                    .put("p_ingredients", ingredientArray)
+                    .put("p_final_cooked_weight_g", finalCookedWeightGrams)
+                    .put("p_portion_g", portionGrams),
+                null
+            )
+        )
+        val row = returned.optJSONObject(0)
+            ?: throw IllegalStateException("Сервер сабти таомро барнагардонд.")
+        MealLogRecord(
+            id = row.optString("id"),
+            itemName = row.optString("item_name_snapshot"),
+            portionGrams = row.optDouble("portion_g"),
+            nutrients = NutritionTotals(
+                row.optDouble("energy_kcal"),
+                row.optDouble("protein_g"),
+                row.optDouble("carbohydrate_g"),
+                row.optDouble("fat_g"),
+                row.optDouble("fiber_g"),
+                row.optDouble("sodium_mg")
+            ),
+            sourceSnapshot = row.optString("source_snapshot"),
+            loggedAt = row.optString("logged_at")
+        )
+    }
+
     suspend fun deleteMeal(mealId: String, accessToken: String) =
         withContext(Dispatchers.IO) {
             requireValidSession(accessToken)
