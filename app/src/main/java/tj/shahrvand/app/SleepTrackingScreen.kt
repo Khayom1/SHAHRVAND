@@ -58,11 +58,6 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import org.json.JSONObject
-import java.net.HttpURLConnection
-import java.net.URL
 
 private val SLEEP_NAVY: Color @Composable get() = LocalShahrvandPalette.current.navy
 private val SLEEP_NAVY_TEXT: Color @Composable get() = LocalShahrvandPalette.current.navyText
@@ -104,55 +99,6 @@ internal object SleepSourceLabels {
 }
 
 
-internal object SupabaseSleepRepository {
-    private val base get() = BuildConfig.SUPABASE_URL.trimEnd('/')
-    private val key get() = BuildConfig.SUPABASE_PUBLISHABLE_KEY
-
-    suspend fun award(
-        token: String,
-        wakeDate: String,
-        startedAt: Instant,
-        endedAt: Instant,
-        sourcePackage: String,
-        isManual: Boolean
-    ): Boolean = withContext(Dispatchers.IO) {
-        var connection: HttpURLConnection? = null
-        try {
-            val body = JSONObject()
-                .put("p_wake_date", wakeDate)
-                .put("p_started_at", startedAt.toString())
-                .put("p_ended_at", endedAt.toString())
-                .put("p_source_package", sourcePackage)
-                .put("p_is_manual", isManual)
-            connection = (URL("$base/rest/v1/rpc/shahrvand_award_sleep_xp").openConnection() as HttpURLConnection).apply {
-                requestMethod = "POST"
-                connectTimeout = 12000
-                readTimeout = 15000
-                setRequestProperty("apikey", key)
-                setRequestProperty("Authorization", "Bearer $token")
-                setRequestProperty("Accept", "application/json")
-                setRequestProperty("Content-Type", "application/json")
-                doOutput = true
-            }
-            connection.outputStream.bufferedWriter(Charsets.UTF_8).use { it.write(body.toString()) }
-            val code = connection.responseCode
-            val stream = if (code in 200..299) connection.inputStream else connection.errorStream
-            val raw = stream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }.orEmpty()
-            if (code !in 200..299) {
-                val message = runCatching { JSONObject(raw).optString("message") }.getOrNull().orEmpty()
-                throw IllegalStateException(message.ifBlank { "HTTP $code" })
-            }
-            val result = JSONObject(raw)
-            result.optBoolean("ok") &&
-                result.optBoolean("qualified") &&
-                !result.optBoolean("already_awarded") &&
-                result.optInt("xp_awarded") == SleepRules.REWARD_XP
-        } finally {
-            connection?.disconnect()
-        }
-    }
-}
-
 private object SleepHealthConnectRepository {
     val permissions = setOf(
         HealthPermission.getReadPermission(SleepSessionRecord::class)
@@ -188,7 +134,7 @@ private object SleepHealthConnectRepository {
 
             // The server validates the full recorded session interval (end - start).
             // Use the same duration here; summing sleep stages can be shorter and
-            // incorrectly prevent an otherwise eligible night from reaching the XP RPC.
+            // avoid excluding a valid recorded sleep session.
             val minutes = Duration.between(record.startTime, record.endTime).toMinutes()
             if (minutes !in 120L..960L) return@mapNotNull null
 
@@ -221,8 +167,7 @@ private object SleepHealthConnectRepository {
 @Composable
 fun SleepTrackingScreen(
     language: String,
-    age: Int,
-    onReward: suspend (date: String, startedAt: Instant, endedAt: Instant, sourcePackage: String, isManual: Boolean) -> Boolean
+    age: Int
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -233,7 +178,6 @@ fun SleepTrackingScreen(
     // Re-check provider availability after returning from system settings or installing Health Connect.
     val sdkStatus = remember(context, refreshCounter) { HealthConnectClient.getSdkStatus(context) }
     var nights by remember { mutableStateOf<List<SleepNight>>(emptyList()) }
-    var rewardMessage by remember { mutableStateOf("") }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         PermissionController.createRequestPermissionResultContract()
@@ -270,46 +214,6 @@ fun SleepTrackingScreen(
     val latest = nights.firstOrNull()
     val todaysNight = nights.firstOrNull { it.wakeDate == today }
     val targetMinutes = SleepRules.minimumTargetMinutes(age)
-    val durationQualifies = todaysNight?.let { SleepRules.qualifies(age, it.minutes) } == true
-    val qualifies = todaysNight?.let {
-        SleepRules.isEligibleRecord(it.isManual, it.sourcePackage) &&
-            SleepRules.qualifies(age, it.minutes)
-    } == true
-
-    LaunchedEffect(todaysNight?.wakeDate, todaysNight?.minutes, todaysNight?.sourcePackage, todaysNight?.isManual, qualifies) {
-        rewardMessage = ""
-        if (todaysNight != null && durationQualifies && !qualifies) {
-            rewardMessage = when {
-                todaysNight.isManual -> sleepTr(language,
-                    "Сабти дастӣ барои гирифтани XP қабул намешавад.",
-                    "Ручная запись не подходит для начисления XP.",
-                    "Manual sleep entries are not eligible for XP.")
-                else -> sleepTr(language,
-                    "Барои XP сабти хоб аз барномаи пайвастшудаи тандурустӣ лозим аст.",
-                    "Для XP нужна запись сна из подключённого приложения здоровья.",
-                    "A sleep record from a connected health app is required for XP.")
-            }
-        } else if (qualifies && todaysNight != null) {
-            try {
-                rewardMessage = if (onReward(
-                    todaysNight.wakeDate.toString(),
-                    todaysNight.start,
-                    todaysNight.end,
-                    todaysNight.sourcePackage,
-                    todaysNight.isManual
-                )) {
-                    sleepTr(language, "Офарин! +15 XP барои хоби кофӣ.", "Отлично! +15 XP за достаточный сон.", "Great! +15 XP for sufficient sleep.")
-                } else {
-                    sleepTr(language, "Холи ин шаб аллакай ҳисоб шудааст.", "Очки за эту ночь уже начислены.", "This night's points have already been awarded.")
-                }
-            } catch (e: Exception) {
-                error = e.message ?: sleepTr(language,
-                    "Сервер XP-ро тасдиқ накард. Баъдтар навсозӣ кун.",
-                    "Сервер не подтвердил XP. Повтори позже.",
-                    "The server could not verify XP. Try refreshing later.")
-            }
-        }
-    }
 
     Column(
         modifier = Modifier.fillMaxSize().shahrvandCanvas().verticalScroll(rememberScrollState()).padding(16.dp),
@@ -318,14 +222,14 @@ fun SleepTrackingScreen(
         Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
             Text(sleepTr(language, "ОДАТИ ХОБ", "ПРИВЫЧКА СНА", "SLEEP HABIT"),
                 color = SLEEP_GOLD, fontSize = 10.sp, fontWeight = FontWeight.ExtraBold)
-            Text(sleepTr(language, "Хоби кофӣ — пешрафти ҳаррӯза.", "Достаточный сон — ежедневный прогресс.", "Enough sleep is daily progress."),
+            Text(sleepTr(language, "Хоб барои саломатӣ ва барқароршавии организм муҳим аст.", "Сон важен для здоровья и восстановления организма.", "Sleep is essential for health and recovery."),
                 color = SLEEP_NAVY_TEXT, fontSize = 22.sp, fontWeight = FontWeight.Black)
             Text(
                 sleepTr(
                     language,
-                    "SHAHRVAND сабти хобро аз Health Connect мехонад. Барои ҳисоб кардани XP сана, вақти оғозу анҷом ва манбаи сабт ба сервер фиристода мешаванд; худи сабти Health Connect нусхабардорӣ намешавад.",
-                    "SHAHRVAND читает записи сна через Health Connect. Для начисления XP на сервер отправляются дата, время начала и окончания, а также источник записи; сама запись Health Connect не копируется.",
-                    "SHAHRVAND reads sleep records through Health Connect. To award XP, the date, start and end times, and record source are sent to the server; the Health Connect record itself is not copied."
+                    "SHAHRVAND маълумоти хобро мустақиман аз Health Connect мехонад. Маълумот танҳо барои назорати саломатӣ ва барқароршавӣ дар ҳамин дастгоҳ истифода мешавад.",
+                    "SHAHRVAND читает данные сна напрямую из Health Connect. Они используются только для контроля здоровья и восстановления на этом устройстве.",
+                    "SHAHRVAND reads sleep data directly from Health Connect. It is used only for health and recovery insights on this device."
                 ), color = SLEEP_MUTED, fontSize = 12.sp, lineHeight = 18.sp
             )
         }
@@ -355,7 +259,6 @@ fun SleepTrackingScreen(
                             }, color = SLEEP_MUTED, fontSize = 11.sp
                         )
                     }
-                    Text("+15 XP", color = SLEEP_GOLD, fontWeight = FontWeight.Black, fontSize = 14.sp)
                 }
                 HorizontalDivider(color = SLEEP_BORDER)
                 when {
@@ -474,12 +377,6 @@ fun SleepTrackingScreen(
                             fontWeight = FontWeight.Bold, fontSize = 12.sp,
                             modifier = Modifier.weight(1f)
                         )
-                        if (latest.wakeDate == today && qualifies) {
-                            Text("+15 XP", color = SLEEP_GREEN, fontWeight = FontWeight.Black)
-                        }
-                    }
-                    if (rewardMessage.isNotBlank()) {
-                        Text(rewardMessage, color = SLEEP_GREEN, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     }
                 }
             }
@@ -545,9 +442,9 @@ fun SleepTrackingScreen(
 
         Text(
             sleepTr(language,
-                "Маълумоти хоб метавонад бо таъхир ба Health Connect ҳамоҳанг шавад. Барномаи манбаи хобро кушо, баъд ин саҳифаро навсозӣ кун. XP-и хоб ба рейтинги ҳафтаинаи серверӣ дохил мешавад.",
-                "Данные сна могут поступать в Health Connect с задержкой. Открой приложение-источник сна, затем обнови эту страницу. XP за сон входит в недельный рейтинг.",
-                "Sleep data may sync to Health Connect with a delay. Open the app that records your sleep, then refresh this screen. Sleep XP also counts toward the weekly leaderboard."
+                "Маълумоти хоб метавонад бо таъхир ба Health Connect ҳамоҳанг шавад. Барномаи манбаи хобро кушо, баъд ин саҳифаро навсозӣ кун. Маълумоти хоб барои назорати саломатӣ истифода мешавад.",
+                "Данные сна могут поступать в Health Connect с задержкой. Открой приложение-источник сна, затем обнови эту страницу. Данные сна нужны для контроля здоровья.",
+                "Sleep data may sync to Health Connect with a delay. Open the app that records your sleep, then refresh this screen. Sleep data is used for health insights."
             ), color = SLEEP_MUTED, fontSize = 10.sp, lineHeight = 15.sp
         )
     }
