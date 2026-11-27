@@ -34,6 +34,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -176,6 +177,12 @@ internal fun NutritionScreen(
         sodiumMg = meals.sumOf { it.nutrients.sodiumMg }
     )
     val waterTotal = waterLogs.sumOf { it.volumeMl }
+    val hydrationReference = healthSnapshot?.profile?.let { profile ->
+        HealthAssessment.estimateDailyHydrationReference(age, profile.sexAtBirth)
+    }
+    val hydrationProgress = hydrationReference?.let { reference ->
+        (waterTotal.toFloat() / reference.beverageWaterMl.toFloat()).coerceIn(0f, 1f)
+    } ?: 0f
     val restingEnergyKcal = healthSnapshot?.let { snapshot ->
         val profile = snapshot.profile
         val measurement = snapshot.latestMeasurement
@@ -525,6 +532,59 @@ internal fun NutritionScreen(
                             Spacer(Modifier.weight(1f))
                             Text("${waterTotal} мл", color = palette.navyLight, fontWeight = FontWeight.Bold, fontSize = 15.sp)
                         }
+                        if (hydrationReference != null) {
+                            Text(
+                                nutritionTr(language, "Ҳадафи тахминии нӯшокиҳо", "Ориентир по напиткам", "Estimated beverage reference"),
+                                color = palette.muted, fontSize = 10.sp, fontWeight = FontWeight.SemiBold
+                            )
+                            Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                                Text(
+                                    "${hydrationReference.beverageWaterMl} мл",
+                                    color = palette.ink, fontSize = 22.sp, fontWeight = FontWeight.Black
+                                )
+                                Text(
+                                    nutritionTr(language, "дар як рӯз", "в день", "per day"),
+                                    color = palette.muted, fontSize = 10.sp, modifier = Modifier.padding(bottom = 3.dp)
+                                )
+                            }
+                            LinearProgressIndicator(
+                                progress = { hydrationProgress },
+                                modifier = Modifier.fillMaxWidth().height(7.dp),
+                                color = Color(0xFF438FDD),
+                                trackColor = palette.surfaceVariant
+                            )
+                            Text(
+                                nutritionTr(
+                                    language,
+                                    "Оби одии сабтшуда: ${waterTotal} мл аз ${hydrationReference.beverageWaterMl} мл. Ҳадаф аз меъёрҳои синну сол ва ҷинси биологӣ гирифта шудааст; он танҳо оби холис нест ва ҳатмӣ ё дақиқ барои ҳар шахс нест.",
+                                    "Записанная обычная вода: ${waterTotal} мл из ${hydrationReference.beverageWaterMl} мл. Ориентир основан на возрасте и биологическом поле; это не только чистая вода и не обязательная точная норма.",
+                                    "Plain water logged: ${waterTotal} ml of ${hydrationReference.beverageWaterMl} ml. This reference is based on age and sex; it includes beverages, not only plain water, and is not an exact requirement."
+                                ),
+                                color = palette.muted, fontSize = 10.sp, lineHeight = 14.sp
+                            )
+                            val activity = healthSnapshot?.profile?.activityLevel
+                            if (activity == "moderate" || activity == "high") {
+                                Text(
+                                    nutritionTr(
+                                        language,
+                                        "Бо фаъолияти ҷисмонии зиёд, арақкунӣ ё ҳавои гарм талафи моеъ бештар мешавад. Ҳангоми машқ ва баъди он мувофиқи ташнагӣ моеъро барқарор кун.",
+                                        "При высокой физической активности, потоотделении и жаре потери жидкости увеличиваются. Во время и после нагрузки восполняй жидкость с учётом жажды.",
+                                        "More activity, sweating and hot weather increase fluid losses. Replace fluids during and after exercise according to thirst."
+                                    ),
+                                    color = palette.navyLight, fontSize = 10.sp, lineHeight = 14.sp
+                                )
+                            }
+                        } else {
+                            Text(
+                                nutritionTr(
+                                    language,
+                                    "Барои ҳисоб синну сол ва ҷинси биологиро дар профили саломатӣ пур кун.",
+                                    "Чтобы рассчитать ориентир, заполни возраст и биологический пол в профиле здоровья.",
+                                    "Complete your age and sex at birth in the health profile to calculate a reference."
+                                ),
+                                color = palette.muted, fontSize = 10.sp, lineHeight = 14.sp
+                            )
+                        }
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             listOf(200, 250, 500).forEach { amount ->
                                 OutlinedButton(
@@ -571,7 +631,12 @@ internal fun NutritionScreen(
                             }
                         }
                         Text(
-                            nutritionTr(language, "Меъёри об барои ҳама яксон нест; ҳаҷми умумиро танҳо ҳамчун сабти нӯшидан нишон медиҳем.", "Потребность в воде индивидуальна; здесь показан только записанный объём.", "Water needs vary; this shows only the volume you logged."),
+                            nutritionTr(
+                                language,
+                                "Ҳисобкунак танҳо оби одиро сабт мекунад; чой, шир ва дигар нӯшокиҳо ба ҳисобкунак илова нашудаанд. Мева, сабзавот ва ғизо низ об доранд. Дар бемориҳои гурда ё дил, ҳомиладорӣ, ширмаконӣ ё маҳдудияти моеъ меъёрро бо духтур муайян кун; обро маҷбуран зиёд нанӯш.",
+                                "Счётчик записывает только обычную воду; чай, молоко и другие напитки здесь не учитываются. Фрукты, овощи и пища тоже содержат воду. При болезнях почек или сердца, беременности, грудном вскармливании или ограничении жидкости согласуй норму с врачом; не заставляй себя пить сверх меры.",
+                                "This tracker logs plain water only; tea, milk and other drinks are not included. Food also contains water. If you have kidney or heart disease, are pregnant or breastfeeding, or have a fluid restriction, ask a clinician for an individual target; do not force excess water."
+                            ),
                             color = palette.muted, fontSize = 10.sp, lineHeight = 14.sp
                         )
                     }
