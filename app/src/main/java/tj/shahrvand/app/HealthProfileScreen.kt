@@ -84,6 +84,12 @@ internal fun HealthProfileScreen(
     var sexAtBirth by remember(userId) { mutableStateOf("not_specified") }
     var activityLevel by remember(userId) { mutableStateOf("light") }
     var healthGoal by remember(userId) { mutableStateOf("build_habit") }
+    var waistText by remember(userId) { mutableStateOf("") }
+    var restingHeartRateText by remember(userId) { mutableStateOf("") }
+    var systolicText by remember(userId) { mutableStateOf("") }
+    var diastolicText by remember(userId) { mutableStateOf("") }
+    var allergiesText by remember(userId) { mutableStateOf("") }
+    var conditionsText by remember(userId) { mutableStateOf("") }
     var previousWeightKg by remember(userId) { mutableStateOf<Double?>(null) }
     var confirmDelete by remember { mutableStateOf(false) }
 
@@ -97,6 +103,12 @@ internal fun HealthProfileScreen(
                 sexAtBirth = profile.sexAtBirth
                 activityLevel = profile.activityLevel
                 healthGoal = profile.healthGoal
+                waistText = profile.waistCm?.let(::formatHealthNumber).orEmpty()
+                restingHeartRateText = profile.restingHeartRateBpm?.toString().orEmpty()
+                systolicText = profile.bloodPressureSystolicMmhg?.toString().orEmpty()
+                diastolicText = profile.bloodPressureDiastolicMmhg?.toString().orEmpty()
+                allergiesText = profile.allergies
+                conditionsText = profile.healthConditions
             }
             snapshot.latestMeasurement?.let { measurement ->
                 weightText = formatHealthNumber(measurement.weightKg)
@@ -224,6 +236,80 @@ internal fun HealthProfileScreen(
                     onSelected = { healthGoal = it }
                 )
                 Text(
+                    healthTr(language, "НИШОНДИҲАНДАҲОИ ИЛОВАГӢ", "ДОПОЛНИТЕЛЬНЫЕ ПОКАЗАТЕЛИ", "ADDITIONAL VITALS"),
+                    color = palette.muted, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+                    OutlinedTextField(
+                        value = waistText,
+                        onValueChange = { waistText = it.filter { ch -> ch.isDigit() || ch == '.' || ch == ',' }.take(6) },
+                        modifier = Modifier.weight(1f),
+                        label = { Text(healthTr(language, "Даври миён", "Талия", "Waist")) },
+                        suffix = { Text("см") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                    )
+                    OutlinedTextField(
+                        value = restingHeartRateText,
+                        onValueChange = { restingHeartRateText = it.filter(Char::isDigit).take(3) },
+                        modifier = Modifier.weight(1f),
+                        label = { Text(healthTr(language, "Набзи оромӣ", "Пульс в покое", "Resting HR")) },
+                        suffix = { Text("bpm") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    )
+                }
+                Text(
+                    healthTr(language, "Фишори хун (танҳо аз ченкунаки воқеӣ ворид кун)", "Артериальное давление (вводи только по реальному измерению)", "Blood pressure (enter only a measured reading)"),
+                    color = palette.ink, fontSize = 10.sp, fontWeight = FontWeight.SemiBold
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+                    OutlinedTextField(
+                        value = systolicText,
+                        onValueChange = { systolicText = it.filter(Char::isDigit).take(3) },
+                        modifier = Modifier.weight(1f),
+                        label = { Text(healthTr(language, "Систолӣ", "Систолическое", "Systolic")) },
+                        suffix = { Text("mmHg") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    )
+                    OutlinedTextField(
+                        value = diastolicText,
+                        onValueChange = { diastolicText = it.filter(Char::isDigit).take(3) },
+                        modifier = Modifier.weight(1f),
+                        label = { Text(healthTr(language, "Диастолӣ", "Диастолическое", "Diastolic")) },
+                        suffix = { Text("mmHg") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    )
+                }
+                OutlinedTextField(
+                    value = allergiesText,
+                    onValueChange = { allergiesText = it.take(1000) },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text(healthTr(language, "Аллергияҳо (ихтиёрӣ)", "Аллергии (необязательно)", "Allergies (optional)")) },
+                    minLines = 2,
+                    maxLines = 3
+                )
+                OutlinedTextField(
+                    value = conditionsText,
+                    onValueChange = { conditionsText = it.take(1000) },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text(healthTr(language, "Ҳолатҳои саломатӣ (ихтиёрӣ)", "Состояния здоровья (необязательно)", "Health conditions (optional)")) },
+                    minLines = 2,
+                    maxLines = 3
+                )
+                Text(
+                    healthTr(
+                        language,
+                        "Набз ва фишорро дастгоҳ чен намекунад: онҳоро танҳо баъди ченкунии воқеӣ ворид кун. Ин маълумот хусусӣ аст.",
+                        "Пульс и давление приложение не измеряет: вводи их только после реального измерения. Эти данные конфиденциальны.",
+                        "The app does not measure heart rate or blood pressure. Enter them only after a real measurement. This information is private."
+                    ),
+                    color = palette.muted, fontSize = 9.sp, lineHeight = 13.sp
+                )
+
+                Text(
                     healthTr(language, "Синну сол аз профили аккаунти SHAHRVAND гирифта мешавад: ", "Возраст берётся из профиля SHAHRVAND: ", "Age is taken from your SHAHRVAND account: ") + age,
                     color = palette.muted, fontSize = 10.sp
                 )
@@ -332,6 +418,26 @@ internal fun HealthProfileScreen(
                     error = healthTr(language, "Вазн бояд аз 5 то 500 кг бошад.", "Вес должен быть от 5 до 500 кг.", "Weight must be between 5 and 500 kg.")
                     return@Button
                 }
+                val parsedWaist = waistText.replace(',', '.').toDoubleOrNull()
+                val parsedRestingHr = restingHeartRateText.toIntOrNull()
+                val parsedSystolic = systolicText.toIntOrNull()
+                val parsedDiastolic = diastolicText.toIntOrNull()
+                if (waistText.isNotBlank() && (parsedWaist == null || parsedWaist !in 30.0..250.0)) {
+                    error = healthTr(language, "Даври миён бояд аз 30 то 250 см бошад.", "Обхват талии должен быть от 30 до 250 см.", "Waist must be between 30 and 250 cm.")
+                    return@Button
+                }
+                if (restingHeartRateText.isNotBlank() && (parsedRestingHr == null || parsedRestingHr !in 25..240)) {
+                    error = healthTr(language, "Набзи оромӣ бояд аз 25 то 240 бошад.", "Пульс в покое должен быть от 25 до 240.", "Resting heart rate must be between 25 and 240 bpm.")
+                    return@Button
+                }
+                val bpIsBlank = systolicText.isBlank() && diastolicText.isBlank()
+                val bpIsValid = parsedSystolic != null && parsedDiastolic != null &&
+                    parsedSystolic in 60..260 && parsedDiastolic in 30..180 &&
+                    parsedSystolic > parsedDiastolic
+                if (!bpIsBlank && !bpIsValid) {
+                    error = healthTr(language, "Ҳар ду рақами фишорро ворид кун; систолӣ бояд аз диастолӣ баланд бошад.", "Введи оба значения давления; систолическое должно быть выше диастолического.", "Enter both blood pressure values; systolic must be higher than diastolic.")
+                    return@Button
+                }
                 scope.launch {
                     saving = true
                     error = ""
@@ -345,7 +451,13 @@ internal fun HealthProfileScreen(
                             sexAtBirth = sexAtBirth,
                             activityLevel = activityLevel,
                             healthGoal = healthGoal,
-                            previousWeightKg = previousWeightKg
+                            previousWeightKg = previousWeightKg,
+                            waistCm = parsedWaist,
+                            restingHeartRateBpm = parsedRestingHr,
+                            bloodPressureSystolicMmhg = parsedSystolic,
+                            bloodPressureDiastolicMmhg = parsedDiastolic,
+                            allergies = allergiesText,
+                            healthConditions = conditionsText
                         )
                         previousWeightKg = parsedWeight
                         status = if (weightWasAdded) {
@@ -422,6 +534,12 @@ internal fun HealthProfileScreen(
                                     sexAtBirth = "not_specified"
                                     activityLevel = "light"
                                     healthGoal = "build_habit"
+                                    waistText = ""
+                                    restingHeartRateText = ""
+                                    systolicText = ""
+                                    diastolicText = ""
+                                    allergiesText = ""
+                                    conditionsText = ""
                                     status = healthTr(
                                         language,
                                         "Маълумоти саломатӣ нест карда шуд.",
