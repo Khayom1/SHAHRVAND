@@ -366,15 +366,13 @@ private fun ShahrvandApp() {
             val navTabs = listOf(0, 1, 4, 2, 3)
             val labels = listOf(
                 tr(language, "Асосӣ", "Главная", "Home"),
-                tr(language, "Фаъолият", "Активность", "Activity"),
-                tr(language, "Саломатӣ", "Здоровье", "Health"),
+                tr(language, "Вазифаҳо", "Задания", "Tasks"),
                 tr(language, "Рейтинг", "Рейтинг", "Ranking"),
                 tr(language, "Профил", "Профиль", "Profile")
             )
             val icons = listOf(
                 Icons.Filled.Home,
                 Icons.Filled.Explore,
-                Icons.Filled.Favorite,
                 Icons.Filled.EmojiEvents,
                 Icons.Filled.AccountCircle
             )
