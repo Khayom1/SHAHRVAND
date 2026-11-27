@@ -386,10 +386,11 @@ internal fun CleanupSubmissionScreen(
                                     "Заявка отправлена. Статус обновится после проверки администратором.",
                                     "Submission sent. Its status will update after administrator review."
                                 )
-                                runCatching { refreshHistory() }
-                                    .onFailure {
-                                        error = nutritionTr(language, "Дархост фиристода шуд, аммо таърих нав нашуд. Барои санҷиш навсозиро пахш кун.", "Заявка отправлена, но история не обновилась. Нажми обновить для проверки.", "Submission was sent, but history did not refresh. Refresh to verify its status.")
-                                    }
+                                try {
+                                    refreshHistory()
+                                } catch (_: Exception) {
+                                    error = nutritionTr(language, "Дархост фиристода шуд, аммо таърих нав нашуд. Барои санҷиш навсозиро пахш кун.", "Заявка отправлена, но история не обновилась. Нажми обновить для проверки.", "Submission was sent, but history did not refresh. Refresh to verify its status.")
+                                }
                             } catch (e: Exception) {
                                 error = e.message ?: nutritionTr(language, "Дархост фиристода нашуд.", "Не удалось отправить заявку.", "Could not submit the evidence.")
                             } finally {
